@@ -1,19 +1,29 @@
 {
   "name": "vjscript",
   "version": "1.0.0",
-  "description": "Module to automatigically transpile JavaScript code to Squirrel",
-  "main": "index.js",
+  "description": "Module to automagically transpile JavaScript code to Squirrel",
+  "main": "src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx vjsc test/code.js",
+    "watch": "tsc -w",
+    "build": "tsc",
+    "dev": "npx ts-node src/index.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MoonlyDays/VJScript.git"
+  },
+  "bin": {
+    "vjsc": "./dist/index.js"
   },
   "author": "Moonly Days",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/MoonlyDays/VJScript/issues"
   },
-  "homepage": "https://github.com/MoonlyDays/VJScript#readme"
+  "homepage": "https://github.com/MoonlyDays/VJScript#readme",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
 }
