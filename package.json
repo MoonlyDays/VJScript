@@ -1,0 +1,19 @@
+{
+  "name": "vjscript",
+  "version": "1.0.0",
+  "description": "Module to automatigically transpile JavaScript code to Squirrel",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MoonlyDays/VJScript.git"
+  },
+  "author": "Moonly Days",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MoonlyDays/VJScript/issues"
+  },
+  "homepage": "https://github.com/MoonlyDays/VJScript#readme"
+}
