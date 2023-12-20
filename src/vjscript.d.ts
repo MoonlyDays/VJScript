@@ -1,7 +1,110 @@
+/**
+ * An interface to find and iterate over the script handles for the entities in play. To iterate over a set of entities, pass null to the previous parameter in the appropriate method to start an iteration. A reference to a previously-found entity can be used instead to continue a search.
+ */
+declare class CEntities {
+    /**
+     * Creates an entity by classname.
+     * @param classname
+     */
+    public CreateByClassname(classname: string): CBaseEntity;
+
+    /**
+     * Dispatches spawn of an entity! Use this on entities created via CreateByClassname to actually spawn them into the world.
+     * @note Calling this on players will cause them to respawn.
+     * @param entity
+     */
+    public DispatchSpawn(entity: CBaseEntity): void;
+
+    /**
+     * Find entities by the string of their classname keyvalue. Pass 'null' value to start an iteration, or reference to a previously found entity to continue a search.
+     * @note The classname keyvalue of an entity can be manipulated and does not necessarily reflect its code class. There might be entities that have a different classname than the one they are created with. For example, you can spawn a "prop_dynamic" then change its classname to "my_prop", and it will retain the functionality of its code class while also not showing up when searching for "prop_dynamic".
+     * @param entity
+     * @param classname
+     */
+    public FindByClassname(entity: CBaseEntity | null, classname: string): CBaseEntity | null;
+
+    /**
+     * Find entities by classname nearest to a point within a radius.
+     * @param classname
+     * @param center
+     * @param radius
+     */
+    public FindByClassnameNearest(classname: string, center: Vector, radius: number): CBaseEntity | null;
+
+    /**
+     * Find entities by classname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * @param previous
+     * @param classname
+     * @param center
+     * @param radius
+     */
+    public FindByClassnameWithin(previous: CBaseEntity | null, classname: string, center: Vector, radius: number): CBaseEntity | null;
+
+    /**
+     * Find entities by the string of their model keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * @param previous
+     * @param modelname
+     */
+    public FindByModel(previous: CBaseEntity | null, modelname: string): CBaseEntity | null;
+
+    /**
+     * Find entities by the string of their targetname keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * @param previous
+     * @param targetname
+     */
+    public FindByName(previous: CBaseEntity | null, targetname: string): CBaseEntity | null;
+
+    /**
+     * Find entities by targetname nearest to a point within a radius.
+     * @param targetname
+     * @param center
+     * @param radius
+     */
+    public FindByNameNearest(targetname: string, center: Vector, radius: number): CBaseEntity | null;
+
+    /**
+     * Find entities by targetname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * @param previous
+     * @param targetname
+     * @param center
+     * @param radius
+     */
+    public FindByNameWithin(previous: CBaseEntity | null, targetname: string, center: Vector, radius: number): CBaseEntity | null;
+
+    /**
+     * Find entities by the string of their target keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * @param previous
+     * @param target
+     */
+    public FindByTarget(previous: CBaseEntity | null, target: string): CBaseEntity | null;
+
+    /**
+     * Find entities within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * @param previous
+     * @param center
+     * @param radius
+     */
+    public FindInSphere(previous: CBaseEntity | null, center: Vector, radius: number): CBaseEntity | null
+
+    /**
+     * Begin an iteration over the list of entities
+     */
+    public First(): CBaseEntity | null;
+
+    /**
+     * At the given reference of a previously-found entity, returns the next one after it in the list.
+     * @param previous
+     */
+    public Next(previous: CBaseEntity): CBaseEntity | null;
+}
+
+/**
+ * Provides access to currently spawned entities
+ */
+declare const Entities: CEntities;
+
 /** Provides an interface to read and change the values of console readonly variables: .; */
 // declare let Convars: Convars;
-/** Provides access to currently readonly spawned: e;readonly ntities: .; */
-// declare readonly let: E;ntities: CEntities;
 /** Allows manipulation readonly of: e;ntity output readonly data: .; */
 // declare readonly let: E;ntityOutputs: CScriptEntityOutputs;
 /** Provides access to the maps NavMesh and readonly NavAreas: .; */
@@ -940,6 +1043,7 @@ declare class CBasePlayer extends CBaseCombatCharacter {
 
 declare class CTFPlayer extends CBasePlayer {
     public BleedPlayer(duration: number): void;
+
     public GetPlayerClass(): number;
 }
 
