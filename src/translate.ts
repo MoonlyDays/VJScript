@@ -6,17 +6,17 @@ import {
     BaseNode,
     BinaryExpression,
     BlockStatement, BreakStatement,
-    CallExpression, ContinueStatement,
-    ExpressionStatement, ForInStatement, ForOfStatement, ForStatement,
+    CallExpression, ConditionalExpression, ContinueStatement,
+    ExpressionStatement, ForInStatement, ForOfStatement, ForStatement, FunctionDeclaration, FunctionExpression,
     Identifier,
     IfStatement,
     ImportDeclaration,
-    Literal,
+    Literal, LogicalExpression,
     MemberExpression,
-    NewExpression,
-    TemplateLiteral,
+    NewExpression, ObjectExpression, Property,
+    TemplateLiteral, ThisExpression,
     UnaryExpression, UpdateExpression,
-    VariableDeclaration
+    VariableDeclaration, WhileStatement
 } from "estree";
 
 export const toSquirrel = (scriptPath: string, node: Program) => {
@@ -43,6 +43,12 @@ const nodeTranslators = {
 
     Literal: function* (node: Literal) {
         yield JSON.stringify(node.value);
+    },
+
+    Property: function* (node: Property) {
+        yield translate(node.key);
+        yield " = ";
+        yield translate(node.value);
     },
 
     TemplateLiteral: function* (node: TemplateLiteral) {
@@ -85,8 +91,7 @@ const nodeTranslators = {
             yield '\n';
         }
 
-        if (addBrackets)
-        {
+        if (addBrackets) {
             currentScopeDepth--;
             yield "}\n";
         }
@@ -116,6 +121,13 @@ const nodeTranslators = {
             yield "else\n";
             yield translate(node.alternate);
         }
+    },
+
+    WhileStatement: function* (node: WhileStatement) {
+        yield "while ("
+        yield translate(node.test);
+        yield ") ";
+        yield translate(node.body);
     },
 
     ForStatement: function* (node: ForStatement) {
@@ -241,10 +253,15 @@ const nodeTranslators = {
     },
 
     AssignmentExpression: function* (node: AssignmentExpression) {
+
         yield translate(node.left);
-        yield " ";
-        yield node.operator;
-        yield " ";
+
+        if (node.left.type == "MemberExpression") {
+            yield " <- ";
+        } else {
+            yield " = ";
+        }
+
         yield translate(node.right);
     },
 
@@ -265,6 +282,17 @@ const nodeTranslators = {
         yield "]";
     },
 
+    ObjectExpression: function* (node: ObjectExpression) {
+        yield "{\n";
+        for (let i = 0; i < node.properties.length; i++) {
+            const prop = node.properties[i];
+            yield "  ";
+            yield translate(prop);
+            yield ",\n";
+        }
+        yield "}";
+    },
+
     BinaryExpression: function* (node: BinaryExpression) {
 
         if (node.operator == "===") {
@@ -279,6 +307,20 @@ const nodeTranslators = {
         yield " ";
         yield translate(node.right);
         yield ")";
+    },
+
+    FunctionExpression: function* (node: FunctionExpression) {
+        yield "function ";
+
+        if (node.id) {
+            yield translate(node.id);
+        }
+
+        yield "(";
+        yield node.params.map(x => translate(x)).join(", ");
+        yield ") ";
+
+        yield translate(node.body);
     },
 
     UnaryExpression: function* (node: UnaryExpression) {
@@ -296,8 +338,32 @@ const nodeTranslators = {
             yield node.operator;
     },
 
+    ConditionalExpression: function* (node: ConditionalExpression) {
+        yield "(";
+        yield translate(node.test);
+        yield " ? ";
+        yield translate(node.consequent);
+        yield " : ";
+        yield translate(node.alternate);
+        yield ")";
+    },
+
+    LogicalExpression: function* (node: LogicalExpression) {
+        yield "(";
+        yield translate(node.left);
+        yield " ";
+        yield node.operator;
+        yield " ";
+        yield translate(node.right);
+        yield ")";
+    },
+
     NewExpression: function* (node: NewExpression) {
         yield* nodeTranslators["CallExpression"](node);
+    },
+
+    ThisExpression: function* (node: ThisExpression) {
+        yield "this";
     },
 
     CallExpression: function* (node: CallExpression) {
@@ -329,17 +395,16 @@ const nodeTranslators = {
     },
 
     ImportDeclaration: function* (node: ImportDeclaration) {
-        // If we include vjscript, this is to get native squirrel functions.
-        // No need to actually import that.
-        if (node.source.type == "Literal") {
-            if (node.source.value == "vjscript")
-                return;
-        }
+    },
+
+    FunctionDeclaration: function* (node: FunctionDeclaration) {
+        yield* this.FunctionExpression(node);
     }
 };
 
 function translate(node: BaseNode): string {
 
+    console.log(node.type);
     const fn = nodeTranslators[node.type];
     if (!fn) {
         console.log(node);

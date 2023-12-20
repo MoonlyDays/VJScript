@@ -1,12 +1,20 @@
+type NutTablePrimitive = number | string | boolean;
+type NutTableValue = NutTablePrimitive | NutTablePrimitive[] | NutTable;
+type NutTable = { [key: string]: NutTableValue };
+type ScriptScope = { [key: string]: any }
+
+declare function SpawnEntityFromTable(name: EntityClassName, table: NutTable): CBaseEntity | null;
+
 /**
  * An interface to find and iterate over the script handles for the entities in play. To iterate over a set of entities, pass null to the previous parameter in the appropriate method to start an iteration. A reference to a previously-found entity can be used instead to continue a search.
  */
+
 declare class CEntities {
     /**
      * Creates an entity by classname.
      * @param classname
      */
-    public CreateByClassname(classname: string): CBaseEntity;
+    public CreateByClassname(classname: EntityClassName): CBaseEntity;
 
     /**
      * Dispatches spawn of an entity! Use this on entities created via CreateByClassname to actually spawn them into the world.
@@ -21,7 +29,7 @@ declare class CEntities {
      * @param entity
      * @param classname
      */
-    public FindByClassname(entity: CBaseEntity | null, classname: string): CBaseEntity | null;
+    public FindByClassname(entity: CBaseEntity | null, classname: EntityClassName): CBaseEntity | null;
 
     /**
      * Find entities by classname nearest to a point within a radius.
@@ -29,7 +37,7 @@ declare class CEntities {
      * @param center
      * @param radius
      */
-    public FindByClassnameNearest(classname: string, center: Vector, radius: number): CBaseEntity | null;
+    public FindByClassnameNearest(classname: EntityClassName, center: Vector, radius: number): CBaseEntity | null;
 
     /**
      * Find entities by classname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
@@ -38,7 +46,7 @@ declare class CEntities {
      * @param center
      * @param radius
      */
-    public FindByClassnameWithin(previous: CBaseEntity | null, classname: string, center: Vector, radius: number): CBaseEntity | null;
+    public FindByClassnameWithin(previous: CBaseEntity | null, classname: EntityClassName, center: Vector, radius: number): CBaseEntity | null;
 
     /**
      * Find entities by the string of their model keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
@@ -102,18 +110,6 @@ declare class CEntities {
  * Provides access to currently spawned entities
  */
 declare const Entities: CEntities;
-
-/** Provides an interface to read and change the values of console readonly variables: .; */
-// declare let Convars: Convars;
-/** Allows manipulation readonly of: e;ntity output readonly data: .; */
-// declare readonly let: E;ntityOutputs: CScriptEntityOutputs;
-/** Provides access to the maps NavMesh and readonly NavAreas: .; */
-// declare let NavMesh: CNavMesh;
-/** Allows reading and updating the network properties of readonly an: e;readonly ntity: .; */
-
-// declare let NetProps: CNetPropManager;
-/** Tracks if any player is using voice and for how readonly long: .; */
-// declare let PlayerVoiceListener: PlayerVoiceListener;
 
 declare abstract class Constants {
     public static readonly EBotType: {
@@ -978,16 +974,626 @@ declare abstract class Constants {
     }
 }
 
+/**
+ * This is a script handle class for entities. All entities have a script handle using this class, sometimes as one of its subclasses.
+ */
 declare class CBaseEntity {
+    /**
+     * Behaves the same as KeyValueFromFloat, use that instead.
+     * @param key
+     * @param value
+     */
+    public __KeyValueFromFloat(key: string, value: number): boolean;
+
+    /**
+     * Behaves the same as KeyValueFromInt, use that instead.
+     * @param key
+     * @param value
+     */
+    public __KeyValueFromInt(key: string, value: number): boolean;
+
+    /**
+     * Behaves the same as KeyValueFromString, use that instead.
+     * @param key
+     * @param value
+     */
+    public __KeyValueFromString(key: string, value: string): boolean;
+
+    /**
+     * Behaves the same as KeyValueFromVector, use that instead.
+     * @param key
+     * @param value
+     */
+    public __KeyValueFromVector(key: string, value: Vector): boolean;
+
+    /**
+     * Adds the supplied flags to the Entity Flags in the entity. (m_iEFlags datamap)
+     * See Constants.FEntityEFlags.
+     * @param flags
+     */
+    public AddEFlags(flags: number): void;
+
+    /**
+     * Adds the supplied flags to another separate player-related entity flags system in the entity. (m_fFlags datamap)
+     * See Constants.FPlayer.
+     * @param flags
+     */
+    public AddFlag(flags: number): void;
+
+    /**
+     * Adds the supplied flags to the Solid Flags in the entity. (m_Collision.m_usSolidFlags datamap)
+     * See Constants.FSolid.
+     * @param flags
+     */
+    public AddSolidFlags(flags: number): void;
+
+    /**
+     * Apply a Velocity Impulse as a world space impulse vector. Works for most physics-based objects including dropped weapons and even dropped Sandviches.
+     * @param impulse
+     */
+    public ApplyAbsVelocityImpulse(impulse: Vector): void;
+
+    /**
+     * Apply an Angular Velocity Impulse in entity local space. The direction of the input vector is the rotation axis, and the length is the magnitude of the impulse.
+     * @param impulse
+     */
+    public ApplyLocalAngularVelocityImpulse(impulse: Vector): void;
+
+    /**
+     * Acts like the BecomeRagdoll input, with the required impulse value applied as a force on the ragdoll. Does NOT spawn a prop_ragdoll or any other entity.
+     * @param impulse
+     */
+    public BecomeRagdollOnClient(impulse: Vector): boolean;
+
+    /**
+     * Sets the player-related entity flags to 0 on an entity, clearing them.
+     */
+    public ClearFlags(): void;
+
+    /**
+     * Sets Solid Flags to 0 on an entity, clearing them.
+     */
+    public ClearSolidFlags(): void;
+
+    /**
+     * Adds an I/O connection that will call the named function when the specified output fires.
+     * @param output
+     * @param func
+     */
+    public ConnectOutput(output: string, func: string): void;
+
+    /**
+     * Removes the entity. Simply calls UTIL_Remove.
+     */
+    public Destroy(): void;
+
+    /**
+     * Disable drawing and transmitting the entity to clients. (adds EF_NODRAW)
+     */
+    public DisableDraw(): void;
+
+    /**
+     * Removes a connected script function from an I/O event.
+     * @param output
+     * @param func
+     */
+    public DisconnectOutput(output: string, func: string): void;
+
+    /**
+     * Alternative dispatch spawn, same as the one in CEntities, for convenience.
+     * @note Calling this on players will cause them to respawn.
+     */
+    public DispatchSpawn(): void;
+
+    /**
+     * Plays a sound from this entity.
+     * @param sound
+     */
+    public EmitSound(sound: string): void;
+
+    /**
+     * Enable drawing and transmitting the entity to clients. (removes EF_NODRAW)
+     */
+    public EnableDraw(): void;
+
+    /**
+     * Returns the entity index.
+     */
+    public entindex(): number;
+
+    /**
+     * Returns the entity's eye angles. Acts like GetAbsAngles if the entity does not support it.
+     */
+    public EyeAngles(): QAngle;
+
+    /**
+     * Get vector to eye position - absolute coords. Acts like GetOrigin if the entity does not support it.
+     */
+    public EyePosition(): Vector;
+
+    /**
+     * Returns the most-recent entity parented to this one.
+     * @tip: Example usage:
+     *     for (local child = entity.FirstMoveChild(); child != null; child = child.NextMovePeer())
+     */
+    public FirstMoveChild(): CBaseEntity | null;
+
+    /**
+     * Get the entity's pitch, yaw, and roll as QAngles.
+     */
+    public GetAbsAngles(): QAngle;
+
+    /**
+     * Returns the current absolute velocity of the entity.
+     */
+    public GetAbsVelocity(): Vector;
+
+    /**
+     * Get the entity's pitch, yaw, and roll as a Vector.
+     */
+    public GetAngles(): Vector;
+
+    /**
+     *  Get the local angular velocity - returns a Vector of pitch, yaw, and roll.
+     */
+    public GetAngularVelocity(): Vector;
+
+    /**
+     *  Returns any constant velocity currently being imparted onto the entity. This includes being pushed by effects like trigger_push and players standing on moving geometry like elevators. Should always returns a zero vector if the entity is not affected by any movement effects.
+     */
+    public GetBaseVelocity(): Vector;
+
+    /**
+     * Get a vector containing max bounds, centered on object
+     */
+    public GetBoundingMaxs(): Vector;
+
+    /**
+     * Get a vector containing max bounds, centered on object, taking the object's orientation into account
+     * @Bug: This does not transform the bounds correctly and in some cases the bounding box will not cover the whole entity. As a workaround, use the non-oriented bounds and perform an AABB transformation using a matrix constructed from the entity's origin and angles.
+     */
+    public GetBoundingMaxsOriented(): Vector;
+
+    /**
+     * Get a vector containing min bounds, centered on object
+     */
+    public GetBoundingMins(): Vector;
+
+    /**
+     * Get a vector containing min bounds, centered on object, taking the object's orientation into account
+     * @bug This does not transform the bounds correctly and in some cases the bounding box will not cover the whole entity. As a workaround, use the non-oriented bounds and perform an AABB transformation using a matrix constructed from the entity's origin and angles.
+     */
+    public GetBoundingMinsOriented(): Vector;
+
+    /**
+     * Get vector to center of object - absolute coords
+     */
+    public GetCenter(): Vector;
+
+    public GetClassname(): string;
+
+    /**
+     * Gets the current collision group of the entity.
+     */
+    public GetCollisionGroup(): number;
+
+    public GetEFlags(): number;
+
+    public GetFlags(): number;
+
+    /**
+     * Get the entity as an EHANDLE
+     */
+    public GetEntityHandle(): void;
+
+    public GetEntityIndex(): number;
+
+    /**
+     * Get the forward vector of the entity
+     */
+    public GetForwardVector(): Vector;
+
+    /**
+     * Get PLAYER friction, ignored for objects
+     */
+    public GetFriction(): number;
+
+    public GetGravity(): number;
+
+    public GetHealth(): number;
+
+    /**
+     * Get the right vector of the entity. This is purely for compatibility.
+     */
+    public GetLeftVector(): Vector;
+
+    public GetLocalAngles(): QAngle;
+
+    public GetLocalOrigin(): Vector;
+
+    /**
+     * Get Entity relative velocity
+     */
+    public GetLocalVelocity(): Vector;
+
+    public GetMaxHealth(): number;
+
+    /**
+     * Get a KeyValue class instance on this entity's model
+     */
+    public GetModelKeyValues(): NutTable;
+
+    /**
+     *  Returns the name of the model
+     */
+    public GetModelName(): string;
+
+    /**
+     * If in hierarchy, retrieves the entity's parent
+     */
+    public GetMoveParent(): CBaseEntity | null;
+
+    public GetMoveType(): number;
+
+    public GetName(): string;
+
+    /**
+     * This is GetAbsOrigin with a funny script name for some reason. Not changing it for legacy compat though.
+     */
+    public GetOrigin(): Vector;
+
+    /**
+     * Gets this entity's owner
+     */
+    public GetOwner(): CBaseEntity | null;
+
+    public GetPhysAngularVelocity(): Vector;
+
+    public GetPhysVelocity(): Vector;
+
+    /**
+     * Get the entity name stripped of template unique decoration
+     */
+    public GetPreTemplateName(): string;
+
+    /**
+     * Get the right vector of the entity
+     */
+    public GetRightVector(): Vector;
+
+    /**
+     * If in hierarchy, walks up the hierarchy to find the root parent
+     */
+    public GetRootMoveParent(): CBaseEntity | null;
+
+    /**
+     *  Retrieve the unique identifier used to refer to the entity within the scripting system.
+     */
+    public GetScriptId(): string;
+
+    /**
+     * Retrieve the script-side data associated with an entity
+     */
+
+    public GetScriptScope(): NutTable;
+
+    /**
+     * Retrieve the name of the current script think func
+     */
+    public GetScriptThinkFunc(): string;
+
+    public GetSolid(): number;
+
+    /**
+     * Returns float duration of the sound. Actor model name is optional and can be left null.
+     * @warning: Does not work on dedicated servers as they do not have audio libraries built-in to load sounds.
+     * @param soundname
+     * @param actormodelname
+     * @constructor
+     */
+    public GetSoundDuration(soundname: string, actormodelname: string): number;
+
+    public GetTeam(): number;
+
+    /**
+     * Get the up vector of the entity
+     */
+    public GetUpVector(): Vector;
+
+    public GetVelocity(): Vector;
+
+    /**
+     * This function tells you how much of the entity is underwater. It returns a value of 0 if not underwater, 1 if the feet are (touching water brush), 2 if the waist is (center of the hull of the entity), and 3 if the head is (eyes position).
+     * @note Some entities might not return 1 despite touching water. In some cases you might get 0 and 3 only, or sometimes 0, 2 and 3.
+     */
+    public GetWaterLevel(): number;
+
+    /**
+     * It returns the type of water the entity is currently submerged in. 32 for water and 16 for slime.
+     */
+    public GetWaterType(): number;
+
+    public IsEFlagSet(eflag: number): boolean;
+
+    /**
+     * Checks whether the entity is a player or not.
+     */
+    public IsPlayer(): this is CBasePlayer;
+
+    public IsSolid(): boolean;
+
+    public IsSolidFlagSet(solidflag: number): boolean;
+
+    /**
+     * Checks whether the entity still exists. Useful when storing entity handles and needing to check if the entity was not deleted.
+     * @note This function is never necessary to call on handles returned from built-in script functions, as they are guaranteed to be valid or null.
+     */
+    public IsValid(): boolean;
+
+    /**
+     * Executes KeyValue with a float
+     * @warning Does not update the internal network state of the entity, which can result in any desired visual changes being delayed for clients if used after spawning. Netprops can be used instead which correctly updates the networking state and results in an immediate update.
+     * @param key
+     * @param value
+     */
     public KeyValueFromFloat(key: string, value: number): boolean;
 
+    /**
+     * Executes KeyValue with an int
+     * @warning Does not update the internal network state of the entity, which can result in any desired visual changes being delayed for clients if used after spawning. Netprops can be used instead which correctly updates the networking state and results in an immediate update.
+     * @param key
+     * @param value
+     */
     public KeyValueFromInt(key: string, value: number): boolean;
 
+    /**
+     * Executes KeyValue with a string
+     * @warning Does not update the internal network state of the entity, which can result in any desired visual changes being delayed for clients if used after spawning. Netprops can be used instead which correctly updates the networking state and results in an immediate update.
+     * @param key
+     * @param value
+     */
     public KeyValueFromString(key: string, value: string): boolean;
 
-    public KeyValueFromVector(key: string, value: Vector): boolean;
+    /**
+     * Executes KeyValue with a vector
+     * @warning Does not update the internal network state of the entity, which can result in any desired visual changes being delayed for clients if used after spawning. Netprops can be used instead which correctly updates the networking state and results in an immediate update.
+     * @param key
+     * @param value
+     */
+    KeyValueFromVector(key: string, value: Vector): boolean;
 
+    /**
+     * Removes the entity. Equivalent of firing the Kill I/O input, but instantaneous.
+     */
     public Kill(): void;
+
+    /**
+     * Returns the entity's local eye angles
+     */
+    public LocalEyeAngles(): unknown;
+
+    /**
+     * Returns the next entity parented with the entity. Intended for iteration use with FirstMoveChild().
+     */
+    public NextMovePeer(): CBaseEntity | null;
+
+    /**
+     * Precache a model
+     * @note This has no return, unlike the global PrecacheModel function. Use the latter if you need the model index.
+     * @param modelname
+     */
+    public PrecacheModel(modelname: string): void;
+
+    /**
+     * Precache a sound script. Same as PrecacheSoundScript.
+     * @param soundscript
+     */
+    public PrecacheScriptSound(soundscript: string): void;
+
+    /**
+     * Precache a sound script. Same as PrecacheScriptSound.
+     * @param soundscript
+     */
+    public PrecacheSoundScript(soundscript: string): void;
+
+    public RemoveEFlags(eflags: number): void;
+
+    public RemoveFlag(flags: number): void;
+
+    public RemoveSolidFlags(solidflags: number): void;
+
+    /**
+     * Set entity pitch, yaw, roll as QAngles
+     * @note Does not work on players, use SnapEyeAngles instead.
+     * @param angles
+     */
+    public SetAbsAngles(angles: QAngle): void;
+
+    /**
+     * Sets the current absolute velocity of the entity.
+     * @note Does nothing on VPhysics objects (such as prop_physics). For those, use SetPhysVelocity instead.
+     * @param velocity
+     */
+    public SetAbsVelocity(velocity: Vector): void;
+
+    /**
+     * Sets the absolute origin of the entity.
+     * @param origin
+     */
+    public SetAbsOrigin(origin: Vector): void;
+
+    /**
+     * Set entity angles
+     * @param pitch
+     * @param yaw
+     * @param roll
+     */
+    public SetAngles(pitch: number, yaw: number, roll: number): void;
+
+    /**
+     * Set the local angular velocity.
+     * @param pitch
+     * @param yaw
+     * @param roll
+     */
+    public SetAngularVelocity(pitch: number, yaw: number, roll: number): void;
+
+    /**
+     * Set the current collision group of the entity.
+     * See Constants.ECollisionGroup
+     * @param collision_group
+     * @constructor
+     */
+    public SetCollisionGroup(collision_group: number): void;
+
+    /**
+     * Enables drawing if you pass true, disables drawing if you pass false.
+     * @param toggle
+     */
+    public SetDrawEnabled(toggle: boolean): void;
+
+    public SetEFlags(eflags: number): void;
+
+    /**
+     * Set the orientation of the entity to have this forward vector
+     * @param forward
+     */
+    public SetForwardVector(forward: Vector): void;
+
+    public SetFriction(friction: number): void;
+
+    public SetGravity(gravity: number): void;
+
+    public SetHealth(health: number): void;
+
+    public SetLocalAngles(angles: QAngle): void;
+
+    public SetLocalOrigin(origin: Vector): void;
+
+    /**
+     * Sets the maximum health this entity can have. Does not update the current health, so SetHealth should be used afterwards.
+     * @note Does nothing on players. Add the max health additive bonus attribute via AddCustomAttribute instead.
+     * @param health
+     */
+    public SetMaxHealth(health: number): void;
+
+    /**
+     * Set a model for this entity.
+     * @warning ake sure the model was already precached before using this function or otherwise the game will crash! Alternatively, SetModelSimple will precache the entity for you.
+     */
+    public SetModel(model: string): void;
+
+    public SetMoveType(movetype: number, movecollide: number): void;
+
+    public SetOrigin(origin: Vector): void;
+
+    /**
+     * Sets this entity's owner
+     * @param entity
+     */
+    public SetOwner(entity: CBaseEntity): void;
+
+    public SetPhysAngularVelocity(angular_velocity: Vector): void;
+
+    public SetPhysVelocity(velocity: Vector): void;
+
+    /**
+     * Sets the bounding box's scale for this entity.
+     * @warning If any component of mins/maxs is backwards (i.e. mins.x > maxs.x), the engine will exit with a fatal error.
+     * @param mins
+     * @param maxs
+     */
+    public SetSize(mins: Vector, maxs: Vector): void;
+
+    public SetSolid(solid: number): void;
+
+    public SetSolidFlags(solid_flags: number): void;
+
+    /**
+     * Sets entity team.
+     * @note Use ForceChangeTeam on players instead.
+     * @param team
+     */
+    public SetTeam(team: number): void;
+
+    public SetVelocity(velocity: Vector): void;
+
+    /**
+     * This sets how much of the entity is underwater. Setting it to 0 means it is not underwater, 1 if the feet are (touching water brush), 2 if the waist is (center of the hull of the entity), and 3 if the head is (eyes position).
+     * @param water_level
+     */
+    public SetWaterLevel(water_level: number): void;
+
+    /**
+     *  Set the type of water the entity is currently submerged in. Generic values to use are 32 for water and 16 for slime.
+     * @param water_type
+     */
+    public SetWaterType(water_type: number): void;
+
+    /**
+     *  Stops a sound on this entity.
+     * @param sound_name
+     */
+    public StopSound(sound_name: string): void;
+
+    /**
+     * Deals damage to the entity.
+     * @param flDamage
+     * @param nDamageType
+     * @param hAttacker
+     */
+    public TakeDamage(flDamage: number, nDamageType: number, hAttacker: CBaseEntity): void;
+
+    /**
+     * Extended version of TakeDamage.
+     * @note If vecDamageForce is Vector(0, 0, 0), the game will automatically calculate it from vecDamagePosition and flDamage. However, specifying a custom damage force requires a really, really big value to have visible effect (in the hundreds of thousands).
+     * @param hInflictor
+     * @param hAttacker
+     * @param hWeapon
+     * @param vecDamageForce
+     * @param vecDamagePosition
+     * @param flDamage
+     * @param nDamageType
+     */
+    public TakeDamageEx(hInflictor: CBaseEntity, hAttacker: CBaseEntity, hWeapon: CBaseEntity, vecDamageForce: Vector, vecDamagePosition: Vector, flDamage: number, nDamageType: number): void;
+
+    /**
+     * Extended version of TakeDamageEx that can apply a custom damage type.
+     * @param hInflictor
+     * @param hAttacker
+     * @param hWeapon
+     * @param vecDamageForce
+     * @param vecDamagePosition
+     * @param flDamage
+     * @param nDamageType
+     * @param nCustomDamageType
+     */
+    public TakeDamageCustom(hInflictor: CBaseEntity, hAttacker: CBaseEntity, hWeapon: CBaseEntity, vecDamageForce: Vector, vecDamagePosition: Vector, flDamage: number, nDamageType: number, nCustomDamageType: number): void;
+
+    /**
+     * Teleports this entity. For this function, set the bools to false if you want that entity's property unchanged. (do not use null arguments!)
+     * @param use_origin
+     * @param origin
+     * @param use_angles
+     * @param angles
+     * @param use_velocity
+     * @param velocity
+     */
+    public Teleport(use_origin: boolean, origin: Vector, use_angles: boolean, angles: QAngle, use_velocity: boolean, velocity: Vector): void;
+
+    /**
+     *  Clear the current script scope for this entity
+     */
+    public TerminateScriptScope(): void;
+
+    public ToggleFlag(flags: number): void;
+
+    /**
+     * Ensure that an entity's script scope has been created.
+     * @tip On players, this only needs to be called once. Script scopes remain permanent on players until their entity is removed, i.e. disconnected. The best place to call this is in the player_spawn event when params.team equals 0 (unassigned). The event is always fired once for team unassigned when the player entity spawns. Similarly, for engineer buildings, this function can also be called once. The player_builtobject is fired when an engineer building is created (or re-placed after moving, but this shouldn't matter).
+     */
+    public ValidateScriptScope(): boolean;
+
 }
 
 declare class CBaseAnimating extends CBaseEntity {
@@ -1058,3 +1664,650 @@ declare function printl(message: string): void;
 declare function realPrintl(message: string): void;
 
 declare function ShowMessage(message: string): void;
+
+declare type EntityClassName = "_firesmoke"
+    | "_plasma"
+    | "ai_ally_speech_manager"
+    | "ai_battle_line"
+    | "ai_changehintgroup"
+    | "ai_changetarget"
+    | "ai_goal_assault"
+    | "ai_goal_follow"
+    | "ai_goal_lead"
+    | "ai_goal_lead_weapon"
+    | "ai_goal_standoff"
+    | "ai_hint"
+    | "ai_network"
+    | "ai_relationship"
+    | "ai_script_conditions"
+    | "ai_sound"
+    | "ai_speechfilter"
+    | "aiscripted_schedule"
+    | "aitesthull"
+    | "ambient_generic"
+    | "assault_assaultpoint"
+    | "assault_rallypoint"
+    | "bot_action_point"
+    | "bot_controller"
+    | "bot_generator"
+    | "bot_hint_engineer_nest"
+    | "bot_hint_sentrygun"
+    | "bot_hint_sniper_spot"
+    | "bot_hint_teleporter_exit"
+    | "bot_proxy"
+    | "bot_roster"
+    | "color_correction"
+    | "color_correction_volume"
+    | "cycler"
+    | "cycler_actor"
+    | "cycler_flex"
+    | "dispenser_touch_trigger"
+    | "dynamic_prop"
+    | "entity_bird"
+    | "entity_blocker"
+    | "entity_carrier"
+    | "entity_croc"
+    | "entity_medigun_shield"
+    | "entity_revive_marker"
+    | "entity_rocket"
+    | "entity_saucer"
+    | "entity_sign"
+    | "entity_soldier_statue"
+    | "entity_spawn_manager"
+    | "entity_spawn_point"
+    | "entityflame"
+    | "env_beam"
+    | "env_beverage"
+    | "env_blood"
+    | "env_bubbles"
+    | "env_credits"
+    | "env_cubemap"
+    | "env_debughistory"
+    | "env_detail_controller"
+    | "env_dustpuff"
+    | "env_dusttrail"
+    | "env_effectscript"
+    | "env_embers"
+    | "env_entity_dissolver"
+    | "env_entity_igniter"
+    | "env_entity_maker"
+    | "env_explosion"
+    | "env_fade"
+    | "env_fire"
+    | "env_fire_trail"
+    | "env_firesensor"
+    | "env_firesource"
+    | "env_fog_controller"
+    | "env_funnel"
+    | "env_global"
+    | "env_glow"
+    | "env_gunfire"
+    | "env_hudhint"
+    | "env_laser"
+    | "env_laserdot"
+    | "env_lightglow"
+    | "env_message"
+    | "env_microphone"
+    | "env_movieexplosion"
+    | "env_muzzleflash"
+    | "env_particle_performance_monitor"
+    | "env_particle_trail"
+    | "env_particlefire"
+    | "env_particlelight"
+    | "env_particlescript"
+    | "env_particlesmokegrenade"
+    | "env_physexplosion"
+    | "env_physimpact"
+    | "env_physwire"
+    | "env_player_surface_trigger"
+    | "env_projectedtexture"
+    | "env_quadraticbeam"
+    | "env_ragdoll_boogie"
+    | "env_rockettrail"
+    | "env_rotorshooter"
+    | "env_rotorwash_emitter"
+    | "env_screeneffect"
+    | "env_screenoverlay"
+    | "env_shake"
+    | "env_shooter"
+    | "env_smokestack"
+    | "env_smoketrail"
+    | "env_sniperdot"
+    | "env_soundscape"
+    | "env_soundscape_proxy"
+    | "env_soundscape_triggerable"
+    | "env_spark"
+    | "env_splash"
+    | "env_sporeexplosion"
+    | "env_sporetrail"
+    | "env_sprite"
+    | "env_sprite_oriented"
+    | "env_spritetrail"
+    | "env_steam"
+    | "env_steamjet"
+    | "env_sun"
+    | "env_texturetoggle"
+    | "env_tonemap_controller"
+    | "env_tracer"
+    | "env_viewpunch"
+    | "env_wind"
+    | "env_zoom"
+    | "event_queue_saveload_proxy"
+    | "eyeball_boss"
+    | "filter_activator_class"
+    | "filter_activator_mass_greater"
+    | "filter_activator_name"
+    | "filter_activator_tfteam"
+    | "filter_damage_type"
+    | "filter_enemy"
+    | "filter_multi"
+    | "filter_tf_bot_has_tag"
+    | "filter_tf_class"
+    | "filter_tf_condition"
+    | "filter_tf_damaged_by_weapon_in_slot"
+    | "filter_tf_player_can_cap"
+    | "fish"
+    | "funCBaseFlex"
+    | "func_areaportal"
+    | "func_areaportalwindow"
+    | "func_breakable"
+    | "func_breakable_surf"
+    | "func_brush"
+    | "func_button"
+    | "func_capturezone"
+    | "func_changeclass"
+    | "func_clip_vphysics"
+    | "func_conveyor"
+    | "func_croc"
+    | "func_detail"
+    | "func_door"
+    | "func_door_rotating"
+    | "func_dustcloud"
+    | "func_dustmotes"
+    | "func_fish_pool"
+    | "func_flag_alert"
+    | "func_flagdetectionzone"
+    | "func_forcefield"
+    | "func_guntarget"
+    | "func_illusionary"
+    | "func_instance"
+    | "func_instance_parms"
+    | "func_ladderendpoint"
+    | "func_lod"
+    | "func_monitor"
+    | "func_movelinear"
+    | "func_nav_avoid"
+    | "func_nav_avoidance_obstacle"
+    | "func_nav_blocker"
+    | "func_nav_prefer"
+    | "func_nav_prerequisite"
+    | "func_nobuild"
+    | "func_nogrenades"
+    | "func_occluder"
+    | "func_passtime_goal"
+    | "func_passtime_goalie_zone"
+    | "func_passtime_no_ball_zone"
+    | "func_physbox"
+    | "func_platrot"
+    | "func_powerupvolume"
+    | "func_precipitation"
+    | "func_proprrespawnzone"
+    | "func_reflective_glass"
+    | "func_regenerate"
+    | "func_respawnflag"
+    | "func_respawnroom"
+    | "func_respawnroomvisualizer"
+    | "func_rot_button"
+    | "func_rotating"
+    | "func_smokevolume"
+    | "func_suggested_build"
+    | "func_tanktrain"
+    | "func_tfbot_hint"
+    | "func_trackautochange"
+    | "func_trackchange"
+    | "func_tracktrain"
+    | "func_traincontrols"
+    | "func_upgradestation"
+    | "func_useableladder"
+    | "func_vehicleclip"
+    | "func_viscluster"
+    | "func_wall"
+    | "func_wall_toggle"
+    | "func_water_analog"
+    | "game_end"
+    | "game_forcerespawn"
+    | "game_gib_manager"
+    | "game_intro_viewpoint"
+    | "game_player_equip"
+    | "game_player_team"
+    | "game_ragdoll_manager"
+    | "game_round_win"
+    | "game_score"
+    | "game_text"
+    | "game_text_tf"
+    | "game_ui"
+    | "game_weapon_manager"
+    | "game_zone_player"
+    | "ghost"
+    | "gibshooter"
+    | "halloween_fortune_teller"
+    | "halloween_souls_pack"
+    | "halloween_zapper"
+    | "hammer_updateignorelist"
+    | "headless_hatman"
+    | "hightower_teleport_vortex"
+    | "info_camera_link"
+    | "info_constraint_anchor"
+    | "info_hint"
+    | "info_intermission"
+    | "info_ladder_dismount"
+    | "info_landmark"
+    | "info_lighting"
+    | "info_mass_center"
+    | "info_no_dynamic_shadow"
+    | "info_node"
+    | "info_node_air"
+    | "info_node_air_hint"
+    | "info_node_climb"
+    | "info_node_hint"
+    | "info_node_link"
+    | "info_node_link_controller"
+    | "info_npc_spawn_destination"
+    | "info_null"
+    | "info_observer_point"
+    | "info_overlay"
+    | "info_overlay_accessor"
+    | "info_overlay_transition"
+    | "info_particle_system"
+    | "info_passtime_ball_spawn"
+    | "info_player_deathmatch"
+    | "info_player_start"
+    | "info_player_teamspawn"
+    | "info_populator"
+    | "info_powerup_spawn"
+    | "info_projecteddecal"
+    | "info_radial_link_controller"
+    | "info_target"
+    | "info_teleport_destination"
+    | "infodecal"
+    | "instanced_scripted_scene"
+    | "item_ammopack_full"
+    | "item_ammopack_medium"
+    | "item_ammopack_small"
+    | "item_bonuspack"
+    | "item_currencypack_custom"
+    | "item_currencypack_large"
+    | "item_currencypack_medium"
+    | "item_currencypack_small"
+    | "item_healthammokit"
+    | "item_healthkit_full"
+    | "item_healthkit_medium"
+    | "item_healthkit_small"
+    | "item_powerup_crit"
+    | "item_powerup_rune"
+    | "item_powerup_rune_temp"
+    | "item_powerup_uber"
+    | "item_sodacan"
+    | "item_teamflag"
+    | "item_teamflag_return_icon"
+    | "keyframe_rope"
+    | "keyframe_track"
+    | "light"
+    | "light_dynamic"
+    | "light_environment"
+    | "light_spot"
+    | "logic_active_autosave"
+    | "logic_auto"
+    | "logic_autosave"
+    | "logic_branch"
+    | "logic_branch_listener"
+    | "logic_case"
+    | "logic_choreographed_scene"
+    | "logic_collision_pair"
+    | "logic_compare"
+    | "logic_lineto"
+    | "logic_measure_movement"
+    | "logic_multicompare"
+    | "logic_navigation"
+    | "logic_playerproxy"
+    | "logic_proximity"
+    | "logic_relay"
+    | "logic_scene_list_manager"
+    | "logic_timer"
+    | "mapobj_cart_dispenser"
+    | "material_modify_control"
+    | "math_colorblend"
+    | "math_counter"
+    | "math_remap"
+    | "merasmus"
+    | "merasmus_dancer"
+    | "momentary_rot_button"
+    | "monster_furniture"
+    | "monster_generic"
+    | "move_keyframed"
+    | "move_rope"
+    | "move_track"
+    | "npc_concussiongrenade"
+    | "npc_contactgrenade"
+    | "npc_furniture"
+    | "npc_handgrenade"
+    | "npc_maker"
+    | "npc_puppet"
+    | "npc_template_maker"
+    | "npc_vehicledriver"
+    | "obj_attachment_sapper"
+    | "obj_dispenser"
+    | "obj_sentrygun"
+    | "obj_teleporter"
+    | "passtime_ball"
+    | "passtime_logic"
+    | "path_corner"
+    | "path_corner_crash"
+    | "path_track"
+    | "pd_dispenser"
+    | "phys_ballsocket"
+    | "phys_constraint"
+    | "phys_constraintsystem"
+    | "phys_convert"
+    | "phys_hinge"
+    | "phys_keepupright"
+    | "phys_lengthconstraint"
+    | "phys_magnet"
+    | "phys_motor"
+    | "phys_pulleyconstraint"
+    | "phys_ragdollconstraint"
+    | "phys_ragdollmagnet"
+    | "phys_slideconstraint"
+    | "phys_spring"
+    | "phys_thruster"
+    | "phys_torque"
+    | "physics_cannister"
+    | "player"
+    | "player_loadsaved"
+    | "player_manager"
+    | "player_speedmod"
+    | "player_weaponstrip"
+    | "point_anglesensor"
+    | "point_angularvelocitysensor"
+    | "point_bonusmaps_accessor"
+    | "point_camera"
+    | "point_clientcommand"
+    | "point_commentary_node"
+    | "point_devshot_camera"
+    | "point_enable_motion_fixup"
+    | "point_gamestats_counter"
+    | "point_hurt"
+    | "point_intermission"
+    | "point_message"
+    | "point_playermoveconstraint"
+    | "point_populator_interface"
+    | "point_posecontroller"
+    | "point_proximity_sensor"
+    | "point_servercommand"
+    | "point_spotlight"
+    | "point_teleport"
+    | "point_template"
+    | "point_tesla"
+    | "point_velocitysensor"
+    | "point_viewcontrol"
+    | "populator_internal_spawn_point"
+    | "prop_detail"
+    | "prop_door_rotating"
+    | "prop_dynamic"
+    | "prop_dynamic_ornament"
+    | "prop_dynamic_override"
+    | "prop_physics"
+    | "prop_physics_multiplayer"
+    | "prop_physics_override"
+    | "prop_ragdoll"
+    | "prop_soccer_ball"
+    | "prop_static"
+    | "prop_vehicle"
+    | "prop_vehicle_driveable"
+    | "rd_robot_dispenser"
+    | "scene_manager"
+    | "script_intro"
+    | "scripted_scene"
+    | "scripted_sentence"
+    | "scripted_sequence"
+    | "scripted_target"
+    | "shadow_control"
+    | "simple_bot"
+    | "simple_physics_brush"
+    | "simple_physics_prop"
+    | "sky_camera"
+    | "soundent"
+    | "tank_boss"
+    | "tank_destruction"
+    | "tanktrain_ai"
+    | "tanktrain_aitarget"
+    | "team_control_point"
+    | "team_control_point_master"
+    | "team_control_point_round"
+    | "team_round_timer"
+    | "team_train_watcher"
+    | "test_traceline"
+    | "tf_ammo_pack"
+    | "tf_base_minigame"
+    | "tf_bonus_duck_pickup"
+    | "tf_bot"
+    | "tf_dropped_weapon"
+    | "tf_flame"
+    | "tf_flame_rocket"
+    | "tf_gamerules"
+    | "tf_generic_bomb"
+    | "tf_glow"
+    | "tf_halloween_gift_pickup"
+    | "tf_halloween_gift_spawn_location"
+    | "tf_halloween_minigame"
+    | "tf_halloween_minigame_falling_platforms"
+    | "tf_halloween_pickup"
+    | "tf_logic_arena"
+    | "tf_logic_bonusround"
+    | "tf_logic_boss_battle"
+    | "tf_logic_competitive"
+    | "tf_logic_cp_timer"
+    | "tf_logic_holiday"
+    | "tf_logic_hybrid_ctf_cp"
+    | "tf_logic_koth"
+    | "tf_logic_mann_vs_machine"
+    | "tf_logic_medieval"
+    | "tf_logic_minigames"
+    | "tf_logic_multiple_escort"
+    | "tf_logic_on_holiday"
+    | "tf_logic_player_destruction"
+    | "tf_logic_raid"
+    | "tf_logic_robot_destruction"
+    | "tf_logic_training_mode"
+    | "tf_mann_vs_machine_stats"
+    | "tf_merasmus_trick_or_treat_prop"
+    | "tf_objective_resource"
+    | "tf_pda_expansion_dispenser"
+    | "tf_pda_expansion_teleporter"
+    | "tf_player_manager"
+    | "tf_point_nav_interface"
+    | "tf_point_weapon_mimic"
+    | "tf_populator"
+    | "tf_powerup_bottle"
+    | "tf_projectile_arrow"
+    | "tf_projectile_ball_ornament"
+    | "tf_projectile_balloffire"
+    | "tf_projectile_cleaver"
+    | "tf_projectile_energy_ball"
+    | "tf_projectile_energy_ring"
+    | "tf_projectile_flare"
+    | "tf_projectile_grapplinghook"
+    | "tf_projectile_healing_bolt"
+    | "tf_projectile_jar"
+    | "tf_projectile_jar_gas"
+    | "tf_projectile_jar_milk"
+    | "tf_projectile_lightningorb"
+    | "tf_projectile_pipe"
+    | "tf_projectile_pipe_remote"
+    | "tf_projectile_rocket"
+    | "tf_projectile_sentryrocket"
+    | "tf_projectile_spellbats"
+    | "tf_projectile_spellfireball"
+    | "tf_projectile_spellkartbats"
+    | "tf_projectile_spellkartorb"
+    | "tf_projectile_spellmeteorshower"
+    | "tf_projectile_spellmirv"
+    | "tf_projectile_spellpumpkin"
+    | "tf_projectile_spellspawnboss"
+    | "tf_projectile_spellspawnhorde"
+    | "tf_projectile_spellspawnzombie"
+    | "tf_projectile_spelltransposeteleport"
+    | "tf_projectile_stun_ball"
+    | "tf_projectile_syringe"
+    | "tf_projectile_throwable"
+    | "tf_projectile_throwable_breadmonster"
+    | "tf_projectile_throwable_brick"
+    | "tf_projectile_throwable_repel"
+    | "tf_pumpkin_bomb"
+    | "tf_ragdoll"
+    | "tf_robot_destruction_robot"
+    | "tf_robot_destruction_robot_spawn"
+    | "tf_robot_destruction_spawn_group"
+    | "tf_spawner"
+    | "tf_spell_meteorshowerspawner"
+    | "tf_spell_pickup"
+    | "tf_target_dummy"
+    | "tf_taunt_prop"
+    | "tf_team"
+    | "tf_teleport_location"
+    | "tf_template_stun_drone"
+    | "tf_viewmodel"
+    | "tf_weapon_base"
+    | "tf_weapon_bat"
+    | "tf_weapon_bat_fish"
+    | "tf_weapon_bat_giftwrap"
+    | "tf_weapon_bat_wood"
+    | "tf_weapon_bonesaw"
+    | "tf_weapon_bottle"
+    | "tf_weapon_breakable_sign"
+    | "tf_weapon_buff_item"
+    | "tf_weapon_builder"
+    | "tf_weapon_cannon"
+    | "tf_weapon_charged_smg"
+    | "tf_weapon_cleaver"
+    | "tf_weapon_club"
+    | "tf_weapon_compound_bow"
+    | "tf_weapon_crossbow"
+    | "tf_weapon_drg_pomson"
+    | "tf_weapon_fireaxe"
+    | "tf_weapon_fists"
+    | "tf_weapon_flamethrower"
+    | "tf_weapon_flaregun"
+    | "tf_weapon_flaregun_revenge"
+    | "tf_weapon_grapplinghook"
+    | "tf_weapon_grenadelauncher"
+    | "tf_weapon_handgun_scout_primary"
+    | "tf_weapon_handgun_scout_secondary"
+    | "tf_weapon_invis"
+    | "tf_weapon_jar"
+    | "tf_weapon_jar_gas"
+    | "tf_weapon_jar_milk"
+    | "tf_weapon_katana"
+    | "tf_weapon_knife"
+    | "tf_weapon_laser_pointer"
+    | "tf_weapon_lunchbox"
+    | "tf_weapon_lunchbox_drink"
+    | "tf_weapon_mechanical_arm"
+    | "tf_weapon_medigun"
+    | "tf_weapon_minigun"
+    | "tf_weapon_parachute"
+    | "tf_weapon_parachute_primary"
+    | "tf_weapon_parachute_secondary"
+    | "tf_weapon_particle_cannon"
+    | "tf_weapon_passtime_gun"
+    | "tf_weapon_pda_engineer_build"
+    | "tf_weapon_pda_engineer_destroy"
+    | "tf_weapon_pda_spy"
+    | "tf_weapon_pep_brawler_blaster"
+    | "tf_weapon_pipebomblauncher"
+    | "tf_weapon_pistol"
+    | "tf_weapon_pistol_scout"
+    | "tf_weapon_raygun"
+    | "tf_weapon_revolver"
+    | "tf_weapon_robot_arm"
+    | "tf_weapon_rocketlauncher"
+    | "tf_weapon_rocketlauncher_airstrike"
+    | "tf_weapon_rocketlauncher_directhit"
+    | "tf_weapon_rocketlauncher_fireball"
+    | "tf_weapon_rocketpack"
+    | "tf_weapon_sapper"
+    | "tf_weapon_scattergun"
+    | "tf_weapon_sentry_revenge"
+    | "tf_weapon_shotgun_building_rescue"
+    | "tf_weapon_shotgun_hwg"
+    | "tf_weapon_shotgun_primary"
+    | "tf_weapon_shotgun_pyro"
+    | "tf_weapon_shotgun_soldier"
+    | "tf_weapon_shovel"
+    | "tf_weapon_slap"
+    | "tf_weapon_smg"
+    | "tf_weapon_sniperrifle"
+    | "tf_weapon_sniperrifle_classic"
+    | "tf_weapon_sniperrifle_decap"
+    | "tf_weapon_soda_popper"
+    | "tf_weapon_spellbook"
+    | "tf_weapon_stickbomb"
+    | "tf_weapon_sword"
+    | "tf_weapon_syringegun_medic"
+    | "tf_weapon_wrench"
+    | "tf_weaponbase_grenade_proj"
+    | "tf_weaponbase_melee"
+    | "tf_weaponbase_merasmus_grenade"
+    | "tf_wearable"
+    | "tf_wearable_campaign_item"
+    | "tf_wearable_demoshield"
+    | "tf_wearable_levelable_item"
+    | "tf_wearable_razorback"
+    | "tf_wearable_robot_arm"
+    | "tf_wearable_vm"
+    | "tf_zombie"
+    | "tf_zombie_spawner"
+    | "training_annotation"
+    | "training_prop_dynamic"
+    | "trigger_add_or_remove_tf_player_attributes"
+    | "trigger_add_tf_player_condition"
+    | "trigger_apply_impulse"
+    | "trigger_autosave"
+    | "trigger_bot_tag"
+    | "trigger_capture_area"
+    | "trigger_catapult"
+    | "trigger_changelevel"
+    | "trigger_gravity"
+    | "trigger_hurt"
+    | "trigger_ignite"
+    | "trigger_ignite_arrows"
+    | "trigger_impact"
+    | "trigger_look"
+    | "trigger_multiple"
+    | "trigger_once"
+    | "trigger_particle"
+    | "trigger_passtime_ball"
+    | "trigger_player_respawn_override"
+    | "trigger_playermovement"
+    | "trigger_proximity"
+    | "trigger_push"
+    | "trigger_rd_vault_trigger"
+    | "trigger_remove"
+    | "trigger_remove_tf_player_condition"
+    | "trigger_serverragdoll"
+    | "trigger_soundscape"
+    | "trigger_stun"
+    | "trigger_teleport"
+    | "trigger_timer_door"
+    | "trigger_transition"
+    | "trigger_wind"
+    | "vgui_screen"
+    | "vgui_screen_team"
+    | "vgui_slideshow_display"
+    | "vote_controller"
+    | "water_lod_control"
+    | "wearable_item"
+    | "wheel_of_doom"
+    | "wheel_of_doom_spiral"
+    | "worldspawn"
+    | string;

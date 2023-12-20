@@ -1,7 +1,8 @@
-const array = [9, 8, 7, 6, 5, 4, 3];
+function DeleteAllPropDynamic() {
+    let ent;
+    while (ent = Entities.FindByClassname(ent, "item_ammopack_full")) {
+        ent.Kill();
+    }
+}
 
-for (const v of array)
-    printl(v);
-
-for (const i in array)
-    printl(i);
+DeleteAllPropDynamic();
