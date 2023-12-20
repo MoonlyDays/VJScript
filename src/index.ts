@@ -2,8 +2,8 @@
 
 import * as fs from "fs";
 import * as esprima from "esprima";
-import {toSquirrel} from "./squirrel";
 import * as path from "path";
+import {JSToSquirrel} from "./JSToSquirrel";
 
 // Make sure the file we want to transpile actually exists.
 const scriptPath = process.argv[2];
@@ -17,7 +17,12 @@ const content = fs.readFileSync(scriptPath, 'utf8');
 
 // Create a tree representation of the given program.
 const program = esprima.parseModule(content);
-const squirrelCode = toSquirrel(program);
+const treePath = path.format({...path.parse(scriptPath), base: '', ext: '.lst'});
+fs.writeFileSync(treePath, JSON.stringify(program, null, 2));
+
+const transpiler = new JSToSquirrel();
+const squirrelCode = transpiler.transpile(program);
+console.log(squirrelCode);
 
 const nutPath = path.format({...path.parse(scriptPath), base: '', ext: '.nut'});
 fs.writeFileSync(nutPath, squirrelCode);
