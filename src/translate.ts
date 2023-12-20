@@ -34,7 +34,7 @@ export const toSquirrel = (scriptPath: string, node: Program) => {
     return code + translate(node);
 }
 
-let currentScopeDepth = -1;
+let currentScopeDepth = 0;
 const nodeTranslators = {
 
     Identifier: function* (node: Identifier) {
@@ -67,15 +67,13 @@ const nodeTranslators = {
         }
     },
 
-    BlockStatement: function* (node: BlockStatement) {
-        yield "{\n";
-        yield* nodeTranslators["Program"](node);
-        yield "}\n";
-    },
+    BlockStatement: function* (node: BlockStatement, addBrackets = true) {
 
-    Program: function* (node: Program) {
+        if (addBrackets) {
+            yield "{\n";
+            currentScopeDepth++;
+        }
 
-        currentScopeDepth++;
         for (const element of node.body) {
             let code = translate(element);
 
@@ -87,7 +85,15 @@ const nodeTranslators = {
             yield '\n';
         }
 
-        currentScopeDepth--;
+        if (addBrackets)
+        {
+            currentScopeDepth--;
+            yield "}\n";
+        }
+    },
+
+    Program: function (node: Program) {
+        return this.BlockStatement(node, false);
     },
 
     ExpressionStatement: function* (node: ExpressionStatement) {
