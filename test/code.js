@@ -1,15 +1,7 @@
-/**
- * Variable Assignment Test
- */
+const array = [9, 8, 7, 6, 5, 4, 3];
 
-var var_variable = 1;
-let let_variable = 2;
-const constant = 3;
+for (const v of array)
+    printl(v);
 
-let int_number = 10;
-let float_number = 10.5;
-
-let double_quoted_string = "test";
-let single_quoted_string = 'test';
-let escaped_string = "test \"test\"";
-let interpolated_string = `value = ${2}`;
+for (const i in array)
+    printl(i);
