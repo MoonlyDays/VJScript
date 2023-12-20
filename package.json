@@ -24,6 +24,7 @@
   "homepage": "https://github.com/MoonlyDays/VJScript#readme",
   "devDependencies": {
     "@types/esprima": "^4.0.6",
+    "@types/estree": "^1.0.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
