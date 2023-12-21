@@ -1,38 +1,17 @@
 import * as path from "path";
 import {Program} from "esprima";
 import {
-    ArrayExpression,
-    AssignmentExpression,
-    BaseNode,
-    BinaryExpression,
-    BlockStatement, BreakStatement,
+    ArrayExpression, AssignmentExpression, BaseNode,
+    BinaryExpression, BlockStatement, BreakStatement,
     CallExpression, ConditionalExpression, ContinueStatement,
-    ExpressionStatement, ForInStatement, ForOfStatement, ForStatement, FunctionDeclaration, FunctionExpression,
-    Identifier,
-    IfStatement,
-    ImportDeclaration,
-    Literal, LogicalExpression,
-    MemberExpression,
+    ExpressionStatement, ForInStatement, ForOfStatement,
+    ForStatement, FunctionDeclaration, FunctionExpression,
+    Identifier, IfStatement, ImportDeclaration,
+    Literal, LogicalExpression, MemberExpression,
     NewExpression, ObjectExpression, Property,
-    TemplateLiteral, ThisExpression,
-    UnaryExpression, UpdateExpression,
-    VariableDeclaration, WhileStatement
+    TemplateLiteral, ThisExpression, UnaryExpression,
+    UpdateExpression, VariableDeclaration, WhileStatement
 } from "estree";
-
-export const toSquirrel = (scriptPath: string, node: Program) => {
-
-    let code =
-        '///------------------------------------------------------------\n' +
-        '/// This code was automatically generated using VJScript. nm\n' +
-        '/// VJScript is an automatic code translation tool from JavaScript\n' +
-        '/// to Squirrel.\n' +
-        '/// https://github.com/MoonlyDays/VJScript\n' +
-        '///------------------------------------------------------------\n' +
-        '/// Source Script: ' + path.basename(scriptPath) + '\n' +
-        '///------------------------------------------------------------\n\n';
-
-    return code + translate(node);
-}
 
 let currentScopeDepth = 0;
 const nodeTranslators = {
@@ -46,9 +25,9 @@ const nodeTranslators = {
     },
 
     Property: function* (node: Property) {
-        yield translate(node.key);
+        yield squirrel(node.key);
         yield " = ";
-        yield translate(node.value);
+        yield squirrel(node.value);
     },
 
     TemplateLiteral: function* (node: TemplateLiteral) {
@@ -68,7 +47,7 @@ const nodeTranslators = {
                     yield " + ";
 
                 const expr = node.expressions[i];
-                yield translate(expr);
+                yield squirrel(expr);
             }
         }
     },
@@ -81,7 +60,7 @@ const nodeTranslators = {
         }
 
         for (const element of node.body) {
-            let code = translate(element);
+            let code = squirrel(element);
 
             if (currentScopeDepth > 0) {
                 code = code.split("\n").map(x => "  " + x).join("\n");
@@ -107,47 +86,47 @@ const nodeTranslators = {
             return;
         }
 
-        yield translate(node.expression);
+        yield squirrel(node.expression);
     },
 
     IfStatement: function* (node: IfStatement) {
 
         yield "if (";
-        yield translate(node.test);
+        yield squirrel(node.test);
         yield ")\n";
-        yield translate(node.consequent);
+        yield squirrel(node.consequent);
 
         if (node.alternate) {
             yield "else\n";
-            yield translate(node.alternate);
+            yield squirrel(node.alternate);
         }
     },
 
     WhileStatement: function* (node: WhileStatement) {
         yield "while ("
-        yield translate(node.test);
+        yield squirrel(node.test);
         yield ") ";
-        yield translate(node.body);
+        yield squirrel(node.body);
     },
 
     ForStatement: function* (node: ForStatement) {
         yield "for(";
         if (node.init) {
-            yield translate(node.init);
+            yield squirrel(node.init);
         }
 
         yield ";";
         if (node.test) {
-            yield translate(node.test);
+            yield squirrel(node.test);
         }
 
         yield ";";
         if (node.update) {
-            yield translate(node.update);
+            yield squirrel(node.update);
         }
 
         yield ")\n";
-        yield translate(node.body);
+        yield squirrel(node.body);
     },
 
     ForOfStatement: function* (node: ForOfStatement): Generator<string, void, unknown> {
@@ -188,10 +167,10 @@ const nodeTranslators = {
             }
 
             yield " in ";
-            yield translate(node.right);
+            yield squirrel(node.right);
             yield ")\n"
 
-            yield translate(node.body);
+            yield squirrel(node.body);
             return;
 
         }
@@ -243,18 +222,18 @@ const nodeTranslators = {
             const decl = node.declarations[i];
             // yield nutKind;
             yield "local ";
-            yield translate(decl.id);
+            yield squirrel(decl.id);
 
             if (decl.init) {
                 yield ' = ';
-                yield translate(decl.init);
+                yield squirrel(decl.init);
             }
         }
     },
 
     AssignmentExpression: function* (node: AssignmentExpression) {
 
-        yield translate(node.left);
+        yield squirrel(node.left);
 
         if (node.left.type == "MemberExpression") {
             yield " <- ";
@@ -262,7 +241,7 @@ const nodeTranslators = {
             yield " = ";
         }
 
-        yield translate(node.right);
+        yield squirrel(node.right);
     },
 
     ArrayExpression: function* (node: ArrayExpression) {
@@ -277,7 +256,7 @@ const nodeTranslators = {
             if (i > 0)
                 yield ", ";
 
-            yield translate(el);
+            yield squirrel(el);
         }
         yield "]";
     },
@@ -287,7 +266,7 @@ const nodeTranslators = {
         for (let i = 0; i < node.properties.length; i++) {
             const prop = node.properties[i];
             yield "  ";
-            yield translate(prop);
+            yield squirrel(prop);
             yield ",\n";
         }
         yield "}";
@@ -301,11 +280,11 @@ const nodeTranslators = {
         }
 
         yield "(";
-        yield translate(node.left);
+        yield squirrel(node.left);
         yield " ";
         yield node.operator;
         yield " ";
-        yield translate(node.right);
+        yield squirrel(node.right);
         yield ")";
     },
 
@@ -313,26 +292,26 @@ const nodeTranslators = {
         yield "function ";
 
         if (node.id) {
-            yield translate(node.id);
+            yield squirrel(node.id);
         }
 
         yield "(";
-        yield node.params.map(x => translate(x)).join(", ");
+        yield node.params.map(x => squirrel(x)).join(", ");
         yield ") ";
 
-        yield translate(node.body);
+        yield squirrel(node.body);
     },
 
     UnaryExpression: function* (node: UnaryExpression) {
         yield node.operator;
-        yield translate(node.argument);
+        yield squirrel(node.argument);
     },
 
     UpdateExpression: function* (node: UpdateExpression) {
         if (node.prefix)
             yield node.operator;
 
-        yield translate(node.argument);
+        yield squirrel(node.argument);
 
         if (!node.prefix)
             yield node.operator;
@@ -340,21 +319,21 @@ const nodeTranslators = {
 
     ConditionalExpression: function* (node: ConditionalExpression) {
         yield "(";
-        yield translate(node.test);
+        yield squirrel(node.test);
         yield " ? ";
-        yield translate(node.consequent);
+        yield squirrel(node.consequent);
         yield " : ";
-        yield translate(node.alternate);
+        yield squirrel(node.alternate);
         yield ")";
     },
 
     LogicalExpression: function* (node: LogicalExpression) {
         yield "(";
-        yield translate(node.left);
+        yield squirrel(node.left);
         yield " ";
         yield node.operator;
         yield " ";
-        yield translate(node.right);
+        yield squirrel(node.right);
         yield ")";
     },
 
@@ -367,7 +346,7 @@ const nodeTranslators = {
     },
 
     CallExpression: function* (node: CallExpression) {
-        yield translate(node.callee);
+        yield squirrel(node.callee);
         yield "(";
         for (let i = 0; i < node.arguments.length; i++) {
             const arg = node.arguments[i];
@@ -375,23 +354,23 @@ const nodeTranslators = {
                 yield ", ";
             }
 
-            yield translate(arg);
+            yield squirrel(arg);
         }
         yield ")";
     },
 
     MemberExpression: function* (node: MemberExpression) {
-        yield translate(node.object);
 
+        yield squirrel(node.object);
         if (node.computed) {
             yield "[";
-            yield translate(node.property);
+            yield squirrel(node.property);
             yield "]";
             return;
         }
 
         yield ".";
-        yield translate(node.property);
+        yield squirrel(node.property);
     },
 
     ImportDeclaration: function* (node: ImportDeclaration) {
@@ -402,9 +381,23 @@ const nodeTranslators = {
     }
 };
 
-function translate(node: BaseNode): string {
+export const toSquirrel = (scriptPath: string, node: Program) => {
 
-    console.log(node.type);
+    let code =
+        '///----------------------------------------------------------------/\n' +
+        '/// This code was automatically generated using VJScript.          /\n' +
+        '/// VJScript is an automatic code translation tool from JavaScript /\n' +
+        '/// to Squirrel.                                                   /\n' +
+        '/// https://github.com/MoonlyDays/VJScript                         /\n' +
+        '///----------------------------------------------------------------/\n' +
+        '/// Source Script: ' + path.basename(scriptPath) + '\n' +
+        '///----------------------------------------------------------------/\n\n';
+
+    return code + squirrel(node);
+}
+
+function squirrel(node: BaseNode): string {
+
     const fn = nodeTranslators[node.type];
     if (!fn) {
         console.log(node);

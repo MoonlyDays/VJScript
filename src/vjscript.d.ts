@@ -3,7 +3,6 @@ type NutTableValue = NutTablePrimitive | NutTablePrimitive[] | NutTable;
 type NutTable = { [key: string]: NutTableValue };
 type ScriptScope = { [key: string]: any }
 
-
 declare class Vector {
     x: number;
     y: number;
