@@ -3,114 +3,126 @@ type NutTableValue = NutTablePrimitive | NutTablePrimitive[] | NutTable;
 type NutTable = { [key: string]: NutTableValue };
 type ScriptScope = { [key: string]: any }
 
+//------------------------------------------------------------------------------------
+// Globals
+//------------------------------------------------------------------------------------
+/**
+ * Sets a function in the entity's script to rerun by itself constantly. Pass null as the function name to remove a think function. The default think interval is 0.1s, unless overridden by returning a different time interval in seconds in the think function
+ * @tip Return -1 to think every tick. Do not return 0, this will give inconsistent intervals.
+ * @note: If trying to clear a think function while inside a think function, this function alone will not work as the think function is restored on the entity after it's finished. NetProps.SetPropString(self, "m_iszScriptThinkFunction", ""); must be used to fully clear the think function.
+ * @warning: This can apply to events if they are chained from a think function, for example killing a player with TakeDamage and then trying to clear the think function in player_death event. The think function will not be cleared unless the line above is also added.
+ * @note Adding a think function will clear the EFL_NO_THINK_FUNCTION eflag, but the eflag can be added afterwards and the script think will still work.
+ * @bug The think function name stored in the entity is not reset if null is passed as the function name. However this is harmless, and it will only show a warning in console.
+ * @param ent
+ * @param funcName
+ */
+declare function AddThinkToEnt(ent: CBaseEntity, funcName: string): void;
+
+declare function AddToScriptHelp(): unknown;
+
+declare function AllowThirdPersonCamera(): boolean;
+
+declare function ArePlayersInHell(): boolean;
+
+/**
+ * Test value and if not true, throws exception, optionally with message.
+ * @param value
+ * @param optionalMessage
+ */
+declare function Assert(value: boolean, optionalMessage?: string): void;
+
+/**
+ * Empties the tables of game event callback functions.
+ */
+declare function ClearGameEventCallbacks(): void;
+
+/**
+ * Create a prop
+ * @param classname
+ * @param origin
+ * @param model_name
+ * @param activity
+ */
+declare function CreateProp(classname: string, origin: Vector, model_name: string, activity: number): CBaseEntity;
+
+/**
+ * Create a scene entity to play the specified scene.
+ * @param scene
+ */
+declare function CreateSceneEntity(scene: string): CBaseEntity;
+
+/**
+ * The current level of the developer console variable.
+ */
+declare function developer(): number;
+
 declare function SpawnEntityFromTable(name: EntityClassName, table: NutTable): CBaseEntity | null;
 
 /**
- * An interface to find and iterate over the script handles for the entities in play. To iterate over a set of entities, pass null to the previous parameter in the appropriate method to start an iteration. A reference to a previously-found entity can be used instead to continue a search.
+ * Dispatches a one-off particle system
+ * @bug The angles parameter is incorrectly defined as a Vector type rather than QAngle.
+ * @bug This does not precache the particle! As a result, custom particles may show as a burst of red Xs instead. To precache a particle, use the following function:
+ * ```
+ * function PrecacheParticle(name)
+ * {
+ *     PrecacheEntityFromTable({ classname: "info_particle_system", effect_name: name })
+ * }
+ * ```
+ * @bug To spawn particles that require to be tied to an entity, or require following a specific attachment, use a trigger_particle entity. Example:
+ * ```
+ * local entity = GetListenServerHost();
+ * local particle_name = entity.GetTeam() == 2 ? "spy_start_disguise_red" : "spy_start_disguise_blue";
+ * local particle = SpawnEntityFromTable("trigger_particle",
+ * {
+ *     particle_name = particle_name,
+ *     attachment_type = 1, // PATTACH_ABSORIGIN_FOLLOW,
+ *     spawnflags = 64 // allow everything
+ * });
+ * EntFireByHandle(particle, "StartTouch", "!activator", -1, entity, entity);
+ * EntFireByHandle(particle, "Kill", "", -1, null, null);
+ * ```
+ * @note The effect will only appear for players that were in the PVS of the origin, at the time of dispatch. Use info_particle_system if everyone must see it.
+ * @param name
+ * @param origin
+ * @param angles
+ * @constructor
  */
-
-declare class CEntities {
-    /**
-     * Creates an entity by classname.
-     * @param classname
-     */
-    public CreateByClassname(classname: EntityClassName): CBaseEntity;
-
-    /**
-     * Dispatches spawn of an entity! Use this on entities created via CreateByClassname to actually spawn them into the world.
-     * @note Calling this on players will cause them to respawn.
-     * @param entity
-     */
-    public DispatchSpawn(entity: CBaseEntity): void;
-
-    /**
-     * Find entities by the string of their classname keyvalue. Pass 'null' value to start an iteration, or reference to a previously found entity to continue a search.
-     * @note The classname keyvalue of an entity can be manipulated and does not necessarily reflect its code class. There might be entities that have a different classname than the one they are created with. For example, you can spawn a "prop_dynamic" then change its classname to "my_prop", and it will retain the functionality of its code class while also not showing up when searching for "prop_dynamic".
-     * @param entity
-     * @param classname
-     */
-    public FindByClassname(entity: CBaseEntity | null, classname: EntityClassName): CBaseEntity | null;
-
-    /**
-     * Find entities by classname nearest to a point within a radius.
-     * @param classname
-     * @param center
-     * @param radius
-     */
-    public FindByClassnameNearest(classname: EntityClassName, center: Vector, radius: number): CBaseEntity | null;
-
-    /**
-     * Find entities by classname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
-     * @param previous
-     * @param classname
-     * @param center
-     * @param radius
-     */
-    public FindByClassnameWithin(previous: CBaseEntity | null, classname: EntityClassName, center: Vector, radius: number): CBaseEntity | null;
-
-    /**
-     * Find entities by the string of their model keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
-     * @param previous
-     * @param modelname
-     */
-    public FindByModel(previous: CBaseEntity | null, modelname: string): CBaseEntity | null;
-
-    /**
-     * Find entities by the string of their targetname keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
-     * @param previous
-     * @param targetname
-     */
-    public FindByName(previous: CBaseEntity | null, targetname: string): CBaseEntity | null;
-
-    /**
-     * Find entities by targetname nearest to a point within a radius.
-     * @param targetname
-     * @param center
-     * @param radius
-     */
-    public FindByNameNearest(targetname: string, center: Vector, radius: number): CBaseEntity | null;
-
-    /**
-     * Find entities by targetname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
-     * @param previous
-     * @param targetname
-     * @param center
-     * @param radius
-     */
-    public FindByNameWithin(previous: CBaseEntity | null, targetname: string, center: Vector, radius: number): CBaseEntity | null;
-
-    /**
-     * Find entities by the string of their target keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
-     * @param previous
-     * @param target
-     */
-    public FindByTarget(previous: CBaseEntity | null, target: string): CBaseEntity | null;
-
-    /**
-     * Find entities within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
-     * @param previous
-     * @param center
-     * @param radius
-     */
-    public FindInSphere(previous: CBaseEntity | null, center: Vector, radius: number): CBaseEntity | null
-
-    /**
-     * Begin an iteration over the list of entities
-     */
-    public First(): CBaseEntity | null;
-
-    /**
-     * At the given reference of a previously-found entity, returns the next one after it in the list.
-     * @param previous
-     */
-    public Next(previous: CBaseEntity): CBaseEntity | null;
-}
+declare function DispatchParticleEffect(name: string, origin: Vector, angles: Vector): void;
 
 /**
- * Provides access to currently spawned entities
+ * Generate an entity I/O event. The caller and activator argument takes a CBaseEntity script handle, and entities assigned can receive inputs with target set to !self, or !activator / !caller.
+ * @tip Use a -1 delay to consistently fire it at the end of the frame. 0 delay might bring inconsistent timing.
+ * @note Does not work if the target string is point_servercommand.
+ * @param target
+ * @param action
+ * @param value
+ * @param delay
+ * @param activator
+ * @param caller
+ * @constructor
  */
-declare const Entities: CEntities;
+declare function DoEntFire(target: string, action: string, value: string, delay: number, activator: CBaseEntity, caller: CBaseEntity): void;
 
+/**
+ * Execute a script and put all its content for the argument passed to thescopeparameter. The file must have the .nut extension.
+ * @warning Do not put uppercase letters in the path, doing so will cause Linux to fail loading the script from loose directories.
+ * @param file
+ * @param scope
+ * @constructor
+ */
+declare function DoIncludeScript(file: string, scope?: NutTable): void;
+
+/**
+ * Wrapper for DoIncludeScript.
+ * @param file
+ * @param scope
+ * @constructor
+ */
+declare function IncludeScript(file: string, scope?: NutTable): void;
+
+//------------------------------------------------------------------------------------
+// Constants
+//------------------------------------------------------------------------------------
 declare abstract class Constants {
     public static readonly EBotType: {
         readonly TF_BOT_TYPE: 1337;
@@ -973,6 +985,115 @@ declare abstract class Constants {
         readonly TF_NAV_PERSISTENT_ATTRIBUTES: 1988098048;
     }
 }
+
+//------------------------------------------------------------------------------------
+// CEntities
+//------------------------------------------------------------------------------------
+/**
+ * An interface to find and iterate over the script handles for the entities in play. To iterate over a set of entities, pass null to the previous parameter in the appropriate method to start an iteration. A reference to a previously-found entity can be used instead to continue a search.
+ */
+declare class CEntities {
+    /**
+     * Creates an entity by classname.
+     * @param classname
+     */
+    public CreateByClassname(classname: EntityClassName): CBaseEntity;
+
+    /**
+     * Dispatches spawn of an entity! Use this on entities created via CreateByClassname to actually spawn them into the world.
+     * @note Calling this on players will cause them to respawn.
+     * @param entity
+     */
+    public DispatchSpawn(entity: CBaseEntity): void;
+
+    /**
+     * Find entities by the string of their classname keyvalue. Pass 'null' value to start an iteration, or reference to a previously found entity to continue a search.
+     * @note The classname keyvalue of an entity can be manipulated and does not necessarily reflect its code class. There might be entities that have a different classname than the one they are created with. For example, you can spawn a "prop_dynamic" then change its classname to "my_prop", and it will retain the functionality of its code class while also not showing up when searching for "prop_dynamic".
+     * @param entity
+     * @param classname
+     */
+    public FindByClassname(entity: CBaseEntity | null, classname: EntityClassName): CBaseEntity | null;
+
+    /**
+     * Find entities by classname nearest to a point within a radius.
+     * @param classname
+     * @param center
+     * @param radius
+     */
+    public FindByClassnameNearest(classname: EntityClassName, center: Vector, radius: number): CBaseEntity | null;
+
+    /**
+     * Find entities by classname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * @param previous
+     * @param classname
+     * @param center
+     * @param radius
+     */
+    public FindByClassnameWithin(previous: CBaseEntity | null, classname: EntityClassName, center: Vector, radius: number): CBaseEntity | null;
+
+    /**
+     * Find entities by the string of their model keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * @param previous
+     * @param modelname
+     */
+    public FindByModel(previous: CBaseEntity | null, modelname: string): CBaseEntity | null;
+
+    /**
+     * Find entities by the string of their targetname keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * @param previous
+     * @param targetname
+     */
+    public FindByName(previous: CBaseEntity | null, targetname: string): CBaseEntity | null;
+
+    /**
+     * Find entities by targetname nearest to a point within a radius.
+     * @param targetname
+     * @param center
+     * @param radius
+     */
+    public FindByNameNearest(targetname: string, center: Vector, radius: number): CBaseEntity | null;
+
+    /**
+     * Find entities by targetname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * @param previous
+     * @param targetname
+     * @param center
+     * @param radius
+     */
+    public FindByNameWithin(previous: CBaseEntity | null, targetname: string, center: Vector, radius: number): CBaseEntity | null;
+
+    /**
+     * Find entities by the string of their target keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * @param previous
+     * @param target
+     */
+    public FindByTarget(previous: CBaseEntity | null, target: string): CBaseEntity | null;
+
+    /**
+     * Find entities within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * @param previous
+     * @param center
+     * @param radius
+     */
+    public FindInSphere(previous: CBaseEntity | null, center: Vector, radius: number): CBaseEntity | null
+
+    /**
+     * Begin an iteration over the list of entities
+     */
+    public First(): CBaseEntity | null;
+
+    /**
+     * At the given reference of a previously-found entity, returns the next one after it in the list.
+     * @param previous
+     */
+    public Next(previous: CBaseEntity): CBaseEntity | null;
+}
+
+/**
+ * Provides access to currently spawned entities
+ */
+declare const Entities: CEntities;
+
 
 /**
  * This is a script handle class for entities. All entities have a script handle using this class, sometimes as one of its subclasses.
