@@ -3,6 +3,23 @@ type NutTableValue = NutTablePrimitive | NutTablePrimitive[] | NutTable;
 type NutTable = { [key: string]: NutTableValue };
 type ScriptScope = { [key: string]: any }
 
+
+declare class Vector {
+    x: number;
+    y: number;
+    z: number;
+
+    constructor(x: number, y: number, z: number);
+}
+
+declare class QAngle {
+    x: number;
+    y: number;
+    z: number;
+
+    constructor(x: number, y: number, z: number);
+}
+
 //------------------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------------------
@@ -1094,7 +1111,9 @@ declare class CEntities {
  */
 declare const Entities: CEntities;
 
-
+//------------------------------------------------------------------------------------
+// Entity Classes
+//------------------------------------------------------------------------------------
 /**
  * This is a script handle class for entities. All entities have a script handle using this class, sometimes as one of its subclasses.
  */
@@ -1935,22 +1954,6 @@ declare class CBaseAnimating extends CBaseEntity {
     public StudioFrameAdvanceManual(dt: number): void;
 }
 
-
-declare class Vector {
-    x: number;
-    y: number;
-    z: number;
-
-    constructor(x: number, y: number, z: number);
-}
-
-declare class QAngle {
-    x: number;
-    y: number;
-    z: number;
-
-    constructor(x: number, y: number, z: number);
-}
 
 declare class CBaseFlex extends CBaseAnimating {
     public PlayScene(scene_file: string, delay: number): number;
