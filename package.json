@@ -1,7 +1,7 @@
 {
   "name": "vjscript",
   "version": "1.0.0",
-  "description": "Module to automagically transpile JavaScript code to Squirrel",
+  "description": "Framework that automagically translates your JavaScript code to VScript supported Squirrel language.",
   "main": "src/index.ts",
   "scripts": {
     "test": "npx vjsc test/code.js",
