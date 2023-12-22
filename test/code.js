@@ -1,10 +1,13 @@
-const log = "log";
-function DeleteAllPropDynamic() {
-    let ent;
-    while (ent = Entities.FindByClassname(ent, "item_ammopack_full")) {
-        console.log(`Deleting: ${ent.toString()}. sin: ${Math.sin(123)}`);
-        ent.Kill();
-    }
+function degrees_to_radians(degrees) {
+    const pi = Math.PI;
+    return degrees * (pi / 180);
 }
 
-DeleteAllPropDynamic();
+for (let i = 0; i < 360; i++) {
+
+    const rad = degrees_to_radians(i);
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    console.log(`Deg: ${i}°: sin: ${sin}, cos: ${cos}`);
+}

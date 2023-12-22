@@ -1,7 +1,16 @@
+import {BaseNode, BlockStatement, ExpressionMap, ModuleDeclaration, NodeMap, Statement} from "estree";
+import {Syntax} from "esprima";
+
 type SymbolRenameMapIdentifier = string | [string, string];
 type SymbolRenameMembers = [string, SymbolRenameMapIdentifier][];
 type SymbolRenameMap = {
     [key: string]: SymbolRenameMembers | SymbolRenameMapIdentifier;
+}
+
+export type ESTreeNodeMap = ExpressionMap & NodeMap;
+
+export const isNodeOfType = <T extends keyof ESTreeNodeMap>(node: BaseNode, type: T): node is ESTreeNodeMap[T] => {
+    return node.type == type;
 }
 
 /**

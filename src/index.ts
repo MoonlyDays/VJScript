@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as esprima from "esprima";
 import * as path from "path";
 import {preprocess} from "./squirrel/preprocessing";
-import {translate} from "./squirrel/translations";
+import {translate} from "./squirrel/translation";
 
 // Make sure the file we want to translate actually exists.
 const scriptPath = process.argv[2];
@@ -20,7 +20,7 @@ const program = esprima.parseModule(jsCode);
 // Preprocess it to allow better compatibility with Squirrel
 preprocess(program);
 // Translate it to Squirrel code.
-const nutCode = translate(program);
+const nutCode = translate(scriptPath, program);
 console.log(nutCode);
 
 // Save it in the file.
