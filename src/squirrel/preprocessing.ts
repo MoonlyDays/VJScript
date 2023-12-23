@@ -3,8 +3,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {Program} from 'esprima';
-import {BaseNode, Declaration, Identifier, MemberExpression} from 'estree';
+import {BaseNode, Declaration, Identifier, MemberExpression, Program, Property} from 'estree';
 
 import {ESTreeNodeMap} from './nodes';
 import {renameNode} from './rename';
@@ -27,6 +26,11 @@ const PreprocessorMap: PreprocessingMap = {
     },
     MemberExpression: (ctx: NodeContext<MemberExpression>) => {
         renameNode(ctx);
+    },
+    Property: (ctx: NodeContext<Property>) => {
+
+        console.log(ctx.isChildOf('ClassDeclaration'));
+
     }
 };
 
@@ -56,12 +60,7 @@ const preprocessRecursively = (ctx: NodeContext) => {
 };
 
 const preprocessNodeWithContext = (node: BaseNode, parent: NodeContext) => {
-    const ctx: NodeContext = {
-        node,
-        parent,
-        program: parent.program
-    };
-
+    const ctx: NodeContext = new NodeContext(node, parent);
     preprocessRecursively(ctx);
     return ctx.node;
 };

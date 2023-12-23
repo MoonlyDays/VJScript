@@ -3,18 +3,17 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {Program} from 'esprima';
 import {
     ArrayExpression, ArrowFunctionExpression, AssignmentExpression, BaseNode,
-    BinaryExpression, BlockStatement, CallExpression,
+    BinaryExpression, BlockStatement, CallExpression, ClassBody, ClassDeclaration,
     ConditionalExpression, ExpressionStatement, ForInStatement,
     ForOfStatement, ForStatement, FunctionDeclaration,
     FunctionExpression, Identifier, IfStatement,
-    Literal, LogicalExpression, MemberExpression,
+    Literal, LogicalExpression, MemberExpression, MethodDefinition,
     NewExpression, ObjectExpression, Property,
-    ReturnStatement, Statement, TemplateLiteral,
+    ReturnStatement, Statement, Super, TemplateLiteral,
     UnaryExpression, UpdateExpression, VariableDeclaration,
-    WhileStatement
+    WhileStatement, Program
 } from 'estree';
 import * as path from 'path';
 
@@ -62,7 +61,12 @@ const TranslationMap: TranslationMap = {
     Property: function* (node: Property) {
         yield translateNode(node.key);
         yield ' = ';
-        yield translateNode(node.value);
+
+        if (node.value) {
+            yield translateNode(node.value);
+        } else {
+            yield 'null';
+        }
     },
 
     TemplateLiteral: function* (node: TemplateLiteral) {
@@ -270,6 +274,36 @@ const TranslationMap: TranslationMap = {
                 yield translateNode(decl.init);
             }
         }
+    },
+
+    ClassDeclaration: function* (node: ClassDeclaration) {
+
+        yield 'class ';
+        yield translateNode(node.id);
+        if (node.superClass) {
+            yield ' extends ';
+            yield translateNode(node.superClass);
+        }
+
+        yield ' ';
+        yield translateNode(node.body);
+    },
+
+    ClassBody: function* (node: ClassBody) {
+        yield* this.BlockStatement({
+            type: 'BlockStatement',
+            body: node.body as BlockStatement['body'],
+        });
+    },
+
+    MethodDefinition: function* (node: MethodDefinition) {
+        const func = node.value;
+        func.id = node.key as Identifier;
+        yield* this.FunctionExpression(func);
+    },
+
+    Super: function* (node: Super) {
+        yield 'base';
     },
 
     AssignmentExpression: function* (node: AssignmentExpression) {

@@ -5,7 +5,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import * as esprima from 'esprima';
+import * as esprima from 'esprima-next';
 import * as fs from 'fs';
 import * as path from 'path';
 

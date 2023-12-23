@@ -3,19 +3,49 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {Program} from 'esprima';
-import {BaseNode, CallExpression, Expression, Identifier, MemberExpression} from 'estree';
+import {BaseNode, CallExpression, Program, Identifier, MemberExpression} from 'estree';
 
-import {ESTreeNode, ESTreeNodeMap} from './nodes';
+import {ESTreeNodeMap} from './nodes';
 
 export const isNodeOfType = <T extends keyof ESTreeNodeMap>(node: BaseNode, type: T): node is ESTreeNodeMap[T] => {
     return node.type == type;
 };
 
-export interface NodeContext<T extends BaseNode = BaseNode> {
+export class NodeContext<T extends BaseNode = BaseNode> {
     node: T;
     parent?: NodeContext;
     program: Program;
+
+    constructor(node: T, parent?: NodeContext) {
+        this.node = node;
+        this.parent = parent;
+        this.program = parent?.program;
+    }
+
+    /**
+     * Goes up the parent stack and finds a parent of type.
+     */
+    findParent(type: keyof ESTreeNodeMap, maxDepth = 999) {
+
+        if (maxDepth == 0)
+            return null;
+
+        // We reached the top of the stack.
+        if (!this.parent)
+            return null;
+
+        if (this.parent.node.type == type)
+            return this.parent;
+
+        return this.parent.findParent(type, maxDepth - 1);
+    }
+
+    /**
+     * Are we a child of a node of a specific type.
+     */
+    isChildOf(type: keyof ESTreeNodeMap) {
+        return !!this.findParent(type);
+    }
 }
 
 

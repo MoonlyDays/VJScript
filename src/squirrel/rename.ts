@@ -4,11 +4,11 @@
 //--------------------------------------------------------------------------------------------------
 
 import * as crypto from 'crypto';
-import {parseScript} from 'esprima';
+import {parseScript} from 'esprima-next';
 import {BlockStatement, Declaration} from 'estree';
 
 import {IdentifierRenameList} from './config';
-import {ESTreeNode} from './nodes';
+import {ESTreeNode, ESTreeNodeMap} from './nodes';
 import {ExtraDeclarations} from './preprocessing';
 import {
     CollapsedIdentifier,
@@ -53,7 +53,7 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
                 throw Error('More than one declaration is not allowed in Declare config.');
             }
 
-            declaration = normalizeDeclaration(body[0], rule.pattern);
+            declaration = normalizeDeclaration(body[0] as ESTreeNode, rule.pattern);
             ExtraDeclarations.set(decl, declaration);
         }
 
