@@ -1,5 +1,5 @@
 {
-    "Alias":   {
+    "Alias":     {
         "*.toString":  "*.tostring",
         "console.log": "printl",
         "Math.PI":     "PI",
@@ -19,15 +19,22 @@
         "Math.sqrt":   "sqrt",
         "Math.tan":    "tan"
     },
-    "Declare": {
-        "Number":       "(num) => num.tofloat()",
-        "Math.E":       "2.718281828459045",
-        "Math.LN10":    "2.302585092994046",
-        "Math.LN2":     "0.6931471805599453",
-        "Math.LOG10E":  "0.4342944819032518",
-        "Math.LOG2E":   "1.4426950408889634",
-        "Math.SQRT1_2": "0.7071067811865476",
-        "Math.SQRT2":   "1.4142135623730951",
-        "Math.random":  "function __js_math_random() { return Number(rand()) / RAND_MAX; }"
-    }
+    "Declare":   {
+        "Number":                  "x => x.tofloat()",
+        "Number.EPSILON":          "2.220446049250313e-16",
+        "Number.MAX_SAFE_INTEGER": "9007199254740991",
+        "Number.MAX_VALUE":        "1.7976931348623157e+308",
+        "Number.MIN_SAFE_INTEGER": "-9007199254740991",
+        "Number.MIN_VALUE":        "5e-324",
+        "Math.E":                  "2.718281828459045",
+        "Math.LN10":               "2.302585092994046",
+        "Math.LN2":                "0.6931471805599453",
+        "Math.LOG10E":             "0.4342944819032518",
+        "Math.LOG2E":              "1.4426950408889634",
+        "Math.SQRT1_2":            "0.7071067811865476",
+        "Math.SQRT2":              "1.4142135623730951",
+        "Math.random":             "() => Number(rand()) / RAND_MAX"
+    },
+    "Blacklist": [
+    ]
 }

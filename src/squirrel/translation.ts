@@ -5,7 +5,7 @@
 
 import {Program} from 'esprima';
 import {
-    ArrayExpression, AssignmentExpression, BaseNode,
+    ArrayExpression, ArrowFunctionExpression, AssignmentExpression, BaseNode,
     BinaryExpression, BlockStatement, CallExpression,
     ConditionalExpression, ExpressionStatement, ForInStatement,
     ForOfStatement, ForStatement, FunctionDeclaration,
@@ -18,6 +18,7 @@ import {
 } from 'estree';
 import * as path from 'path';
 
+import {ESTreeNodeMap} from './nodes';
 import {isNodeOfType} from './util';
 
 export function translate(scriptPath: string, program: Program) {
@@ -48,7 +49,8 @@ function translateNode(node: BaseNode): string {
 }
 
 let scopeDepth = 0;
-const TranslationMap = {
+type TranslationMap = { [K in keyof ESTreeNodeMap]?: (node: ESTreeNodeMap[K]) => Generator<string, void, unknown> };
+const TranslationMap: TranslationMap = {
     Identifier: function* (node: Identifier) {
         yield node.name;
     },
@@ -421,6 +423,28 @@ const TranslationMap = {
 
         yield '.';
         yield translateNode(node.property);
+    },
+
+    ArrowFunctionExpression: function* (node: ArrowFunctionExpression) {
+
+        if (!isNodeOfType(node.body, 'BlockStatement')) {
+            node.body = {
+                type: 'BlockStatement',
+                body: [{
+                    type: 'ReturnStatement',
+                    argument: node.body
+                }]
+            };
+        }
+
+        yield '(';
+        yield* this.FunctionExpression({
+            type: 'FunctionExpression',
+            id: null,
+            params: node.params,
+            body: node.body
+        });
+        yield ')';
     },
 
     ImportDeclaration: function* () {

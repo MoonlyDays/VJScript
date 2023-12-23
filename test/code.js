@@ -1,1 +1,1 @@
-console.log(Math.random() + Math.SQRT2);
+console.log(Number.NaN);

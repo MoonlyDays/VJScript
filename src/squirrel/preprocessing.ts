@@ -4,18 +4,18 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Program} from 'esprima';
-import {BaseNode, Declaration,  Identifier, MemberExpression} from 'estree';
+import {BaseNode, Declaration, Identifier, MemberExpression} from 'estree';
 
 import {renameNode} from './rename';
 import {NodeContext} from './util';
 
-export const ExtraDeclarations = new Set<Declaration>();
+export const ExtraDeclarations = new Map<string, Declaration>();
 
 export const preprocess = (program: Program): void => {
     preprocessRecursively({node: program, program});
 
     for (const decl of ExtraDeclarations) {
-        program.body.unshift(decl);
+        program.body.unshift(decl[1]);
     }
 };
 

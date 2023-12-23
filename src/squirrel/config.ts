@@ -46,7 +46,6 @@ function parse() {
     }
 
     IdentifierRenameList.sort((a, b) => b.pattern.length - a.pattern.length);
-    console.log(IdentifierRenameList);
 }
 
 parse();

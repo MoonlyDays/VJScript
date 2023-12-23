@@ -5,10 +5,10 @@
 
 import {randomBytes} from 'crypto';
 import {parseScript} from 'esprima';
-import {BaseNode, BlockStatement, Declaration, FunctionDeclaration, VariableDeclaration} from 'estree';
+import {BlockStatement, Declaration} from 'estree';
 
 import {IdentifierRenameList} from './config';
-import {ESTreeNode, ESTreeNodeMap} from './nodes';
+import {ESTreeNode} from './nodes';
 import {ExtraDeclarations} from './preprocessing';
 import {
     CollapsedIdentifier,
@@ -32,15 +32,20 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
 
     if ('declaration' in rule) {
         const decl = rule.declaration;
-        const programCode = parseScript(decl);
-        const body = programCode.body;
 
-        if (body.length > 1) {
-            throw Error('More than one declaration is not allowed in Declare config.');
+        let declaration = ExtraDeclarations.get(decl);
+        if(!declaration)
+        {
+            const programCode = parseScript(decl);
+            const body = programCode.body;
+
+            if (body.length > 1) {
+                throw Error('More than one declaration is not allowed in Declare config.');
+            }
+
+            declaration = normalizeDeclaration(body[0]);
+            ExtraDeclarations.set(decl, declaration);
         }
-
-        const declaration = normalizeDeclaration(body[0]);
-        ExtraDeclarations.add(declaration);
 
         const identName = extractIdentifierName(declaration);
         const declaredIdent = decodeIdentifier(identName);
@@ -49,7 +54,6 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
         return;
     }
 
-    /*
     const newIdent = [];
     for (let i = 0; i < rule.rename.length; i++) {
         const renameItem = rule.rename[i];
@@ -57,7 +61,6 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
         newIdent.push(renameItem || identItem);
     }
     ctx.node = expandIdentifier(newIdent);
-    */
 }
 
 function findRule(node: IdentifierNode, ident: CollapsedIdentifier) {
