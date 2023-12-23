@@ -13,7 +13,7 @@ import {
     NewExpression, ObjectExpression, Property,
     ReturnStatement, Statement, Super, TemplateLiteral,
     UnaryExpression, UpdateExpression, VariableDeclaration,
-    WhileStatement, Program
+    WhileStatement, Program, ThrowStatement
 } from 'estree';
 import * as path from 'path';
 
@@ -250,6 +250,11 @@ const TranslationMap: TranslationMap = {
 
     ReturnStatement: function* (node: ReturnStatement) {
         yield 'return ';
+        yield translateNode(node.argument);
+    },
+
+    ThrowStatement: function* (node: ThrowStatement) {
+        yield 'throw ';
         yield translateNode(node.argument);
     },
 

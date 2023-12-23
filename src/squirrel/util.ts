@@ -4,8 +4,8 @@
 //--------------------------------------------------------------------------------------------------
 
 import {BaseNode, CallExpression, Program, Identifier, MemberExpression} from 'estree';
-
 import {ESTreeNodeMap} from './nodes';
+import {SearchPattern} from './config';
 
 export const isNodeOfType = <T extends keyof ESTreeNodeMap>(node: BaseNode, type: T): node is ESTreeNodeMap[T] => {
     return node.type == type;
@@ -146,4 +146,46 @@ export function decodeIdentifier(encoded: string): CollapsedIdentifier {
 
 export function encodeIdentifier(decoded: CollapsedIdentifier): string {
     return decoded.map(x => x || '*').join('.');
+}
+
+export function findListEntryByNode<T extends SearchPattern>(list: Array<T>, ctx: NodeContext<IdentifierNode>): T {
+
+    const node = ctx.node;
+    const ident = collapseIdentifier(node);
+    if (ident === false)
+        return;
+
+    for (const renameRule of list) {
+
+        const identPattern = renameRule.pattern;
+        if (identPattern.length != ident.length)
+            continue;
+
+        let matched = true;
+        for (let i = 0; i < identPattern.length; i++) {
+            const patternItem = identPattern[i];
+            const identItem = ident[i];
+            if (!patternItem)
+                continue;
+
+            if (patternItem == identItem)
+                continue;
+
+            matched = false;
+        }
+
+        if (!matched)
+            continue;
+
+        if (renameRule.call_only) {
+            const parent = ctx.parent.node;
+            if (!isNodeOfType(parent, 'CallExpression'))
+                return;
+
+            if (parent.callee != node)
+                return;
+        }
+
+        return renameRule;
+    }
 }

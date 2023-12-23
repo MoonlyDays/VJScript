@@ -4,7 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {BaseNode, Declaration, Identifier, MemberExpression, Program, Property} from 'estree';
-
+import {checkBlocked} from './blacklist';
 import {ESTreeNodeMap} from './nodes';
 import {renameNode} from './rename';
 import {NodeContext} from './util';
@@ -12,19 +12,24 @@ import {NodeContext} from './util';
 export const ExtraDeclarations = new Map<string, Declaration>();
 
 export const preprocess = (program: Program): void => {
-    preprocessRecursively({node: program, program});
+    const ctxParent = new NodeContext(program);
+    ctxParent.program = program;
+    preprocessRecursively(ctxParent);
 
-    for (const decl of ExtraDeclarations) {
-        program.body.unshift(decl[1]);
+    for (const pair of ExtraDeclarations) {
+        const decl = preprocessNodeWithContext(pair[1], ctxParent);
+        program.body.unshift(decl as Declaration);
     }
 };
 
 type PreprocessingMap = { [K in keyof ESTreeNodeMap]?: (ctx: NodeContext<ESTreeNodeMap[K]>) => void };
 const PreprocessorMap: PreprocessingMap = {
     Identifier: (ctx: NodeContext<Identifier>) => {
+        checkBlocked(ctx);
         renameNode(ctx);
     },
     MemberExpression: (ctx: NodeContext<MemberExpression>) => {
+        checkBlocked(ctx);
         renameNode(ctx);
     },
     Property: (ctx: NodeContext<Property>) => {
@@ -35,7 +40,7 @@ const PreprocessorMap: PreprocessingMap = {
 };
 
 const preprocessRecursively = (ctx: NodeContext) => {
-    preprocessNode(ctx);
+    preprocessContext(ctx);
 
     const node = ctx.node;
     for (const k in node) {
@@ -65,7 +70,7 @@ const preprocessNodeWithContext = (node: BaseNode, parent: NodeContext) => {
     return ctx.node;
 };
 
-const preprocessNode = (ctx: NodeContext) => {
+const preprocessContext = (ctx: NodeContext) => {
     const type = ctx.node.type;
     const fn = PreprocessorMap[type] || null;
     if (!fn) return;

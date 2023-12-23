@@ -6,16 +6,16 @@
 import Config from '../config.json';
 import {CollapsedIdentifier, decodeIdentifier} from './util';
 
-type RenameRuleShared = {
+export type SearchPattern = {
     pattern: CollapsedIdentifier;
     call_only: boolean;
 };
 
-type RenameRuleAlias = RenameRuleShared & {
+export type RenameRuleAlias = SearchPattern & {
     rename: CollapsedIdentifier;
 };
 
-type RenameRuleDeclare = RenameRuleShared & {
+export type RenameRuleDeclare = SearchPattern & {
     declaration: string;
 };
 
@@ -24,6 +24,7 @@ export type RenameRule =
     RenameRuleDeclare;
 
 export const IdentifierRenameList: RenameRule[] = [];
+export const IdentifierBlackList: SearchPattern[] = [];
 
 function parseAlias(encodedSearch: string, encodedRename: string) {
     const rule = parseSearchPattern<RenameRuleAlias>(encodedSearch);
@@ -39,7 +40,12 @@ function parseDeclare(encodedSearch: string, declareCode: string) {
     IdentifierRenameList.push(rule);
 }
 
-function parseSearchPattern<T extends RenameRuleShared>(encodedSearch: string): T {
+function parseBlacklist(pattern: string) {
+    const item = parseSearchPattern(pattern);
+    IdentifierBlackList.push(item);
+}
+
+function parseSearchPattern<T extends SearchPattern>(encodedSearch: string): T {
 
     let call_only = false;
     if (encodedSearch.endsWith('()')) {
@@ -67,6 +73,14 @@ function parse() {
     }
 
     IdentifierRenameList.sort((a, b) => b.pattern.length - a.pattern.length);
+
+    const blacklist = Config['Blacklist'];
+    for (const ident of blacklist) {
+        parseBlacklist(ident);
+    }
+
+    IdentifierBlackList.sort((a, b) => b.pattern.length - a.pattern.length);
+    console.log(IdentifierBlackList);
 }
 
 parse();
