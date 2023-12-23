@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 
-import * as fs from "fs";
-import * as esprima from "esprima";
-import * as path from "path";
-import {preprocess} from "./squirrel/preprocessing";
-import {translate} from "./squirrel/translation";
+//--------------------------------------------------------------------------------------------------
+// Copyright (C) Moonly Days                                                                       -
+// https://github.com/MoonlyDays                                                                   -
+//--------------------------------------------------------------------------------------------------
+
+import * as esprima from 'esprima';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import {preprocess} from './squirrel/preprocessing';
+import {translate} from './squirrel/translation';
 
 // Make sure the file we want to translate actually exists.
 const scriptPath = process.argv[2];
 if (!fs.existsSync(scriptPath)) {
-    console.error("Script not found: " + JSON.stringify(scriptPath));
+    console.error('Script not found: ' + JSON.stringify(scriptPath));
     process.exit(1);
 }
 

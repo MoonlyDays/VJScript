@@ -1,0 +1,33 @@
+{
+    "Alias":   {
+        "*.toString":  "*.tostring",
+        "console.log": "printl",
+        "Math.PI":     "PI",
+        "Math.abs":    "fabs",
+        "Math.acos":   "acos",
+        "Math.asin":   "asin",
+        "Math.atan":   "atan",
+        "Math.atan2":  "atan2",
+        "Math.ceil":   "ceil",
+        "Math.cos":    "cos",
+        "Math.exp":    "exp",
+        "Math.floor":  "floor",
+        "Math.log":    "log",
+        "Math.log10":  "log10",
+        "Math.pow":    "pow",
+        "Math.sin":    "sin",
+        "Math.sqrt":   "sqrt",
+        "Math.tan":    "tan"
+    },
+    "Declare": {
+        "Number":       "(num) => num.tofloat()",
+        "Math.E":       "2.718281828459045",
+        "Math.LN10":    "2.302585092994046",
+        "Math.LN2":     "0.6931471805599453",
+        "Math.LOG10E":  "0.4342944819032518",
+        "Math.LOG2E":   "1.4426950408889634",
+        "Math.SQRT1_2": "0.7071067811865476",
+        "Math.SQRT2":   "1.4142135623730951",
+        "Math.random":  "function __js_math_random() { return Number(rand()) / RAND_MAX; }"
+    }
+}

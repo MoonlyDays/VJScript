@@ -5,6 +5,7 @@
         "esModuleInterop":                  true,
         "forceConsistentCasingInFileNames": true,
         "outDir":                           "./dist",
-        "rootDir":                          "./src"
+        "rootDir":                          "./src",
+        "resolveJsonModule":                true
     }
 }

@@ -1,22 +1,28 @@
+//--------------------------------------------------------------------------------------------------
+// Copyright (C) Moonly Days                                                                       -
+// https://github.com/MoonlyDays                                                                   -
+//--------------------------------------------------------------------------------------------------
+
+import {Program} from 'esprima';
 import {
     ArrayExpression, AssignmentExpression, BaseNode,
-    BinaryExpression, BlockStatement, BreakStatement,
-    CallExpression, ConditionalExpression, ContinueStatement,
-    ExpressionStatement, ForInStatement, ForOfStatement,
-    ForStatement, FunctionDeclaration, FunctionExpression,
-    Identifier, IfStatement, ImportDeclaration,
+    BinaryExpression, BlockStatement, CallExpression,
+    ConditionalExpression, ExpressionStatement, ForInStatement,
+    ForOfStatement, ForStatement, FunctionDeclaration,
+    FunctionExpression, Identifier, IfStatement,
     Literal, LogicalExpression, MemberExpression,
-    NewExpression, ObjectExpression, Property, ReturnStatement,
-    Statement, TemplateLiteral, ThisExpression,
+    NewExpression, ObjectExpression, Property,
+    ReturnStatement, Statement, TemplateLiteral,
     UnaryExpression, UpdateExpression, VariableDeclaration,
     WhileStatement
-} from "estree";
-import {Program} from "esprima";
-import * as path from "path";
+} from 'estree';
+import * as path from 'path';
+
+import {isNodeOfType} from './util';
 
 export function translate(scriptPath: string, program: Program) {
 
-    let code =
+    const code =
         '///-------------------------------------------------------------------\n' +
         '/// This code was automatically generated using VJScript.\n' +
         '/// VJScript is an automatic code translation tool from JavaScript\n' +
@@ -38,7 +44,7 @@ function translateNode(node: BaseNode): string {
 
     let fragments = [...fn.call(TranslationMap, node)];
     fragments = fragments.filter(x => !!x);
-    return fragments.join("");
+    return fragments.join('');
 }
 
 let scopeDepth = 0;
@@ -53,7 +59,7 @@ const TranslationMap = {
 
     Property: function* (node: Property) {
         yield translateNode(node.key);
-        yield " = ";
+        yield ' = ';
         yield translateNode(node.value);
     },
 
@@ -63,14 +69,14 @@ const TranslationMap = {
             const hasQausis = !!element.value.cooked;
             if (hasQausis) {
                 if (i > 0) {
-                    yield " + ";
+                    yield ' + ';
                 }
                 yield JSON.stringify(element.value.cooked);
             }
 
             if (!element.tail) {
                 if (hasQausis)
-                    yield " + ";
+                    yield ' + ';
 
                 const expr = node.expressions[i];
                 yield translateNode(expr);
@@ -81,7 +87,7 @@ const TranslationMap = {
     BlockStatement: function* (node: BlockStatement, addBrackets = true) {
 
         if (addBrackets) {
-            yield "{\n";
+            yield '{\n';
             scopeDepth++;
         }
 
@@ -89,7 +95,7 @@ const TranslationMap = {
             let code = translateNode(element);
 
             if (scopeDepth > 0) {
-                code = code.split("\n").map(x => "  " + x).join("\n");
+                code = code.split('\n').map(x => '  ' + x).join('\n');
             }
 
             yield code;
@@ -98,13 +104,13 @@ const TranslationMap = {
 
         if (addBrackets) {
             scopeDepth--;
-            yield "}\n";
+            yield '}';
         }
     },
 
     Program: function* (node: Program) {
         yield* this.BlockStatement({
-            type: "BlockStatement",
+            type: 'BlockStatement',
             body: node.body as Statement[]
         }, false);
     },
@@ -112,7 +118,7 @@ const TranslationMap = {
     ExpressionStatement: function* (node: ExpressionStatement) {
 
         // Directives are not added to the source code.
-        if ("directive" in node) {
+        if ('directive' in node) {
             return;
         }
 
@@ -121,41 +127,41 @@ const TranslationMap = {
 
     IfStatement: function* (node: IfStatement) {
 
-        yield "if (";
+        yield 'if (';
         yield translateNode(node.test);
-        yield ")\n";
+        yield ')\n';
         yield translateNode(node.consequent);
 
         if (node.alternate) {
-            yield "else\n";
+            yield 'else\n';
             yield translateNode(node.alternate);
         }
     },
 
     WhileStatement: function* (node: WhileStatement) {
-        yield "while ("
+        yield 'while (';
         yield translateNode(node.test);
-        yield ") ";
+        yield ') ';
         yield translateNode(node.body);
     },
 
     ForStatement: function* (node: ForStatement) {
-        yield "for(";
+        yield 'for(';
         if (node.init) {
             yield translateNode(node.init);
         }
 
-        yield ";";
+        yield ';';
         if (node.test) {
             yield translateNode(node.test);
         }
 
-        yield ";";
+        yield ';';
         if (node.update) {
             yield translateNode(node.update);
         }
 
-        yield ")\n";
+        yield ')\n';
         yield translateNode(node.body);
     },
 
@@ -172,91 +178,89 @@ const TranslationMap = {
          * +--------------------------+-----------------------------+
          */
 
-        if (node.left.type == "VariableDeclaration") {
+        if (node.left.type == 'VariableDeclaration') {
 
             const decl = node.left.declarations[0];
-            if (decl.id.type == "ArrayPattern") {
+            if (decl.id.type == 'ArrayPattern') {
                 node.left.declarations = decl.id.elements.map(x => ({
-                    type: "VariableDeclarator",
+                    type: 'VariableDeclarator',
                     id: x as Identifier,
                     init: null
                 }));
             }
 
             // The last third case of foreach.
-            yield "foreach(";
+            yield 'foreach(';
 
             for (let i = 0; i < node.left.declarations.length; i++) {
                 const decl = node.left.declarations[i];
-                if (decl.id.type == "Identifier") {
+                if (decl.id.type == 'Identifier') {
                     if (i > 0)
-                        yield ", ";
+                        yield ', ';
 
                     yield decl.id.name;
                 }
             }
 
-            yield " in ";
+            yield ' in ';
             yield translateNode(node.right);
-            yield ")\n"
+            yield ')\n';
 
             yield translateNode(node.body);
             return;
 
         }
 
-        console.log(node)
-        throw Error("The following for ... of loop cannot be converted.");
+        throw Error('The following for ... of loop cannot be converted.');
     },
 
     ForInStatement: function (node: ForInStatement) {
 
-        if (node.left.type == "VariableDeclaration") {
+        if (node.left.type == 'VariableDeclaration') {
 
             node.left.declarations.push({
-                type: "VariableDeclarator",
+                type: 'VariableDeclarator',
                 init: null,
                 id: {
-                    type: "Identifier",
-                    name: "__v",
+                    type: 'Identifier',
+                    name: '__v',
                 }
             });
 
-            const forOfNode: ForOfStatement = {...node, type: "ForOfStatement", await: false};
+            const forOfNode: ForOfStatement = {...node, type: 'ForOfStatement', await: false};
             return this.ForOfStatement(forOfNode);
         }
 
-        console.log(node)
-        throw Error("The following for ... of loop cannot be converted");
+        throw Error('The following for ... of loop cannot be converted');
     },
 
-    BreakStatement: function* (node: BreakStatement) {
-        yield "break";
+    BreakStatement: function* () {
+        yield 'break';
     },
 
-    ContinueStatement: function* (node: ContinueStatement) {
-        yield "continue";
+    ContinueStatement: function* () {
+        yield 'continue';
     },
 
     ReturnStatement: function* (node: ReturnStatement) {
-        yield "return ";
+        yield 'return ';
         yield translateNode(node.argument);
     },
 
     VariableDeclaration: function* (node: VariableDeclaration) {
 
         const kind = node.kind;
-        const nutKind = kind == "const" ? kind : "local";
+        const nutKind = kind == 'const' ? kind : 'local';
 
         for (let i = 0; i < node.declarations.length; i++) {
 
             if (i > 0) {
-                yield "\n";
+                yield '\n';
             }
 
             const decl = node.declarations[i];
-            // yield nutKind;
-            yield "local ";
+            yield nutKind;
+            yield ' ';
             yield translateNode(decl.id);
 
             if (decl.init) {
@@ -270,10 +274,10 @@ const TranslationMap = {
 
         yield translateNode(node.left);
 
-        if (node.left.type == "MemberExpression") {
-            yield " <- ";
+        if (node.left.type == 'MemberExpression') {
+            yield ' <- ';
         } else {
-            yield " = ";
+            yield ' = ';
         }
 
         yield translateNode(node.right);
@@ -281,7 +285,7 @@ const TranslationMap = {
 
     ArrayExpression: function* (node: ArrayExpression) {
 
-        yield "[";
+        yield '[';
         for (let i = 0; i < node.elements.length; i++) {
 
             const el = node.elements[i];
@@ -289,50 +293,61 @@ const TranslationMap = {
                 continue;
 
             if (i > 0)
-                yield ", ";
+                yield ', ';
 
             yield translateNode(el);
         }
-        yield "]";
+        yield ']';
     },
 
     ObjectExpression: function* (node: ObjectExpression) {
-        yield "{\n";
+        yield '{\n';
         for (let i = 0; i < node.properties.length; i++) {
             const prop = node.properties[i];
-            yield "  ";
+            yield '  ';
             yield translateNode(prop);
-            yield ",\n";
+            yield ',\n';
         }
-        yield "}";
+        yield '}';
     },
 
     BinaryExpression: function* (node: BinaryExpression) {
 
-        if (node.operator == "===") {
+        if (node.operator == '===') {
             // Squirrel doesn't support triple equal signs.
-            node.operator = "==";
+            node.operator = '==';
         }
 
-        yield "(";
+        yield '(';
         yield translateNode(node.left);
-        yield " ";
+        yield ' ';
         yield node.operator;
-        yield " ";
+        yield ' ';
         yield translateNode(node.right);
-        yield ")";
+        yield ')';
     },
 
     FunctionExpression: function* (node: FunctionExpression) {
-        yield "function ";
 
+        const body = node.body;
+        if (!isNodeOfType(body, 'BlockStatement')) {
+            node.body = {
+                type: 'BlockStatement',
+                body: [{
+                    type: 'ReturnStatement',
+                    argument: body
+                }]
+            };
+        }
+
+        yield 'function ';
         if (node.id) {
             yield translateNode(node.id);
         }
 
-        yield "(";
-        yield node.params.map(x => translateNode(x)).join(", ");
-        yield ") ";
+        yield '(';
+        yield node.params.map(x => translateNode(x)).join(', ');
+        yield ') ';
 
         yield translateNode(node.body);
     },
@@ -353,65 +368,70 @@ const TranslationMap = {
     },
 
     ConditionalExpression: function* (node: ConditionalExpression) {
-        yield "(";
+        yield '(';
         yield translateNode(node.test);
-        yield " ? ";
+        yield ' ? ';
         yield translateNode(node.consequent);
-        yield " : ";
+        yield ' : ';
         yield translateNode(node.alternate);
-        yield ")";
+        yield ')';
     },
 
     LogicalExpression: function* (node: LogicalExpression) {
-        yield "(";
+        yield '(';
         yield translateNode(node.left);
-        yield " ";
+        yield ' ';
         yield node.operator;
-        yield " ";
+        yield ' ';
         yield translateNode(node.right);
-        yield ")";
+        yield ')';
     },
 
     NewExpression: function* (node: NewExpression) {
         yield* this.CallExpression(node);
     },
 
-    ThisExpression: function* (node: ThisExpression) {
-        yield "this";
+    ThisExpression: function* () {
+        yield 'this';
     },
 
     CallExpression: function* (node: CallExpression) {
         yield translateNode(node.callee);
-        yield "(";
+        yield '(';
         for (let i = 0; i < node.arguments.length; i++) {
             const arg = node.arguments[i];
             if (i > 0) {
-                yield ", ";
+                yield ', ';
             }
 
             yield translateNode(arg);
         }
-        yield ")";
+        yield ')';
     },
 
     MemberExpression: function* (node: MemberExpression) {
 
         yield translateNode(node.object);
         if (node.computed) {
-            yield "[";
+            yield '[';
             yield translateNode(node.property);
-            yield "]";
+            yield ']';
             return;
         }
 
-        yield ".";
+        yield '.';
         yield translateNode(node.property);
     },
 
-    ImportDeclaration: function* (node: ImportDeclaration) {
+    ImportDeclaration: function* () {
     },
 
     FunctionDeclaration: function* (node: FunctionDeclaration) {
-        yield* this.FunctionExpression(node);
+        yield* this.FunctionExpression({
+            type: 'FunctionExpression',
+            id: node.id,
+            params: node.params,
+            body: node.body
+        });
     }
-}
+};
