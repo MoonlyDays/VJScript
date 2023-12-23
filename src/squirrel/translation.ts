@@ -12,7 +12,7 @@ import {
     FunctionExpression, Identifier, IfStatement,
     Literal, LogicalExpression, MemberExpression,
     NewExpression, ObjectExpression, Property,
-    ReturnStatement, Statement, TemplateLiteral,
+    ReturnStatement, Statement, TemplateLiteral, ThrowStatement,
     UnaryExpression, UpdateExpression, VariableDeclaration,
     WhileStatement
 } from 'estree';
@@ -246,6 +246,11 @@ const TranslationMap: TranslationMap = {
 
     ReturnStatement: function* (node: ReturnStatement) {
         yield 'return ';
+        yield translateNode(node.argument);
+    },
+
+    ThrowStatement: function* (node: ThrowStatement) {
+        yield 'throw ';
         yield translateNode(node.argument);
     },
 

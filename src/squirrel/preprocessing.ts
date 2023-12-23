@@ -4,34 +4,39 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Program} from 'esprima';
-import {BaseNode, Declaration, Identifier, MemberExpression} from 'estree';
+import {Declaration, Identifier, MemberExpression} from 'estree';
 
-import {ESTreeNodeMap} from './nodes';
+import {checkBlocked} from './blacklist';
+import {ESTreeNode, ESTreeNodeMap} from './nodes';
 import {renameNode} from './rename';
 import {NodeContext} from './util';
 
 export const ExtraDeclarations = new Map<string, Declaration>();
 
 export const preprocess = (program: Program): void => {
-    preprocessRecursively({node: program, program});
+    const ctxParent = {node: program, program};
+    preprocessRecursively(ctxParent);
 
-    for (const decl of ExtraDeclarations) {
-        program.body.unshift(decl[1]);
+    for (const pair of ExtraDeclarations) {
+        const decl = preprocessNodeWithContext(pair[1], ctxParent);
+        program.body.unshift(decl as Declaration);
     }
 };
 
 type PreprocessingMap = { [K in keyof ESTreeNodeMap]?: (ctx: NodeContext<ESTreeNodeMap[K]>) => void };
 const PreprocessorMap: PreprocessingMap = {
     Identifier: (ctx: NodeContext<Identifier>) => {
+        checkBlocked(ctx);
         renameNode(ctx);
     },
     MemberExpression: (ctx: NodeContext<MemberExpression>) => {
+        checkBlocked(ctx);
         renameNode(ctx);
     }
 };
 
 const preprocessRecursively = (ctx: NodeContext) => {
-    preprocessNode(ctx);
+    preprocessContext(ctx);
 
     const node = ctx.node;
     for (const k in node) {
@@ -55,18 +60,18 @@ const preprocessRecursively = (ctx: NodeContext) => {
     }
 };
 
-const preprocessNodeWithContext = (node: BaseNode, parent: NodeContext) => {
+const preprocessNodeWithContext = (node: ESTreeNode, parent?: NodeContext) => {
     const ctx: NodeContext = {
         node,
         parent,
-        program: parent.program
+        program: parent?.program
     };
 
     preprocessRecursively(ctx);
     return ctx.node;
 };
 
-const preprocessNode = (ctx: NodeContext) => {
+const preprocessContext = (ctx: NodeContext) => {
     const type = ctx.node.type;
     const fn = PreprocessorMap[type] || null;
     if (!fn) return;

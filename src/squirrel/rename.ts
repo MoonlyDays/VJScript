@@ -13,7 +13,9 @@ import {ExtraDeclarations} from './preprocessing';
 import {
     CollapsedIdentifier,
     collapseIdentifier,
-    decodeIdentifier, encodeIdentifier, expandIdentifier,
+    decodeIdentifier,
+    encodeIdentifier,
+    expandIdentifier, findListEntryByNode,
     IdentifierNode,
     isNodeOfType,
     NodeContext
@@ -22,24 +24,15 @@ import {
 const HASH_SALT = 'Club Sandwich!';
 
 export function renameNode(ctx: NodeContext<IdentifierNode>) {
-    const node = ctx.node;
-    const nodeIdent = collapseIdentifier(node);
-    if (nodeIdent === false)
-        return;
-
-    const rule = findRule(node, nodeIdent);
+    const rule = findListEntryByNode(IdentifierRenameList, ctx);
     if (!rule) {
         return;
     }
 
-    if (rule.call_only) {
-        const parent = ctx.parent.node;
-        if (!isNodeOfType(parent, 'CallExpression'))
-            return;
-
-        if (parent.callee != node)
-            return;
-    }
+    const node = ctx.node;
+    const nodeIdent = collapseIdentifier(node);
+    if (nodeIdent === false)
+        return;
 
     if ('declaration' in rule) {
         const decl = rule.declaration;
@@ -72,32 +65,6 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
     }
 
     ctx.node = expandIdentifier(newIdent, node);
-}
-
-function findRule(node: IdentifierNode, ident: CollapsedIdentifier) {
-
-    for (const renameRule of IdentifierRenameList) {
-
-        const identPattern = renameRule.pattern;
-        if (identPattern.length != ident.length)
-            continue;
-
-        let matched = true;
-        for (let i = 0; i < identPattern.length; i++) {
-            const patternItem = identPattern[i];
-            const identItem = ident[i];
-            if (!patternItem)
-                continue;
-
-            if (patternItem == identItem)
-                continue;
-
-            matched = false;
-        }
-
-        if (matched)
-            return renameRule;
-    }
 }
 
 function generateIdentifier(searchPattern: CollapsedIdentifier) {
