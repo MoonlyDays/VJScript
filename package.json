@@ -1,20 +1,28 @@
 {
     "name": "vjscript",
-    "version": "1.0.0",
+    "version": "0.0.2",
     "description": "Framework that automagically translates your JavaScript code to VScript supported Squirrel language.",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
+    "keywords": ["vscript", "squirrel", "javascript"],
     "scripts": {
         "test": "npx vjsc test/code.js",
         "watch": "tsc -w",
         "build": "tsc",
         "dev": "npx ts-node src/index.ts"
     },
+    "files": [
+        "package.json",
+        "dist"
+    ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/MoonlyDays/VJScript.git"
     },
     "bin": {
         "vjsc": "./dist/index.js"
+    },
+    "publishConfig": {
+
     },
     "author": "Moonly Days",
     "license": "ISC",
