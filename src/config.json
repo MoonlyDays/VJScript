@@ -20,7 +20,7 @@
         "Math.tan":    "tan"
     },
     "Declare":   {
-        "Number":                  "x => x.tofloat()",
+        "Number()":                "x => x.tofloat()",
         "Number.EPSILON":          "2.220446049250313e-16",
         "Number.MAX_SAFE_INTEGER": "9007199254740991",
         "Number.MAX_VALUE":        "1.7976931348623157e+308",

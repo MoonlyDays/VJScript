@@ -6,6 +6,7 @@
 import {Program} from 'esprima';
 import {BaseNode, Declaration, Identifier, MemberExpression} from 'estree';
 
+import {ESTreeNodeMap} from './nodes';
 import {renameNode} from './rename';
 import {NodeContext} from './util';
 
@@ -19,7 +20,8 @@ export const preprocess = (program: Program): void => {
     }
 };
 
-const PreprocessorMap = {
+type PreprocessingMap = { [K in keyof ESTreeNodeMap]?: (ctx: NodeContext<ESTreeNodeMap[K]>) => void };
+const PreprocessorMap: PreprocessingMap = {
     Identifier: (ctx: NodeContext<Identifier>) => {
         renameNode(ctx);
     },

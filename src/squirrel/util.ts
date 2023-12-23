@@ -4,7 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Program} from 'esprima';
-import {BaseNode, Identifier, MemberExpression} from 'estree';
+import {BaseNode, CallExpression, Identifier, MemberExpression} from 'estree';
 
 import {ESTreeNodeMap} from './nodes';
 
@@ -20,7 +20,7 @@ export interface NodeContext<T extends BaseNode = BaseNode> {
 
 
 export type CollapsedIdentifier = string[];
-export type IdentifierNode = MemberExpression | Identifier;
+export type IdentifierNode = MemberExpression | Identifier | CallExpression;
 
 /**
  * Tries to convert an identifier or a member expression to a flattened identifier.

@@ -30,12 +30,20 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
         return;
     }
 
+    if (rule.call_only) {
+        const parent = ctx.parent.node;
+        if (!isNodeOfType(parent, 'CallExpression'))
+            return;
+
+        if (parent.callee != node)
+            return;
+    }
+
     if ('declaration' in rule) {
         const decl = rule.declaration;
 
         let declaration = ExtraDeclarations.get(decl);
-        if(!declaration)
-        {
+        if (!declaration) {
             const programCode = parseScript(decl);
             const body = programCode.body;
 

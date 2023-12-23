@@ -426,23 +426,12 @@ const TranslationMap: TranslationMap = {
     },
 
     ArrowFunctionExpression: function* (node: ArrowFunctionExpression) {
-
-        if (!isNodeOfType(node.body, 'BlockStatement')) {
-            node.body = {
-                type: 'BlockStatement',
-                body: [{
-                    type: 'ReturnStatement',
-                    argument: node.body
-                }]
-            };
-        }
-
         yield '(';
         yield* this.FunctionExpression({
             type: 'FunctionExpression',
             id: null,
             params: node.params,
-            body: node.body
+            body: node.body as BlockStatement
         });
         yield ')';
     },
