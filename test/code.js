@@ -1,1 +1,0 @@
-console.log(Number(Math.floor(Math.random()) + '').toString());

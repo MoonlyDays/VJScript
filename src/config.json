@@ -2,6 +2,7 @@
     "Alias":     {
         "*.toString":  "*.tostring",
         "console.log": "printl",
+        "CConVars":    "Convars",
         "Math.PI":     "PI",
         "Math.abs":    "fabs",
         "Math.acos":   "acos",
