@@ -3,7 +3,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {randomBytes} from 'crypto';
+import * as crypto from 'crypto';
 import {parseScript} from 'esprima';
 import {BlockStatement, Declaration} from 'estree';
 
@@ -13,11 +13,13 @@ import {ExtraDeclarations} from './preprocessing';
 import {
     CollapsedIdentifier,
     collapseIdentifier,
-    decodeIdentifier, expandIdentifier,
+    decodeIdentifier, encodeIdentifier, expandIdentifier,
     IdentifierNode,
     isNodeOfType,
     NodeContext
 } from './util';
+
+const HASH_SALT = 'Club Sandwich!';
 
 export function renameNode(ctx: NodeContext<IdentifierNode>) {
     const node = ctx.node;
@@ -51,7 +53,7 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
                 throw Error('More than one declaration is not allowed in Declare config.');
             }
 
-            declaration = normalizeDeclaration(body[0]);
+            declaration = normalizeDeclaration(body[0], rule.pattern);
             ExtraDeclarations.set(decl, declaration);
         }
 
@@ -98,8 +100,19 @@ function findRule(node: IdentifierNode, ident: CollapsedIdentifier) {
     }
 }
 
-function generateIdentifier() {
-    return `__js_gen_${randomBytes(4).toString('hex')}`;
+function generateIdentifier(searchPattern: CollapsedIdentifier) {
+
+    const encodedIdent = encodeIdentifier(searchPattern);
+    const hash = crypto.createHash('SHA1');
+    hash.update(encodedIdent + HASH_SALT);
+    const digest = hash.digest('hex').slice(0, 4);
+
+    const inlineName = searchPattern
+        .filter(x => !!x)
+        .map(x => x.toLowerCase())
+        .join('_');
+
+    return `__js_${inlineName}_${digest}`;
 }
 
 function extractIdentifierName(node: ESTreeNode): string {
@@ -121,7 +134,7 @@ function extractIdentifierName(node: ESTreeNode): string {
     throw Error(`Cannot extract identifier name from ${node.type}.`);
 }
 
-function normalizeDeclaration(node: ESTreeNode): Declaration {
+function normalizeDeclaration(node: ESTreeNode, searchPattern: CollapsedIdentifier): Declaration {
 
     if (isNodeOfType(node, 'ExpressionStatement')) {
 
@@ -132,7 +145,7 @@ function normalizeDeclaration(node: ESTreeNode): Declaration {
                 params: expr.params,
                 body: expr.body as BlockStatement,
                 id: null,
-            });
+            }, searchPattern);
         }
 
         return normalizeDeclaration({
@@ -142,16 +155,16 @@ function normalizeDeclaration(node: ESTreeNode): Declaration {
                 init: expr,
                 id: {
                     type: 'Identifier',
-                    name: generateIdentifier()
+                    name: generateIdentifier(searchPattern)
                 }
             }],
             kind: 'const'
-        });
+        }, searchPattern);
     }
 
     if (isNodeOfType(node, 'FunctionDeclaration')) {
         if (!node.id) {
-            const randomName = generateIdentifier();
+            const randomName = generateIdentifier(searchPattern);
             node.id = {type: 'Identifier', name: randomName};
         }
 

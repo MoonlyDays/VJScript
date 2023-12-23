@@ -1,2 +1,1 @@
-console.log(Number(Number(Number.NaN)).toString());
-console.log(Number('123'));
+console.log(Number(Math.floor(Math.random()) + '').toString());
