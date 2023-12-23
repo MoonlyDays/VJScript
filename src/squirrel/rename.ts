@@ -68,7 +68,8 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
         const identItem = nodeIdent[i];
         newIdent.push(renameItem || identItem);
     }
-    ctx.node = expandIdentifier(newIdent);
+
+    ctx.node = expandIdentifier(newIdent, node);
 }
 
 function findRule(node: IdentifierNode, ident: CollapsedIdentifier) {

@@ -4,9 +4,9 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Program} from 'esprima';
-import {BaseNode, CallExpression, Identifier, MemberExpression} from 'estree';
+import {BaseNode, CallExpression, Expression, Identifier, MemberExpression} from 'estree';
 
-import {ESTreeNodeMap} from './nodes';
+import {ESTreeNode, ESTreeNodeMap} from './nodes';
 
 export const isNodeOfType = <T extends keyof ESTreeNodeMap>(node: BaseNode, type: T): node is ESTreeNodeMap[T] => {
     return node.type == type;
@@ -37,9 +37,7 @@ export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdent
 
         // Object must be an identifier for this to work.
         const object = node.object;
-        if (object.type != 'Identifier') {
-            return false;
-        }
+        const objectName = isNodeOfType(object, 'Identifier') ? object.name : null;
 
         const property = node.property;
         const propPath = collapseIdentifier(property as IdentifierNode);
@@ -49,7 +47,7 @@ export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdent
             return false;
         }
 
-        return [object.name, ...propPath];
+        return [objectName, ...propPath];
     }
 
     if (isNodeOfType(node, 'Identifier')) {
@@ -59,22 +57,38 @@ export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdent
     return false;
 }
 
-/**
- * Expand a collapsed identifier
- * @param collapsedIdent
- */
-export function expandIdentifier(collapsedIdent: CollapsedIdentifier): IdentifierNode {
+export function expandIdentifier(collapsedIdent: CollapsedIdentifier, fallback?: IdentifierNode): IdentifierNode {
     let prev: IdentifierNode;
     for (let i = 0; i < collapsedIdent.length; i++) {
         const identName = collapsedIdent[i];
-        const ident: Identifier = {
+
+        let ident: IdentifierNode = {
             type: 'Identifier',
             name: identName
         };
+
+        if (!ident.name && fallback) {
+            let fallbackNode: IdentifierNode = fallback;
+            let success = true;
+            for (let j = 0; j <= i; j++) {
+                if (!isNodeOfType(fallbackNode, 'MemberExpression')) {
+                    success = false;
+                    break;
+                }
+
+                fallbackNode = fallbackNode.object as IdentifierNode;
+            }
+
+            if (success) {
+                ident = fallbackNode;
+            }
+        }
+
         if (!prev) {
             prev = ident;
             continue;
         }
+
         prev = {
             type: 'MemberExpression',
             computed: false,
