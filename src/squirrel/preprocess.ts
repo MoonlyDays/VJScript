@@ -3,13 +3,13 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {parseModule} from 'meriyah';
+import {traverse} from 'estree-toolkit';
+import {ESTree} from 'meriyah';
 
-import {generate} from './squirrel/generate';
-import {preprocess} from './squirrel/preprocess';
-
-export function translate(jsCode: string): string {
-    const program = parseModule(jsCode);
-    preprocess(program);
-    return generate(program);
+export function preprocess(program: ESTree.Program) {
+    traverse(program, TraverseVisitors);
 }
+
+
+type TraverseVisitors = Parameters<typeof traverse>[1];
+const TraverseVisitors: TraverseVisitors = {};

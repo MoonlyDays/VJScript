@@ -3,52 +3,13 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {CallExpression, Identifier, MemberExpression, Program, Syntax} from 'esprima-next';
+import {CallExpression, Identifier, MemberExpression, Node} from 'estree';
+import {NodePath} from 'estree-toolkit';
 
-import {SearchPattern} from './config';
-import {ESTreeNode, ESTreeNodeMap} from './nodes';
-
-export type Mutable<T> = {
-    -readonly [K in keyof T]: T[K]
-}
-
-export class NodeContext<T extends ESTreeNode = ESTreeNode> {
-    node: T;
-    parent?: NodeContext;
-    program: Program;
-
-    constructor(node: T, parent?: NodeContext) {
-        this.node = node;
-        this.parent = parent;
-        this.program = parent?.program;
-    }
-
-    /**
-     * Goes up the parent stack and finds a parent of type.
-     */
-    findParent(type: keyof ESTreeNodeMap, maxDepth = 999) {
-
-        if (maxDepth == 0)
-            return null;
-
-        // We reached the top of the stack.
-        if (!this.parent)
-            return null;
-
-        if (this.parent.node.type == type)
-            return this.parent;
-
-        return this.parent.findParent(type, maxDepth - 1);
-    }
-
-    /**
-     * Are we a child of a node of a specific type.
-     */
-    isChildOf(type: keyof ESTreeNodeMap) {
-        return !!this.findParent(type);
-    }
-}
-
+export type SearchPattern = {
+    pattern: CollapsedIdentifier;
+    call_only: boolean;
+};
 
 export type CollapsedIdentifier = string[];
 export type IdentifierNode = MemberExpression | Identifier | CallExpression;
@@ -59,7 +20,7 @@ export type IdentifierNode = MemberExpression | Identifier | CallExpression;
  */
 export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdentifier {
 
-    if (node.type == Syntax.MemberExpression) {
+    if (node.type == 'MemberExpression') {
         // Member expression must not be computed,
         // for us to be able to generate identifier path.
         if (node.computed) {
@@ -68,7 +29,7 @@ export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdent
 
         // Object must be an identifier for this to work.
         const object = node.object;
-        const objectName = object.type == Syntax.Identifier ? object.name : null;
+        const objectName = object.type == 'Identifier' ? object.name : null;
 
         const property = node.property;
         const propPath = collapseIdentifier(property as IdentifierNode);
@@ -81,7 +42,7 @@ export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdent
         return [objectName, ...propPath];
     }
 
-    if (node.type == Syntax.Identifier) {
+    if (node.type == 'Identifier') {
         return [node.name];
     }
 
@@ -94,7 +55,7 @@ export function expandIdentifier(collapsedIdent: CollapsedIdentifier, fallback?:
         const identName = collapsedIdent[i];
 
         let ident: IdentifierNode = {
-            type: Syntax.Identifier,
+            type: 'Identifier',
             name: identName
         };
 
@@ -102,7 +63,7 @@ export function expandIdentifier(collapsedIdent: CollapsedIdentifier, fallback?:
             let fallbackNode: IdentifierNode = fallback;
             let success = true;
             for (let j = 0; j <= i; j++) {
-                if (fallbackNode.type != Syntax.MemberExpression) {
+                if (fallbackNode.type != 'MemberExpression') {
                     success = false;
                     break;
                 }
@@ -121,7 +82,7 @@ export function expandIdentifier(collapsedIdent: CollapsedIdentifier, fallback?:
         }
 
         prev = {
-            type: Syntax.MemberExpression,
+            type: 'MemberExpression',
             computed: false,
             optional: false,
             object: prev,
@@ -149,9 +110,9 @@ export function encodeIdentifier(decoded: CollapsedIdentifier): string {
     return decoded.map(x => x || '*').join('.');
 }
 
-export function findListEntryByNode<T extends SearchPattern>(list: Array<T>, ctx: NodeContext<IdentifierNode>): T {
+export function findListEntryForIdentifier<T extends SearchPattern>(list: Array<T>, path: NodePath<IdentifierNode, Node>): T {
 
-    const node = ctx.node;
+    const node = path.node;
     const ident = collapseIdentifier(node);
     if (ident === false)
         return;
@@ -179,12 +140,7 @@ export function findListEntryByNode<T extends SearchPattern>(list: Array<T>, ctx
             continue;
 
         if (renameRule.call_only) {
-            const parent = ctx.parent.node;
-            if (parent.type != Syntax.CallExpression)
-                return;
-
-            if (parent.callee != node)
-                return;
+            throw Error('TODO: Implement call_only match!');
         }
 
         return renameRule;

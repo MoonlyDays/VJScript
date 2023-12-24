@@ -3,7 +3,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {IdentifierBlackList} from './config';
+import {IdentifierBlackList} from '../squirrel/config';
 import {
     collapseIdentifier, encodeIdentifier,
     findListEntryByNode,

@@ -4,12 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import Config from '../config.json';
-import {CollapsedIdentifier, decodeIdentifier} from './util';
-
-export type SearchPattern = {
-    pattern: CollapsedIdentifier;
-    call_only: boolean;
-};
+import {CollapsedIdentifier, decodeIdentifier, SearchPattern} from './identifier';
 
 export type RenameRuleAlias = SearchPattern & {
     rename: CollapsedIdentifier;

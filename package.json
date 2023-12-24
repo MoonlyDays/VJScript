@@ -1,49 +1,51 @@
 {
-    "name":            "vjscript",
-    "version":         "0.0.3",
-    "description":     "Framework that automagically translates your JavaScript code to VScript supported Squirrel language.",
-    "main":            "dist/index.js",
-    "keywords":        [
-        "vscript", "squirrel", "javascript"
+    "name": "vjscript",
+    "version": "0.1.0",
+    "description": "Framework that automagically translates your JavaScript code to VScript supported Squirrel language.",
+    "main": "dist/index.js",
+    "keywords": [
+        "vscript",
+        "squirrel",
+        "javascript"
     ],
-    "scripts":         {
-        "test":  "node dist/index.js test/code.js",
+    "scripts": {
+        "test": "node dist/index.js test/code.js",
         "watch": "tsc -w",
         "build": "tsc",
-        "dev":   "npx ts-node src/index.ts"
+        "dev": "npx ts-node src/vjsc.ts"
     },
-    "files":           [
+    "files": [
         "package.json",
         "dist",
         "vjscript.d.ts"
     ],
-    "repository":      {
+    "repository": {
         "type": "git",
-        "url":  "git+https://github.com/MoonlyDays/VJScript.git"
+        "url": "git+https://github.com/MoonlyDays/VJScript.git"
     },
-    "bin":             {
-        "vjsc": "./dist/index.js"
+    "bin": {
+        "vjsc": "./dist/vjsc.js"
     },
-    "types":           "./vjscript.d.ts",
-    "publishConfig":   {},
-    "author":          "Moonly Days",
-    "license":         "ISC",
-    "bugs":            {
+    "types": "./vjscript.d.ts",
+    "publishConfig": {},
+    "author": "Moonly Days",
+    "license": "ISC",
+    "bugs": {
         "url": "https://github.com/MoonlyDays/VJScript/issues"
     },
-    "homepage":        "https://github.com/MoonlyDays/VJScript#readme",
+    "homepage": "https://github.com/MoonlyDays/VJScript#readme",
     "devDependencies": {
-        "@types/esprima":                   "^4.0.6",
-        "@types/estree":                    "^1.0.5",
+        "@types/estree": "^1.0.5",
         "@typescript-eslint/eslint-plugin": "^6.15.0",
-        "@typescript-eslint/parser":        "^6.15.0",
-        "eslint":                           "^8.56.0",
+        "@typescript-eslint/parser": "^6.15.0",
+        "eslint": "^8.56.0",
         "eslint-plugin-simple-import-sort": "^10.0.0",
-        "ts-node":                          "^10.9.2",
-        "typescript":                       "^5.3.3"
+        "ts-node": "^10.9.2",
+        "typescript": "^5.3.3"
     },
-    "dependencies":    {
-        "crypto":       "^1.0.1",
-        "esprima-next": "^5.8.4"
+    "dependencies": {
+        "crypto": "^1.0.1",
+        "estree-toolkit": "^1.7.3",
+        "meriyah": "^4.3.9"
     }
 }

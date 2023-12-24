@@ -6,7 +6,7 @@
 import * as crypto from 'crypto';
 import {BlockStatement, Declaration, parseScript, Syntax} from 'esprima-next';
 
-import {IdentifierRenameList} from './config';
+import {IdentifierRenameList} from '../squirrel/config';
 import {ESTreeNode} from './nodes';
 import {ExtraDeclarations} from './preprocessing';
 import {
