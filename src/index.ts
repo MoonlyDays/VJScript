@@ -5,7 +5,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import * as esprima from 'esprima-next';
+import {parseModule} from 'esprima-next';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -22,7 +22,7 @@ if (!fs.existsSync(scriptPath)) {
 // Read the JavaScript file from the file.
 const jsCode = fs.readFileSync(scriptPath, 'utf8');
 // Build a syntax tree of the program
-const program = esprima.parseModule(jsCode);
+const program = parseModule(jsCode);
 // Preprocess it to allow better compatibility with Squirrel
 preprocess(program);
 // Translate it to Squirrel code.

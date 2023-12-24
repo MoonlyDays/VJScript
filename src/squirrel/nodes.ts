@@ -5,7 +5,7 @@
 
 import {
     ArrayExpression, ArrowFunctionExpression, AssignmentExpression,
-    AssignmentProperty, AwaitExpression, BinaryExpression,
+    AwaitExpression, BinaryExpression,
     BlockStatement, BreakStatement, CallExpression,
     CatchClause, ChainExpression, ClassBody,
     ClassDeclaration, ClassExpression, ConditionalExpression,
@@ -27,11 +27,12 @@ import {
     ThrowStatement, TryStatement, UnaryExpression,
     UpdateExpression, VariableDeclaration, VariableDeclarator,
     WhileStatement, WithStatement, YieldExpression
-} from 'estree';
+} from 'esprima-next';
 
 export type ESTreeNode = ESTreeNodeMap[keyof ESTreeNodeMap];
+
 export type ESTreeNodeMap = {
-    AssignmentProperty: AssignmentProperty;
+    // AssignmentProperty: AssignmentProperty;
     CatchClause: CatchClause;
     ClassDeclaration: ClassDeclaration;
     ClassExpression: ClassExpression;

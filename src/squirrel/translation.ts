@@ -4,21 +4,46 @@
 //--------------------------------------------------------------------------------------------------
 
 import {
-    ArrayExpression, ArrowFunctionExpression, AssignmentExpression, BaseNode,
-    BinaryExpression, BlockStatement, CallExpression, ClassBody, ClassDeclaration,
-    ConditionalExpression, ExpressionStatement, ForInStatement,
-    ForOfStatement, ForStatement, FunctionDeclaration,
-    FunctionExpression, Identifier, IfStatement,
-    Literal, LogicalExpression, MemberExpression, MethodDefinition,
-    NewExpression, ObjectExpression, Property,
-    ReturnStatement, Statement, Super, TemplateLiteral,
-    UnaryExpression, UpdateExpression, VariableDeclaration,
-    WhileStatement, Program, ThrowStatement
-} from 'estree';
+    ArrayExpression,
+    ArrowFunctionExpression,
+    AssignmentExpression,
+    BinaryExpression,
+    BlockStatement,
+    CallExpression,
+    ClassBody,
+    ClassDeclaration,
+    ConditionalExpression,
+    ExpressionStatement,
+    ForInStatement,
+    ForOfStatement,
+    ForStatement,
+    FunctionDeclaration,
+    FunctionExpression,
+    Identifier,
+    IfStatement,
+    Literal,
+    LogicalExpression,
+    MemberExpression,
+    MethodDefinition,
+    NewExpression,
+    ObjectExpression,
+    Program,
+    Property,
+    ReturnStatement,
+    Statement,
+    Super,
+    Syntax,
+    TemplateLiteral,
+    ThrowStatement,
+    UnaryExpression,
+    UpdateExpression,
+    VariableDeclaration,
+    WhileStatement
+} from 'esprima-next';
 import * as path from 'path';
 
-import {ESTreeNodeMap} from './nodes';
-import {isNodeOfType} from './util';
+import {ESTreeNode, ESTreeNodeMap} from './nodes';
+import {Mutable} from './util';
 
 export function translate(scriptPath: string, program: Program) {
 
@@ -35,7 +60,7 @@ export function translate(scriptPath: string, program: Program) {
     return code + translateNode(program);
 }
 
-function translateNode(node: BaseNode): string {
+function translateNode(node: ESTreeNode): string {
     const fn = TranslationMap[node.type];
     if (!fn) {
         console.log(node);
@@ -184,7 +209,7 @@ const TranslationMap: TranslationMap = {
          * +--------------------------+-----------------------------+
          */
 
-        if (node.left.type == 'VariableDeclaration') {
+        if (node.left.type == Syntax.VariableDeclaration) {
 
             const decl = node.left.declarations[0];
             if (decl.id.type == 'ArrayPattern') {
@@ -352,7 +377,7 @@ const TranslationMap: TranslationMap = {
         yield '}';
     },
 
-    BinaryExpression: function* (node: BinaryExpression) {
+    BinaryExpression: function* (node: Mutable<BinaryExpression>) {
 
         if (node.operator == '===') {
             // Squirrel doesn't support triple equal signs.
@@ -368,14 +393,14 @@ const TranslationMap: TranslationMap = {
         yield ')';
     },
 
-    FunctionExpression: function* (node: FunctionExpression) {
+    FunctionExpression: function* (node: Mutable<FunctionExpression>) {
 
         const body = node.body;
-        if (!isNodeOfType(body, 'BlockStatement')) {
+        if (body.type != Syntax.BlockStatement) {
             node.body = {
-                type: 'BlockStatement',
+                type: Syntax.BlockStatement,
                 body: [{
-                    type: 'ReturnStatement',
+                    type: Syntax.ReturnStatement,
                     argument: body
                 }]
             };

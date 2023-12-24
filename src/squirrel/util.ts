@@ -3,15 +3,16 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {BaseNode, CallExpression, Program, Identifier, MemberExpression} from 'estree';
-import {ESTreeNodeMap} from './nodes';
+import {CallExpression, Identifier, MemberExpression, Program, Syntax} from 'esprima-next';
+
 import {SearchPattern} from './config';
+import {ESTreeNode, ESTreeNodeMap} from './nodes';
 
-export const isNodeOfType = <T extends keyof ESTreeNodeMap>(node: BaseNode, type: T): node is ESTreeNodeMap[T] => {
-    return node.type == type;
-};
+export type Mutable<T> = {
+    -readonly [K in keyof T]: T[K]
+}
 
-export class NodeContext<T extends BaseNode = BaseNode> {
+export class NodeContext<T extends ESTreeNode = ESTreeNode> {
     node: T;
     parent?: NodeContext;
     program: Program;
@@ -58,7 +59,7 @@ export type IdentifierNode = MemberExpression | Identifier | CallExpression;
  */
 export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdentifier {
 
-    if (isNodeOfType(node, 'MemberExpression')) {
+    if (node.type == Syntax.MemberExpression) {
         // Member expression must not be computed,
         // for us to be able to generate identifier path.
         if (node.computed) {
@@ -67,7 +68,7 @@ export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdent
 
         // Object must be an identifier for this to work.
         const object = node.object;
-        const objectName = isNodeOfType(object, 'Identifier') ? object.name : null;
+        const objectName = object.type == Syntax.Identifier ? object.name : null;
 
         const property = node.property;
         const propPath = collapseIdentifier(property as IdentifierNode);
@@ -80,7 +81,7 @@ export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdent
         return [objectName, ...propPath];
     }
 
-    if (isNodeOfType(node, 'Identifier')) {
+    if (node.type == Syntax.Identifier) {
         return [node.name];
     }
 
@@ -93,7 +94,7 @@ export function expandIdentifier(collapsedIdent: CollapsedIdentifier, fallback?:
         const identName = collapsedIdent[i];
 
         let ident: IdentifierNode = {
-            type: 'Identifier',
+            type: Syntax.Identifier,
             name: identName
         };
 
@@ -101,7 +102,7 @@ export function expandIdentifier(collapsedIdent: CollapsedIdentifier, fallback?:
             let fallbackNode: IdentifierNode = fallback;
             let success = true;
             for (let j = 0; j <= i; j++) {
-                if (!isNodeOfType(fallbackNode, 'MemberExpression')) {
+                if (fallbackNode.type != Syntax.MemberExpression) {
                     success = false;
                     break;
                 }
@@ -120,7 +121,7 @@ export function expandIdentifier(collapsedIdent: CollapsedIdentifier, fallback?:
         }
 
         prev = {
-            type: 'MemberExpression',
+            type: Syntax.MemberExpression,
             computed: false,
             optional: false,
             object: prev,
@@ -179,7 +180,7 @@ export function findListEntryByNode<T extends SearchPattern>(list: Array<T>, ctx
 
         if (renameRule.call_only) {
             const parent = ctx.parent.node;
-            if (!isNodeOfType(parent, 'CallExpression'))
+            if (parent.type != Syntax.CallExpression)
                 return;
 
             if (parent.callee != node)

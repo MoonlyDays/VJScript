@@ -4,20 +4,20 @@
 //--------------------------------------------------------------------------------------------------
 
 import * as crypto from 'crypto';
-import {parseScript} from 'esprima-next';
-import {BlockStatement, Declaration} from 'estree';
+import {BlockStatement, Declaration, parseScript, Syntax} from 'esprima-next';
 
 import {IdentifierRenameList} from './config';
-import {ESTreeNode, ESTreeNodeMap} from './nodes';
+import {ESTreeNode} from './nodes';
 import {ExtraDeclarations} from './preprocessing';
 import {
     CollapsedIdentifier,
     collapseIdentifier,
     decodeIdentifier,
     encodeIdentifier,
-    expandIdentifier, findListEntryByNode,
+    expandIdentifier,
+    findListEntryByNode,
     IdentifierNode,
-    isNodeOfType,
+    Mutable,
     NodeContext
 } from './util';
 
@@ -46,7 +46,7 @@ export function renameNode(ctx: NodeContext<IdentifierNode>) {
                 throw Error('More than one declaration is not allowed in Declare config.');
             }
 
-            declaration = normalizeDeclaration(body[0] as ESTreeNode, rule.pattern);
+            declaration = normalizeDeclaration(body[0], rule.pattern);
             ExtraDeclarations.set(decl, declaration);
         }
 
@@ -84,69 +84,70 @@ function generateIdentifier(searchPattern: CollapsedIdentifier) {
 
 function extractIdentifierName(node: ESTreeNode): string {
 
-    if (isNodeOfType(node, 'FunctionDeclaration')) {
+    if (node.type == Syntax.FunctionDeclaration) {
         return node.id.name;
     }
 
-    if (isNodeOfType(node, 'VariableDeclaration')) {
+    if (node.type == Syntax.Identifier)
+        return node.name;
+
+    if (node.type == Syntax.VariableDeclaration) {
         const declaration = node.declarations[0];
-        const id = declaration.id;
-
-        if (isNodeOfType(id, 'Identifier'))
-            return id.name;
-
-        throw Error('Only Identifier is allowed as variable declarator in Declare config.');
+        return extractIdentifierName(declaration.id);
     }
 
     throw Error(`Cannot extract identifier name from ${node.type}.`);
 }
 
-function normalizeDeclaration(node: ESTreeNode, searchPattern: CollapsedIdentifier): Declaration {
+function normalizeDeclaration(node: Mutable<ESTreeNode>, searchPattern: CollapsedIdentifier): Declaration {
 
-    if (isNodeOfType(node, 'ExpressionStatement')) {
+    if (node.type == Syntax.ExpressionStatement) {
 
         const expr = node.expression;
-        if (isNodeOfType(expr, 'ArrowFunctionExpression')) {
+        if (expr.type == Syntax.ArrowFunctionExpression) {
             return normalizeDeclaration({
-                type: 'FunctionDeclaration',
+                type: Syntax.FunctionDeclaration,
                 params: expr.params,
                 body: expr.body as BlockStatement,
+                generator: expr.generator,
+                expression: expr.expression,
+                async: expr.async,
                 id: null,
             }, searchPattern);
         }
 
         return normalizeDeclaration({
-            type: 'VariableDeclaration',
+            type: Syntax.VariableDeclaration,
+            kind: 'const',
             declarations: [{
-                type: 'VariableDeclarator',
+                type: Syntax.VariableDeclarator,
                 init: expr,
                 id: {
-                    type: 'Identifier',
+                    type: Syntax.Identifier,
                     name: generateIdentifier(searchPattern)
                 }
-            }],
-            kind: 'const'
+            }]
         }, searchPattern);
     }
 
-    if (isNodeOfType(node, 'FunctionDeclaration')) {
+    if (node.type == Syntax.FunctionDeclaration) {
+
         if (!node.id) {
             const randomName = generateIdentifier(searchPattern);
-            node.id = {type: 'Identifier', name: randomName};
+            node.id = {type: Syntax.Identifier, name: randomName};
         }
 
         return node;
     }
 
-    if (isNodeOfType(node, 'VariableDeclaration')) {
-
+    if (node.type == Syntax.VariableDeclaration) {
         node.kind = 'const';
         const declarators = node.declarations;
         if (declarators.length > 1)
             throw Error('Only one variable declarator is allowed in Declare config.');
 
         const declarator = declarators[0];
-        if (!isNodeOfType(declarator.id, 'Identifier'))
+        if (declarator.id.type != Syntax.Identifier)
             throw Error('Only Identifier type is allowed in VariableDeclarator.');
 
         return node;

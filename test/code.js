@@ -6,6 +6,9 @@ function addNumbers(a, b) {
     return a + b;
 }
 
+for(const l in GREETING)
+    console.log(l);
+
 // Class declaration with constructor and properties
 class Rectangle {
 
