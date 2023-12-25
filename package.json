@@ -10,6 +10,7 @@
     ],
     "scripts": {
         "test": "node dist/vjsc.js test/code.js -t",
+        "test_watch": "node dist/vjsc.js test/code.js -t -w -i 100",
         "watch": "tsc -w",
         "build": "tsc",
         "dev": "npx ts-node src/vjsc.ts"

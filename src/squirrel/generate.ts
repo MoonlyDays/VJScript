@@ -4,19 +4,17 @@
 //--------------------------------------------------------------------------------------------------
 
 import {
-    BaseNode,
+    BaseNode, BinaryExpression,
     BlockStatement,
     Identifier,
     Literal,
-    Node,
     Program,
     VariableDeclaration,
     VariableDeclarator
 } from 'estree';
 import {traverse, Visitor} from 'estree-toolkit';
-import {ESTree} from 'meriyah';
 
-let scopeDepth = 0;
+import {helpers} from './helpers';
 
 export function generate(node: BaseNode) {
     const generator = Generators[node.type];
@@ -38,31 +36,16 @@ type Generators = {
     ) => Generator<string, void, unknown>;
 };
 
-const generateBody = function* (node: { body: BaseNode[] }) {
-
-    for (const element of node.body) {
-        let code = generate(element);
-
-        if (scopeDepth > 0) {
-            code = code.split('\n').map(x => '  ' + x).join('\n');
-        }
-
-        yield code;
-        yield '\n';
-    }
-};
-
 const Generators: Generators = {
     Program: function* (node: Program) {
-        yield* generateBody(node);
+        yield* helpers.generateBody(node);
     },
     BlockStatement: function* (node: BlockStatement) {
-        yield* generateBody(node);
+        yield* helpers.generateBody(node);
     },
     VariableDeclaration: function* (node: VariableDeclaration) {
-        yield node.kind;
+        yield node.kind == 'const' ? 'const' : 'local';
         yield ' ';
-
         yield node.declarations.map(x => generate(x)).join(', ');
     },
     VariableDeclarator: function* (node: VariableDeclarator) {
@@ -78,4 +61,9 @@ const Generators: Generators = {
     Literal: function* (node: Literal) {
         yield JSON.stringify(node.value);
     },
+    BinaryExpression: function* (node: BinaryExpression) {
+        yield '(';
+        yield* helpers.generateLROperatorExpression(node);
+        yield ')';
+    }
 };

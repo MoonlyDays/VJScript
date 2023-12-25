@@ -8,21 +8,46 @@
 import * as fs from 'fs';
 import {parseModule} from 'meriyah';
 import * as path from 'path';
+import * as wasi from 'wasi';
 
 import {translate} from './index';
 
-const options: {
+const WATCH_INTERVAL = 500;
+const g_kOptions: {
     watch?: boolean;
+    watchInterval: number;
     file?: string;
     dir?: string;
     tree?: boolean;
-} = {};
+} = {
+    watchInterval: WATCH_INTERVAL
+};
 
-const shortOptionMap = {w: 'watch', f: 'file', d: 'dir', t: 'tree'};
+const validateOptions = () => {
+    g_kOptions.watchInterval = Number(g_kOptions.watchInterval) || WATCH_INTERVAL;
+};
+
+const shortOptionMap: { [key: string]: keyof typeof g_kOptions } = {
+    w: 'watch',
+    f: 'file',
+    d: 'dir',
+    t: 'tree',
+    i: 'watchInterval'
+};
+
 const HEADER =
     'This code was automatically generated using VJScript.\n' +
     'VJScript is an automatic code translation tool from JavaScript to Squirrel\n' +
     'https://github.com/MoonlyDays/VJScript';
+
+const findOptionKey = (option: string) => {
+    option = option.toLowerCase();
+    for (const key in g_kOptions)
+        if (key.toLowerCase() == option)
+            return key;
+
+    return option;
+};
 
 const processShortOption = (option: string, value: string) => {
     if (option in shortOptionMap) {
@@ -32,8 +57,8 @@ const processShortOption = (option: string, value: string) => {
 };
 
 const processOption = (option: string, value?: string) => {
-    option = option.toLowerCase();
-    options[option] = value || true;
+    const key = findOptionKey(option);
+    g_kOptions[key] = value || true;
 };
 
 const generateHeader = (filePath: string) => {
@@ -65,10 +90,10 @@ const processFile = (filePath: string) => {
     const jsCode = fs.readFileSync(filePath).toString('utf-8');
 
     const inputPath = path.parse(filePath);
-    const baseDir = options.dir || inputPath.dir;
-    const fileName = options.file || '';
+    const baseDir = g_kOptions.dir || inputPath.dir;
+    const fileName = g_kOptions.file || '';
 
-    if (options.tree) {
+    if (g_kOptions.tree) {
         const treePath = path.format({...inputPath, dir: baseDir, base: fileName, ext: '.txt'});
         const jsTree = parseModule(jsCode);
         fs.writeFileSync(treePath, JSON.stringify(jsTree, undefined, 2));
@@ -86,7 +111,12 @@ for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
 
     if (arg.startsWith('-')) {
-        const value = argv[++i];
+        let value = argv[++i];
+        if (value && value.startsWith('-')) {
+            value = undefined;
+            i--;
+        }
+
         if (arg.startsWith('--')) processOption(arg.slice(1), value);
         else processShortOption(arg.slice(1), value);
 
@@ -96,6 +126,27 @@ for (let i = 2; i < argv.length; i++) {
     paths.push(arg);
 }
 
+validateOptions();
+
 for (const path of paths) {
+    console.log(`Translating ${path}...`);
     processFile(path);
+
+    if (g_kOptions.watch) {
+        fs.watchFile(
+            path,
+            {
+                persistent: true,
+                interval: g_kOptions.watchInterval
+            },
+            x => {
+                console.log(`[Watch Mode]: ${path} has updated. Translating...`);
+                processFile(path);
+            }
+        );
+    }
+}
+
+if (g_kOptions.watch) {
+    console.log(`[Watch Mode]: Watch Mode enabled! (interval: ${g_kOptions.watchInterval}ms)`);
 }
