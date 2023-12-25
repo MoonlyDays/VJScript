@@ -11,6 +11,7 @@ import * as path from 'path';
 import * as wasi from 'wasi';
 
 import {translate} from './index';
+import {MeriyahParseOptions} from './squirrel/helpers';
 
 const WATCH_INTERVAL = 500;
 const g_kOptions: {
@@ -95,7 +96,7 @@ const processFile = (filePath: string) => {
 
     if (g_kOptions.tree) {
         const treePath = path.format({...inputPath, dir: baseDir, base: fileName, ext: '.txt'});
-        const jsTree = parseModule(jsCode);
+        const jsTree = parseModule(jsCode, MeriyahParseOptions);
         fs.writeFileSync(treePath, JSON.stringify(jsTree, undefined, 2));
     }
 

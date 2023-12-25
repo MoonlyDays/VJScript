@@ -6,8 +6,9 @@
 import {
     BaseNode, BinaryExpression,
     BlockStatement,
+    ExpressionStatement,
     Identifier,
-    Literal,
+    Literal, ObjectExpression,
     Program,
     VariableDeclaration,
     VariableDeclarator
@@ -41,7 +42,7 @@ const Generators: Generators = {
         yield* helpers.generateBody(node);
     },
     BlockStatement: function* (node: BlockStatement) {
-        yield* helpers.generateBody(node);
+        yield* helpers.withScope(() => helpers.generateBody(node));
     },
     VariableDeclaration: function* (node: VariableDeclaration) {
         yield node.kind == 'const' ? 'const' : 'local';
@@ -65,5 +66,108 @@ const Generators: Generators = {
         yield '(';
         yield* helpers.generateLROperatorExpression(node);
         yield ')';
+    },
+    ExpressionStatement: function* (node: ExpressionStatement) {
+        yield generate(node.expression);
+    },
+    LogicalExpression: function* (node) {
+        yield* helpers.generateLROperatorExpression(node);
+    },
+    ThisExpression: function* () {
+        yield 'this';
+    },
+    MemberExpression: function* (node) {
+        yield generate(node.object);
+
+        if (node.computed) {
+            yield '[';
+            yield generate(node.property);
+            yield ']';
+            return;
+        }
+
+        yield '.';
+        yield generate(node.property);
+    },
+    ConditionalExpression: function* (node) {
+        yield generate(node.test);
+        yield ' ? ';
+        yield generate(node.consequent);
+        yield ' : ';
+        yield generate(node.alternate);
+    },
+    FunctionExpression: function* (node) {
+        yield 'function';
+
+        if (node.id) {
+            yield ' ';
+            yield generate(node.id);
+        }
+
+        yield ' (';
+        yield node.params.map(x => generate(x)).join(', ');
+        yield ') ';
+
+        yield generate(node.body);
+    },
+    CallExpression: function* (node) {
+        yield generate(node.callee);
+        yield '(';
+        yield node.arguments.map(x => generate(x)).join(', ');
+        yield ')';
+    },
+    IfStatement: function* (node) {
+        yield 'if (';
+        yield generate(node.test);
+        yield ') ';
+        yield generate(node.consequent);
+
+        if (node.alternate) {
+            yield ' else ';
+            yield generate(node.alternate);
+        }
+    },
+    AssignmentExpression: function* (node) {
+        yield* helpers.generateLROperatorExpression(node);
+    },
+    UnaryExpression: function* (node) {
+        yield '(';
+        yield node.operator;
+        yield generate(node.argument);
+        yield ')';
+    },
+    ObjectExpression: function* (node: ObjectExpression) {
+        yield* helpers.generateBody({body: node.properties});
+    },
+    Property: function* (node) {
+        if (['get', 'set'].includes(node.kind))
+            throw Error('Getters and Setters are not supported!');
+
+        yield generate(node.key);
+        yield ' = ';
+        yield generate(node.value);
+    },
+    ReturnStatement: function* (node) {
+        yield 'return ';
+        yield generate(node.argument);
+    },
+    ArrayExpression: function* (node) {
+        yield '[';
+        yield node.elements.map(x => generate(x)).join(', ');
+        yield ']';
+    },
+    ForOfStatement: function* (node) {
+        yield 'foreach (';
+
+        if (node.left.type == 'ArrayPattern') {
+            yield node.left.elements.map(x => generate(x)).join(', ');
+        } else {
+            yield generate(node.left);
+        }
+
+        yield ' in ';
+        yield generate(node.right);
+        yield ') ';
+        yield generate(node.body);
     }
 };

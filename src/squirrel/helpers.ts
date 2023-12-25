@@ -4,8 +4,13 @@
 //--------------------------------------------------------------------------------------------------
 
 import {BaseNode} from 'estree';
+import {Options} from 'meriyah';
 
 import {generate} from './generate';
+
+export const MeriyahParseOptions: Options = {
+    next: true
+};
 
 class Helpers {
 
@@ -34,7 +39,9 @@ class Helpers {
 
     public* withScope(fn: () => Generator<string, void, unknown>) {
         this.scopeDepth++;
+        yield '{\n';
         yield* fn();
+        yield '}';
         this.scopeDepth--;
     }
 }
