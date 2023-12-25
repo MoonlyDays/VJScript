@@ -3,11 +3,22 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {BlockStatement, Program} from 'estree';
+import {
+    BaseNode,
+    BlockStatement,
+    Identifier,
+    Literal,
+    Node,
+    Program,
+    VariableDeclaration,
+    VariableDeclarator
+} from 'estree';
 import {traverse, Visitor} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
 
-export function generate(node: ESTree.Node) {
+let scopeDepth = 0;
+
+export function generate(node: BaseNode) {
     const generator = Generators[node.type];
     if (!generator) {
         console.log(node);
@@ -27,11 +38,44 @@ type Generators = {
     ) => Generator<string, void, unknown>;
 };
 
+const generateBody = function* (node: { body: BaseNode[] }) {
+
+    for (const element of node.body) {
+        let code = generate(element);
+
+        if (scopeDepth > 0) {
+            code = code.split('\n').map(x => '  ' + x).join('\n');
+        }
+
+        yield code;
+        yield '\n';
+    }
+};
+
 const Generators: Generators = {
     Program: function* (node: Program) {
-        this.BlockStatement({});
+        yield* generateBody(node);
     },
     BlockStatement: function* (node: BlockStatement) {
+        yield* generateBody(node);
+    },
+    VariableDeclaration: function* (node: VariableDeclaration) {
+        yield node.kind;
+        yield ' ';
 
-    }
+        yield node.declarations.map(x => generate(x)).join(', ');
+    },
+    VariableDeclarator: function* (node: VariableDeclarator) {
+        yield generate(node.id);
+        if (node.init) {
+            yield ' = ';
+            yield generate(node.init);
+        }
+    },
+    Identifier: function* (node: Identifier) {
+        yield node.name;
+    },
+    Literal: function* (node: Literal) {
+        yield JSON.stringify(node.value);
+    },
 };

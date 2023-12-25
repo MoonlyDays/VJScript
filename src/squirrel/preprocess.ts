@@ -12,4 +12,8 @@ export function preprocess(program: ESTree.Program) {
 
 
 type TraverseVisitors = Parameters<typeof traverse>[1];
-const TraverseVisitors: TraverseVisitors = {};
+const TraverseVisitors: TraverseVisitors = {
+    Program: x => {
+
+    }
+};

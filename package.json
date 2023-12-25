@@ -9,7 +9,7 @@
         "javascript"
     ],
     "scripts": {
-        "test": "node dist/index.js test/code.js",
+        "test": "node dist/vjsc.js test/code.js -t",
         "watch": "tsc -w",
         "build": "tsc",
         "dev": "npx ts-node src/vjsc.ts"
