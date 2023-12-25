@@ -18,19 +18,33 @@ let [test1, test2] = array;
 [test1, test2] = array;
 
 let forDeclared, forDeclared2, forDeclared3;
-for (const item of array) {}
-for (forDeclared of array) {}
-for (const idx in array) {}
-for (forDeclared in array) {}
-for (const [idx] in array) {}
-for ([forDeclared] in array) {}
-for (const [k, v] in array) {}
-for ([forDeclared, forDeclared2] in array) {}
+for (const item of array) {
+}
+for (forDeclared of array) {
+}
+for (const idx in array) {
+}
+for (forDeclared in array) {
+}
+for (const [idx] in array) {
+}
+for ([forDeclared] in array) {
+}
+for (const [k, v] in array) {
+}
+for ([forDeclared, forDeclared2] in array) {
+}
 
-function declared_named_function(arg) {}
-const declared_unnamed_function = function () {};
-const declared_lambda_function = () => {};
+function declared_named_function(arg) {
+}
+
+const declared_unnamed_function = function () {
+};
+const declared_lambda_function = () => {
+};
 declared_named_function(declared_unnamed_function);
-declared_unnamed_function(function inline_named_function() {});
-declared_named_function(function inline_unnamed_function() {});
-declared_unnamed_function(() => {});
+declared_unnamed_function(function inline_named_function() {
+});
+declared_named_function(function inline_unnamed_function() {
+});
+declared_unnamed_function(() => 123 + 123);

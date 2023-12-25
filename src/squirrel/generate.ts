@@ -96,20 +96,6 @@ const Generators: Generators = {
         yield ' : ';
         yield generate(node.alternate);
     },
-    FunctionExpression: function* (node) {
-        yield 'function';
-
-        if (node.id) {
-            yield ' ';
-            yield generate(node.id);
-        }
-
-        yield ' (';
-        yield node.params.map(x => generate(x)).join(', ');
-        yield ') ';
-
-        yield generate(node.body);
-    },
     CallExpression: function* (node) {
         yield generate(node.callee);
         yield '(';
@@ -169,5 +155,11 @@ const Generators: Generators = {
         yield generate(node.right);
         yield ') ';
         yield generate(node.body);
+    },
+    FunctionExpression: function* (node) {
+        yield* helpers.generateFunction(node);
+    },
+    FunctionDeclaration: function *(node) {
+        yield* helpers.generateFunction(node);
     }
 };

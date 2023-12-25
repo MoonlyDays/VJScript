@@ -11,6 +11,7 @@ import {
 } from 'estree';
 import {builders as b, NodePath, traverse} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
+import * as path from 'path';
 
 export function preprocess(program: ESTree.Program) {
     traverse(program, TraverseVisitors);
@@ -120,6 +121,22 @@ const TraverseVisitors: TraverseVisitors = {
             parentPath.insertBefore(replace);
             path.remove();
         }
+    },
+
+    FunctionExpression: path => {
+        // Function expression must not contain a name.
+        const node = path.node;
+        node.id = null;
+    },
+
+    ArrowFunctionExpression: path => {
+        const node = path.node;
+
+        if (node.body.type != 'BlockStatement') {
+            node.body = b.blockStatement([b.returnStatement(node.body)]);
+        }
+
+        path.replaceWith(b.functionExpression(null, node.params, node.body, node.generator, node.async));
     }
 };
 

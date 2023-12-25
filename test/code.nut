@@ -1,12 +1,12 @@
-//------------------------------------------------------------------------------------------//
+//-------------------------------------------------------------------------------------//
 // This code was automatically generated using VJScript.
 // VJScript is an automatic code translation tool from JavaScript to Squirrel
 // https://github.com/MoonlyDays/VJScript
-//------------------------------------------------------------------------------------------//
+//-------------------------------------------------------------------------------------//
 // Source Script Name: code.js
-// Compile Time: Mon Dec 25 2023 20:04:32 GMT+0200 (Восточная Европа, стандартное время)
+// Compile Time: Mon Dec 25 2023 22:31:23 GMT+0200 (Eastern European Standard Time)
 // VJScript Version: 0.1.0
-//------------------------------------------------------------------------------------------//
+//-------------------------------------------------------------------------------------//
 
 const const_int_declare = 1
 const const_float_declare = 1.2
@@ -39,3 +39,17 @@ foreach (k, v in array) {
 }
 foreach (forDeclared, forDeclared2 in array) {
 }
+function declared_named_function (arg) {
+}
+local declared_unnamed_function = function () {
+}
+local declared_lambda_function = function () {
+}
+declared_named_function(declared_unnamed_function)
+declared_unnamed_function(function () {
+})
+declared_named_function(function () {
+})
+declared_unnamed_function(function () {
+  return (123 + 123)
+})
