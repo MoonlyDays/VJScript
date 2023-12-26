@@ -218,7 +218,6 @@ const Generators: Generators = {
         }
     },
     MethodDefinition: function* (node) {
-
         if (['get', 'set'].includes(node.kind)) {
             throw Error('Class getter and setter are not support.');
         }
@@ -240,7 +239,7 @@ const Generators: Generators = {
 
         yield* helpers.withScope(() => helpers.generateBody(node.value.body));
     },
-    Super: function* (node) {
+    Super: function* () {
         yield 'base';
     }
 };

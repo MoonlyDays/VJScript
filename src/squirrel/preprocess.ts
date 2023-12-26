@@ -4,7 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {
-    AssignmentExpression, AssignmentOperator, Class, ClassBody, ClassDeclaration,
+    AssignmentExpression, AssignmentOperator, ClassBody, ClassDeclaration,
     ForInStatement,
     ForOfStatement, MethodDefinition, PropertyDefinition,
     VariableDeclarator
@@ -12,7 +12,6 @@ import {
 import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
 
-import {generate} from './generate';
 import {renameNode} from './rename';
 
 export function preprocess(program: ESTree.Program) {
@@ -334,30 +333,3 @@ const propDefinitionHasValue = (path: PropertyDefinition) => {
 
     return true;
 };
-
-/*
-const helpers = {
-    processArrayPattern: <T extends Node>(path: NodePath<T, Node>, patternKey: keyof T, valueKey: keyof T) => {
-
-        const pattern = path.node[patternKey] as ArrayPattern;
-        const value = path.node[valueKey] as Node;
-
-        const replace: AssignmentExpression[] = [];
-
-        // Try to find a parent that is contained inside an array.
-        const parentPath = path.find(x => Array.isArray(x.container));
-        const tmp = parentPath.scope.generateUidIdentifier();
-        parentPath.insertBefore([b.variableDeclaration(
-            'let', [b.variableDeclarator(tmp, node.right)])
-        ]);
-
-        for (let i = 0; i < left.elements.length; i++) {
-            const key = left.elements[i];
-            const value = b.memberExpression(tmp, b.literal(i), true);
-            replace.push(b.assignmentExpression('=', key, value));
-        }
-
-        parentPath.insertBefore(replace);
-        path.remove();
-    }
-};*/

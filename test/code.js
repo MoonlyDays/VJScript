@@ -28,3 +28,5 @@ for (const color of g_kColors) {
 function getLight(color) {
     return g_kLights[color];
 }
+
+console.log(Math.floor(Math.random() * 100));

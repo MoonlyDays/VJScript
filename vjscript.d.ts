@@ -26,6 +26,7 @@ declare class QAngle {
 //------------------------------------------------------------------------------------
 // Globals
 //------------------------------------------------------------------------------------
+declare const self: CBaseEntity;
 /**
  * Sets a function in the entity's script to rerun by itself constantly. Pass null as the function name to remove a think function. The default think interval is 0.1s, unless overridden by returning a different time interval in seconds in the think function
  * @tip Return -1 to think every tick. Do not return 0, this will give inconsistent intervals.

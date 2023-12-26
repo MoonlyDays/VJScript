@@ -30,9 +30,9 @@ export function renameNode(path: NodePath<IdentifierNode>) {
         return;
 
     if ('declaration' in rule) {
-        /*
-        const decl = rule.declaration;
+        const declareCode = rule.declaration;
 
+        /*
         let declaration = ExtraDeclarations.get(decl);
         if (!declaration) {
             const programCode = parseScript(decl);
