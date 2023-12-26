@@ -10,6 +10,15 @@ class Light {
         this.LightProp = Entities.FindByName(null, `light_${color}`);
         this.SoundEnt = Entities.FindByName(null, `snd_${color}`);
     }
+
+    turnOn() {
+        this.LightProp.SetSkin(0);
+        EntFireByHandle(this.SoundEnt, 'PlaySound', '', -1, null, null);
+    }
+
+    turnOff() {
+        this.LightProp.SetSkin(1);
+    }
 }
 
 const g_kScoreText = Entities.FindByName(null, 'text_score');
@@ -29,4 +38,13 @@ function getLight(color) {
     return g_kLights[color];
 }
 
-console.log(Math.floor(Math.random() * 100));
+const l = getLight('green');
+l.turnOn();
+
+function PlayerThink() {
+    console.log(self.GetName());
+    return -1;
+}
+
+const player = GetListenServerHost();
+AddThinkToEnt(player, 'PlayerThink');

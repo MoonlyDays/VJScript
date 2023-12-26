@@ -24,9 +24,11 @@ const TraverseVisitors: TraverseVisitors = {
     Identifier: path => {
         renameNode(path);
     },
+
     MemberExpression: path => {
         renameNode(path);
     },
+
     VariableDeclaration: path => {
 
         const node = path.node;
@@ -56,6 +58,7 @@ const TraverseVisitors: TraverseVisitors = {
             }
         }
     },
+
     ForOfStatement: path => {
         const node = path.node;
         normalizeLoopStatement(path);
@@ -64,8 +67,8 @@ const TraverseVisitors: TraverseVisitors = {
             if (node.left.elements.length > 2)
                 throw Error('For Loop: Array Pattern must not contain more than 2 elements.');
         }
-
     },
+
     ForInStatement: path => {
         const node = path.node;
         normalizeLoopStatement(path);
@@ -88,6 +91,7 @@ const TraverseVisitors: TraverseVisitors = {
 
         path.replaceWith(b.forOfStatement(left, node.right, node.body, false));
     },
+
     VariableDeclarator: path => {
         const node = path.node;
         if (node.id.type == 'ArrayPattern') {
@@ -105,6 +109,7 @@ const TraverseVisitors: TraverseVisitors = {
             return;
         }
     },
+
     AssignmentExpression: path => {
         const node = path.node;
 
@@ -217,7 +222,9 @@ const TraverseVisitors: TraverseVisitors = {
             []
         ));
     },
+
     Super: path => {
+
         // Is super is being directly invoked in a constructor
         if (is.callExpression(path.parent)) {
             const ctor = path.findParent(x => x.node.type == 'MethodDefinition' && x.node.kind == 'constructor');

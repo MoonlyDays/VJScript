@@ -4,7 +4,7 @@
 // https://github.com/MoonlyDays/VJScript
 //-------------------------------------------------------------------------------------//
 // Source Script Name: code.js
-// Compile Time: Tue Dec 26 2023 17:07:22 GMT+0200 (Eastern European Standard Time)
+// Compile Time: Tue Dec 26 2023 17:21:47 GMT+0200 (Eastern European Standard Time)
 // VJScript Version: 0.1.0
 //-------------------------------------------------------------------------------------//
 
@@ -18,6 +18,13 @@ class Light {
     this.LightProp = Entities.FindByName(null, "light_" + color + "")
     this.SoundEnt = Entities.FindByName(null, "snd_" + color + "")
   }
+  function turnOn() {
+    this.LightProp.SetSkin(0)
+    EntFireByHandle(this.SoundEnt, "PlaySound", "", (- 1), null, null)
+  }
+  function turnOff() {
+    this.LightProp.SetSkin(1)
+  }
 }
 local g_kScoreText = Entities.FindByName(null, "text_score")
 local g_kRecordText = Entities.FindByName(null, "text_record")
@@ -30,4 +37,11 @@ foreach (color in g_kColors) {
 function getLight (color) {
   return g_kLights[color]
 }
-printl(floor((Math.random() * 100)))
+local l = getLight("green")
+l.turnOn()
+function PlayerThink () {
+  printl(self.GetName())
+  return (- 1)
+}
+local player = GetListenServerHost()
+AddThinkToEnt(player, "PlayerThink")
