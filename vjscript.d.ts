@@ -1032,7 +1032,7 @@ declare class CEntities {
      * @param entity
      * @param classname
      */
-    public FindByClassname(entity: CBaseEntity | null, classname: EntityClassName): CBaseEntity | null;
+    public FindByClassname<T extends CBaseEntity = CBaseEntity>(entity: CBaseEntity | null, classname: EntityClassName): T | null;
 
     /**
      * Find entities by classname nearest to a point within a radius.
@@ -1040,7 +1040,7 @@ declare class CEntities {
      * @param center
      * @param radius
      */
-    public FindByClassnameNearest(classname: EntityClassName, center: Vector, radius: number): CBaseEntity | null;
+    public FindByClassnameNearest<T extends CBaseEntity = CBaseEntity>(classname: EntityClassName, center: Vector, radius: number): T | null;
 
     /**
      * Find entities by classname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
@@ -1049,21 +1049,21 @@ declare class CEntities {
      * @param center
      * @param radius
      */
-    public FindByClassnameWithin(previous: CBaseEntity | null, classname: EntityClassName, center: Vector, radius: number): CBaseEntity | null;
+    public FindByClassnameWithin<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, classname: EntityClassName, center: Vector, radius: number): T | null;
 
     /**
      * Find entities by the string of their model keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
      * @param previous
      * @param modelname
      */
-    public FindByModel(previous: CBaseEntity | null, modelname: string): CBaseEntity | null;
+    public FindByModel<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, modelname: string): T | null;
 
     /**
      * Find entities by the string of their targetname keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
      * @param previous
      * @param targetname
      */
-    public FindByName(previous: CBaseEntity | null, targetname: string): CBaseEntity | null;
+    public FindByName<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, targetname: string): T | null;
 
     /**
      * Find entities by targetname nearest to a point within a radius.
@@ -1071,7 +1071,7 @@ declare class CEntities {
      * @param center
      * @param radius
      */
-    public FindByNameNearest(targetname: string, center: Vector, radius: number): CBaseEntity | null;
+    public FindByNameNearest<T extends CBaseEntity = CBaseEntity>(targetname: string, center: Vector, radius: number): T | null;
 
     /**
      * Find entities by targetname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
@@ -1080,14 +1080,14 @@ declare class CEntities {
      * @param center
      * @param radius
      */
-    public FindByNameWithin(previous: CBaseEntity | null, targetname: string, center: Vector, radius: number): CBaseEntity | null;
+    public FindByNameWithin<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, targetname: string, center: Vector, radius: number): T | null;
 
     /**
      * Find entities by the string of their target keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
      * @param previous
      * @param target
      */
-    public FindByTarget(previous: CBaseEntity | null, target: string): CBaseEntity | null;
+    public FindByTarget<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, target: string): T | null;
 
     /**
      * Find entities within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
@@ -1095,7 +1095,7 @@ declare class CEntities {
      * @param center
      * @param radius
      */
-    public FindInSphere(previous: CBaseEntity | null, center: Vector, radius: number): CBaseEntity | null
+    public FindInSphere<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, center: Vector, radius: number): T | null
 
     /**
      * Begin an iteration over the list of entities
@@ -1106,7 +1106,7 @@ declare class CEntities {
      * At the given reference of a previously-found entity, returns the next one after it in the list.
      * @param previous
      */
-    public Next(previous: CBaseEntity): CBaseEntity | null;
+    public Next<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity): T | null;
 }
 
 /**

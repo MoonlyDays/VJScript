@@ -4,14 +4,15 @@
 //--------------------------------------------------------------------------------------------------
 
 import {
-    AssignmentExpression,
+    AssignmentExpression, AssignmentOperator, Class, ClassBody, ClassDeclaration,
     ForInStatement,
-    ForOfStatement,
+    ForOfStatement, MethodDefinition, PropertyDefinition,
     VariableDeclarator
 } from 'estree';
-import {builders as b, NodePath, traverse, types as t} from 'estree-toolkit';
+import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
 
+import {generate} from './generate';
 import {renameNode} from './rename';
 
 export function preprocess(program: ESTree.Program) {
@@ -109,7 +110,7 @@ const TraverseVisitors: TraverseVisitors = {
         const node = path.node;
 
         const left = node.left;
-        if (left.type == 'ArrayPattern') {
+        if (is.arrayPattern(left)) {
             const replace: AssignmentExpression[] = [];
 
             // Try to find a parent that is contained inside an array.
@@ -129,18 +130,53 @@ const TraverseVisitors: TraverseVisitors = {
             path.remove();
         }
 
-        let usesLocal = false;
-        if (left.type == 'Identifier') {
+        // For some cases we can't use the slot creation operator
+        // therefore we need to check for those cases.
+        let useSlotOperator = true;
+
+        // If we assign to a previously declared identifier,
+        // we don't need to use the operator.
+        if (is.identifier(left)) {
             const leftPath = path.get('left');
             if (leftPath.scope.hasBinding(left.name)) {
-                usesLocal = true;
+                useSlotOperator = false;
             }
         }
 
-        if (!usesLocal) {
-            node.operator = '<-';
+        // We can't use slot creation for changing class fields through
+        // this keyword.
+        if (is.memberExpression(left)) {
+            if (is.thisExpression(left.object) && is.identifier(left.property)) {
+                const classBody = path.findParent<ClassBody>(is.classBody);
+                if (classBody) useSlotOperator = false;
+            }
         }
 
+        if (useSlotOperator) {
+            (node.operator as AssignmentOperator | '<-') = '<-';
+        }
+    },
+
+    ClassBody: path => {
+        // We generally assume that each class definition must have a constructor.
+        ensureConstructorInClass(path);
+
+        const ctor = getClassConstructor(path);
+        if (!ctor) throw Error('Class Body doesn\'t have a constructor even though we ensured it?');
+
+        const props = getClassProperties(path);
+        for (const prop of props) {
+
+            if (propDefinitionHasValue(prop)) {
+                ctor.value.body.body.unshift(b.expressionStatement(b.assignmentExpression(
+                    '=',
+                    b.memberExpression(b.thisExpression(), prop.key),
+                    prop.value
+                )));
+            }
+
+            prop.value = b.literal(null);
+        }
     },
 
     FunctionExpression: path => {
@@ -157,9 +193,11 @@ const TraverseVisitors: TraverseVisitors = {
 
         path.replaceWith(b.functionExpression(null, node.params, node.body, node.generator, node.async));
     },
+
     SpreadElement: () => {
         throw Error('Spread Operator (...) is not supported by Squirrel.');
     },
+
     SequenceExpression: path => {
 
         const node = path.node;
@@ -179,7 +217,55 @@ const TraverseVisitors: TraverseVisitors = {
             b.arrowFunctionExpression([], b.blockStatement(funcBody)),
             []
         ));
+    },
+    Super: path => {
+        // Is super is being directly invoked in a constructor
+        if (is.callExpression(path.parent)) {
+            const ctor = path.findParent(x => x.node.type == 'MethodDefinition' && x.node.kind == 'constructor');
+            if (ctor) {
+                path.replaceWith(b.memberExpression(
+                    b.super(),
+                    b.identifier('constructor')
+                ));
+            }
+        }
     }
+};
+
+const ensureConstructorInClass = (path: NodePath<ClassBody>) => {
+    let ctor = getClassConstructor(path);
+    if (ctor) return;
+
+    const parentPath = path.parentPath;
+    if (!is.classDeclaration(parentPath))
+        throw Error('Class Body is not inside Class Declaration?');
+
+    const ctorBlock = b.blockStatement([]);
+    const ctorParams = [];
+
+    const superClass = getClassDeclarationSuper(parentPath);
+    if (superClass) {
+        if (superClass.node == parentPath.node)
+            throw Error('Class Definition has itself as Super?');
+
+        const superBody = superClass.get('body');
+        ensureConstructorInClass(superBody);
+        const superCtor = getClassConstructor(superClass.get('body'));
+        if (!superCtor)
+            throw Error('Super Class without a Constructor?');
+
+        ctorParams.push(...superCtor.value.params);
+        ctorBlock.body.push(b.expressionStatement(b.callExpression(b.super(), ctorParams)));
+    }
+
+    ctor = b.methodDefinition(
+        'constructor',
+        b.identifier('constructor'),
+        b.functionExpression(null, ctorParams, ctorBlock)
+    );
+
+    // Add constructor to the top of class body.
+    path.unshiftContainer('body', [ctor]);
 };
 
 const normalizeLoopStatement = (forPath: NodePath<ForInStatement | ForOfStatement>) => {
@@ -208,6 +294,45 @@ const normalizeLoopStatement = (forPath: NodePath<ForInStatement | ForOfStatemen
 
         throw Error(`Unhandled left-side node of an for loop expression: ${node.type}`);
     }
+};
+
+export const getClassConstructor = (path: NodePath<ClassBody>): MethodDefinition => {
+    return path.node.body.find(x => is.methodDefinition(x) && x.kind == 'constructor') as MethodDefinition;
+};
+
+export const getClassProperties = (path: NodePath<ClassBody>): PropertyDefinition[] => {
+    return path.node.body.filter(x => is.propertyDefinition(x)) as PropertyDefinition[];
+};
+
+export const getClassDeclarationSuper = (path: NodePath<ClassDeclaration>): NodePath<ClassDeclaration> => {
+
+    const superIdent = path.node.superClass;
+    if (!superIdent)
+        return;
+
+    if (!is.identifier(superIdent))
+        throw Error(`Unhandled Super Class Node of type ${superIdent.type}`);
+
+    const superBinding = path.scope.getBinding(superIdent.name);
+    if (!superBinding)
+        throw Error(`Undefined Super Class Binding: ${superIdent.name}`);
+
+    const superClassDeclaration = superBinding.path;
+    if (!is.classDeclaration(superClassDeclaration))
+        throw Error(`Super Class Binding is not a Class Declaration: ${superIdent.name}`);
+
+    return superClassDeclaration;
+};
+
+const propDefinitionHasValue = (path: PropertyDefinition) => {
+
+    const node = path;
+    if (!node.value) return false;
+
+    if (is.literal(node.value) && node.value.value === null)
+        return false;
+
+    return true;
 };
 
 /*

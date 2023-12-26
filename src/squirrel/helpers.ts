@@ -3,7 +3,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {BaseNode, FunctionDeclaration, FunctionExpression} from 'estree';
+import {BaseNode, FunctionDeclaration, FunctionExpression, Node} from 'estree';
 import {Options} from 'meriyah';
 
 import {generate} from './generate';
@@ -27,6 +27,10 @@ class Helpers {
             yield code;
             yield '\n';
         }
+    }
+
+    public* generateArguments(args: Node[]) {
+        yield args.map(x => generate(x)).join(', ');
     }
 
     public* generateFunction(node: FunctionExpression | FunctionDeclaration) {

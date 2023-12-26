@@ -47,7 +47,7 @@ const Generators: Generators = {
     VariableDeclaration: function* (node: VariableDeclaration) {
         yield node.kind == 'const' ? 'const' : 'local';
         yield ' ';
-        yield node.declarations.map(x => generate(x)).join(', ');
+        yield* helpers.generateArguments(node.declarations);
     },
     VariableDeclarator: function* (node: VariableDeclarator) {
         yield generate(node.id);
@@ -99,7 +99,7 @@ const Generators: Generators = {
     CallExpression: function* (node) {
         yield generate(node.callee);
         yield '(';
-        yield node.arguments.map(x => generate(x)).join(', ');
+        yield* helpers.generateArguments(node.arguments);
         yield ')';
     },
     IfStatement: function* (node) {
@@ -144,14 +144,14 @@ const Generators: Generators = {
     },
     ArrayExpression: function* (node) {
         yield '[';
-        yield node.elements.map(x => generate(x)).join(', ');
+        yield* helpers.generateArguments(node.elements);
         yield ']';
     },
     ForOfStatement: function* (node) {
         yield 'foreach (';
 
         if (node.left.type == 'ArrayPattern') {
-            yield node.left.elements.map(x => generate(x)).join(', ');
+            yield* helpers.generateArguments(node.left.elements);
         } else {
             yield generate(node.left);
         }
@@ -186,5 +186,61 @@ const Generators: Generators = {
     },
     NewExpression: function* (node) {
         yield generate(node.callee);
+        yield '(';
+        yield* helpers.generateArguments(node.arguments);
+        yield ')';
+    },
+    ClassDeclaration: function* (node) {
+        yield 'class ';
+        yield generate(node.id);
+
+        if (node.superClass) {
+            yield ' extends ';
+            yield generate(node.superClass);
+        }
+
+        yield ' ';
+        yield generate(node.body);
+    },
+    ClassBody: function* (node) {
+        yield* helpers.withScope(() => helpers.generateBody(node));
+    },
+    PropertyDefinition: function* (node) {
+        if (node.static) {
+            yield 'static ';
+        }
+
+        yield generate(node.key);
+
+        if (node.value) {
+            yield ' = ';
+            yield generate(node.value);
+        }
+    },
+    MethodDefinition: function* (node) {
+
+        if (['get', 'set'].includes(node.kind)) {
+            throw Error('Class getter and setter are not support.');
+        }
+
+        if (node.static) {
+            yield 'static ';
+        }
+
+        if (node.kind == 'method') {
+            yield 'function ';
+            yield generate(node.key);
+        } else {
+            yield 'constructor';
+        }
+
+        yield '(';
+        yield* helpers.generateArguments(node.value.params);
+        yield ') ';
+
+        yield* helpers.withScope(() => helpers.generateBody(node.value.body));
+    },
+    Super: function* (node) {
+        yield 'base';
     }
 };
