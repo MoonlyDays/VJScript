@@ -1,52 +1,45 @@
 {
-    "name": "vjscript",
-    "version": "0.1.0",
-    "description": "Framework that automagically translates your JavaScript code to VScript supported Squirrel language.",
-    "main": "dist/index.js",
-    "keywords": [
-        "vscript",
-        "squirrel",
-        "javascript"
-    ],
-    "scripts": {
-        "test": "node dist/vjsc.js test/code.js -t",
-        "test_watch": "node dist/vjsc.js test/code.js -t -w -i 100",
-        "watch": "tsc -w",
-        "build": "tsc",
-        "dev": "npx ts-node src/vjsc.ts"
-    },
-    "files": [
-        "package.json",
-        "dist",
-        "vjscript.d.ts"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/MoonlyDays/VJScript.git"
-    },
-    "bin": {
-        "vjsc": "./dist/vjsc.js"
-    },
-    "types": "./vjscript.d.ts",
-    "publishConfig": {},
-    "author": "Moonly Days",
-    "license": "ISC",
-    "bugs": {
+    "name":            "vjscript",
+    "version":         "0.1.0",
+    "description":     "Framework that automagically translates your JavaScript code to VScript supported Squirrel language.",
+    "main":            "dist/index.js",
+    "author":          "Moonly Days",
+    "license":         "ISC",
+    "bugs":            {
         "url": "https://github.com/MoonlyDays/VJScript/issues"
     },
-    "homepage": "https://github.com/MoonlyDays/VJScript#readme",
-    "devDependencies": {
-        "@types/estree": "^1.0.5",
-        "@typescript-eslint/eslint-plugin": "^6.15.0",
-        "@typescript-eslint/parser": "^6.15.0",
-        "eslint": "^8.56.0",
-        "eslint-plugin-simple-import-sort": "^10.0.0",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.3.3"
+    "homepage":        "https://github.com/MoonlyDays/VJScript#readme",
+    "keywords":        [
+        "vscript", "squirrel", "javascript"
+    ],
+    "types":           "./types/index.d.ts",
+    "exports":         "./dist/index.js",
+    "scripts":         {
+        "test":       "node dist/vjsc.js test/code.js -t",
+        "test_watch": "node dist/vjsc.js test/code.js -t -w -i 100",
+        "watch":      "tsc -w",
+        "build":      "tsc",
+        "dev":        "npx ts-node src/vjsc.ts"
     },
-    "dependencies": {
-        "crypto": "^1.0.1",
+    "repository":      {
+        "type": "git",
+        "url":  "git+https://github.com/MoonlyDays/VJScript.git"
+    },
+    "bin":             {
+        "vjsc": "./dist/vjsc.js"
+    },
+    "devDependencies": {
+        "@types/estree":                    "^1.0.5",
+        "@typescript-eslint/eslint-plugin": "^6.15.0",
+        "@typescript-eslint/parser":        "^6.15.0",
+        "eslint":                           "^8.56.0",
+        "eslint-plugin-simple-import-sort": "^10.0.0",
+        "ts-node":                          "^10.9.2",
+        "typescript":                       "^5.3.3"
+    },
+    "dependencies":    {
+        "crypto":         "^1.0.1",
         "estree-toolkit": "^1.7.3",
-        "meriyah": "^4.3.9"
+        "meriyah":        "^4.3.9"
     }
 }

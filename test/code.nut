@@ -4,7 +4,7 @@
 // https://github.com/MoonlyDays/VJScript
 //-------------------------------------------------------------------------------------//
 // Source Script Name: code.js
-// Compile Time: Tue Dec 26 2023 17:21:47 GMT+0200 (Eastern European Standard Time)
+// Compile Time: Tue Dec 26 2023 17:23:11 GMT+0200 (Eastern European Standard Time)
 // VJScript Version: 0.1.0
 //-------------------------------------------------------------------------------------//
 
@@ -37,7 +37,7 @@ foreach (color in g_kColors) {
 function getLight (color) {
   return g_kLights[color]
 }
-local l = getLight("green")
+local l = getLight("blue")
 l.turnOn()
 function PlayerThink () {
   printl(self.GetName())

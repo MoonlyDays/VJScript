@@ -38,7 +38,7 @@ function getLight(color) {
     return g_kLights[color];
 }
 
-const l = getLight('green');
+const l = getLight('blue');
 l.turnOn();
 
 function PlayerThink() {

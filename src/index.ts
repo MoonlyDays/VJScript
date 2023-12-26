@@ -19,3 +19,4 @@ export function translate(jsCode: string): string {
 const removeShebangs = (jsCode: string): string => {
     return jsCode.replace(/^#!.*$/, '');
 };
+
