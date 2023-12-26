@@ -4,7 +4,7 @@
 // https://github.com/MoonlyDays/VJScript
 //-------------------------------------------------------------------------------------//
 // Source Script Name: code.js
-// Compile Time: Mon Dec 25 2023 22:31:23 GMT+0200 (Eastern European Standard Time)
+// Compile Time: Tue Dec 26 2023 02:28:57 GMT+0200 (Eastern European Standard Time)
 // VJScript Version: 0.1.0
 //-------------------------------------------------------------------------------------//
 

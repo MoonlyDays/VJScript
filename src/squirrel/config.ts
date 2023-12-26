@@ -75,7 +75,6 @@ function parse() {
     }
 
     IdentifierBlackList.sort((a, b) => b.pattern.length - a.pattern.length);
-    console.log(IdentifierBlackList);
 }
 
 parse();

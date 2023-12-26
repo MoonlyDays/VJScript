@@ -5,9 +5,9 @@
 
 import {Declaration, Identifier, MemberExpression, Program, Property} from 'esprima-next';
 
+import {renameNode} from '../squirrel/rename';
 import {checkBlocked} from './blacklist';
 import {ESTreeNode, ESTreeNodeMap} from './nodes';
-import {renameNode} from './rename';
 import {NodeContext} from './util';
 
 export const ExtraDeclarations = new Map<string, Declaration>();

@@ -110,7 +110,7 @@ export function encodeIdentifier(decoded: CollapsedIdentifier): string {
     return decoded.map(x => x || '*').join('.');
 }
 
-export function findListEntryForIdentifier<T extends SearchPattern>(list: Array<T>, path: NodePath<IdentifierNode, Node>): T {
+export function findListEntryForIdentifier<T extends SearchPattern>(list: Array<T>, path: NodePath<IdentifierNode>): T {
 
     const node = path.node;
     const ident = collapseIdentifier(node);

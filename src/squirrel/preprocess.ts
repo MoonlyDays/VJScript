@@ -5,22 +5,28 @@
 
 import {
     AssignmentExpression,
-    ForInStatement, ForOfStatement,
-    Node,
+    ForInStatement,
+    ForOfStatement,
     VariableDeclarator
 } from 'estree';
-import {builders as b, NodePath, traverse} from 'estree-toolkit';
+import {builders as b, NodePath, traverse, types as t} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
-import * as path from 'path';
+
+import {renameNode} from './rename';
 
 export function preprocess(program: ESTree.Program) {
     traverse(program, TraverseVisitors);
 }
 
-
 type TraverseVisitors = Parameters<typeof traverse>[1];
 const TraverseVisitors: TraverseVisitors = {
     $: {scope: true},
+    Identifier: path => {
+        renameNode(path);
+    },
+    MemberExpression: path => {
+        renameNode(path);
+    },
     VariableDeclaration: path => {
 
         const node = path.node;
@@ -101,8 +107,9 @@ const TraverseVisitors: TraverseVisitors = {
     },
     AssignmentExpression: path => {
         const node = path.node;
-        if (node.left.type == 'ArrayPattern') {
-            const left = node.left;
+
+        const left = node.left;
+        if (left.type == 'ArrayPattern') {
             const replace: AssignmentExpression[] = [];
 
             // Try to find a parent that is contained inside an array.
@@ -121,6 +128,19 @@ const TraverseVisitors: TraverseVisitors = {
             parentPath.insertBefore(replace);
             path.remove();
         }
+
+        let usesLocal = false;
+        if (left.type == 'Identifier') {
+            const leftPath = path.get('left');
+            if (leftPath.scope.hasBinding(left.name)) {
+                usesLocal = true;
+            }
+        }
+
+        if (!usesLocal) {
+            node.operator = '<-';
+        }
+
     },
 
     FunctionExpression: path => {
@@ -131,12 +151,34 @@ const TraverseVisitors: TraverseVisitors = {
 
     ArrowFunctionExpression: path => {
         const node = path.node;
-
         if (node.body.type != 'BlockStatement') {
             node.body = b.blockStatement([b.returnStatement(node.body)]);
         }
 
         path.replaceWith(b.functionExpression(null, node.params, node.body, node.generator, node.async));
+    },
+    SpreadElement: () => {
+        throw Error('Spread Operator (...) is not supported by Squirrel.');
+    },
+    SequenceExpression: path => {
+
+        const node = path.node;
+        const funcBody = [];
+        for (let i = 0; i < node.expressions.length; i++) {
+            const expr = node.expressions[i];
+
+            if (i == (node.expressions.length - 1)) {
+                funcBody.push(b.returnStatement(expr));
+                continue;
+            }
+
+            funcBody.push(b.expressionStatement(expr));
+        }
+
+        path.replaceWith(b.callExpression(
+            b.arrowFunctionExpression([], b.blockStatement(funcBody)),
+            []
+        ));
     }
 };
 

@@ -119,11 +119,12 @@ const Generators: Generators = {
     UnaryExpression: function* (node) {
         yield '(';
         yield node.operator;
+        yield ' ';
         yield generate(node.argument);
         yield ')';
     },
     ObjectExpression: function* (node: ObjectExpression) {
-        yield* helpers.generateBody({body: node.properties});
+        yield* helpers.withScope(() => helpers.generateBody({body: node.properties}));
     },
     Property: function* (node) {
         if (['get', 'set'].includes(node.kind))
@@ -134,8 +135,12 @@ const Generators: Generators = {
         yield generate(node.value);
     },
     ReturnStatement: function* (node) {
-        yield 'return ';
-        yield generate(node.argument);
+        yield 'return';
+
+        if (node.argument) {
+            yield ' ';
+            yield generate(node.argument);
+        }
     },
     ArrayExpression: function* (node) {
         yield '[';
@@ -159,7 +164,27 @@ const Generators: Generators = {
     FunctionExpression: function* (node) {
         yield* helpers.generateFunction(node);
     },
-    FunctionDeclaration: function *(node) {
+    FunctionDeclaration: function* (node) {
         yield* helpers.generateFunction(node);
+    },
+    TemplateLiteral: function* (node) {
+        const parts = [];
+        for (let i = 0; i < node.quasis.length; i++) {
+            const element = node.quasis[i];
+            parts.push(generate(element));
+
+            if (!element.tail) {
+                const expr = node.expressions[i];
+                parts.push(generate(expr));
+            }
+        }
+
+        yield parts.filter(x => !!x).join(' + ');
+    },
+    TemplateElement: function* (node) {
+        yield JSON.stringify(node.value.cooked);
+    },
+    NewExpression: function* (node) {
+        yield generate(node.callee);
     }
 };
