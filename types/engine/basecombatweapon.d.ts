@@ -10,99 +10,99 @@ declare global {
      * Script handle class for any weapon entities that can be part of a player's inventory.
      * Team Fortress 2's weapons leave Clip2 unused, so those functions can be ignored
      */
-    class CBaseCombatWeapon extends CBaseAnimating {
+    interface CBaseCombatWeapon extends CBaseAnimating {
 
         /**
          * Can this weapon be selected
          */
-        public CanBeSelected(): boolean;
+        CanBeSelected(): boolean;
 
         /**
          * Current ammo in clip1
          */
-        public Clip1(): number;
+        Clip1(): number;
 
         /**
          * Current ammo in clip2
          */
-        public Clip2(): number;
+        Clip2(): number;
 
         /**
          * Default size of clip1
          */
-        public GetDefaultClip1(): number;
+        GetDefaultClip1(): number;
 
         /**
          * Default size of clip2
          */
-        public GetDefaultClip2(): number;
+        GetDefaultClip2(): number;
 
         /**
          * Max size of clip1
          */
-        public GetMaxClip1(): number;
+        GetMaxClip1(): number;
 
         /**
          * Max size of clip2
          */
-        public GetMaxClip2(): number;
+        GetMaxClip2(): number;
 
         /**
          * Gets the weapon's name
          */
-        public GetName(): string;
+        GetName(): string;
 
         /**
          * Gets the weapon's current position
          */
-        public GetPosition(): number;
+        GetPosition(): number;
 
         /**
          * Current primary ammo count if no clip is used or to give a player if they pick up this weapon legacy style (not TF)
          */
-        public GetPrimaryAmmoCount(): number;
+        GetPrimaryAmmoCount(): number;
 
         /** Returns the primary ammo type */
-        public GetPrimaryAmmoType(): number;
+        GetPrimaryAmmoType(): number;
 
         /** Gets the weapon's print name */
-        public GetPrintName(): string;
+        GetPrintName(): string;
 
         /** Current secondary ammo count if no clip is used or to give a player if they pick up this weapon legacy style (not TF) */
-        public GetSecondaryAmmoCount(): number;
+        GetSecondaryAmmoCount(): number;
 
         /** Returns the secondary ammo type */
-        public GetSecondaryAmmoType(): number;
+        GetSecondaryAmmoType(): number;
 
         /** Gets the weapon's current slot */
-        public GetSlot(): number;
+        GetSlot(): number;
 
         /** Get the weapon subtype */
-        public GetSubType(): number;
+        GetSubType(): number;
 
         /** Get the weapon flags */
-        public GetWeaponFlags(): number;
+        GetWeaponFlags(): number;
 
         /** Get the weapon weighting/importance */
-        public GetWeight(): number;
+        GetWeight(): number;
 
         /** Do we have any ammo? */
-        public HasAnyAmmo(): boolean;
+        HasAnyAmmo(): boolean;
 
         /** Do we have any primary ammo? */
-        public HasPrimaryAmmo(): boolean;
+        HasPrimaryAmmo(): boolean;
 
         /** Do we have any secondary ammo? */
-        public HasSecondaryAmmo(): boolean;
+        HasSecondaryAmmo(): boolean;
 
         /** Are we allowed to switch to this weapon? */
-        public IsAllowedToSwitch(): boolean;
+        IsAllowedToSwitch(): boolean;
 
         /** Returns whether this is a melee weapon */
-        public IsMeleeWeapon(): boolean;
+        IsMeleeWeapon(): boolean;
 
         /** Force a primary attack */
-        public PrimaryAttack(): void;
+        PrimaryAttack(): void;
 
         /**
          * Force a secondary attack
@@ -110,61 +110,61 @@ declare global {
          * @warning Hitscan and melee weapons require lag compensation information to be present, or the game will crash! Calling this from a player's think function or OnTakeDamage hook (whose source is a player's hitscan weapon) is sufficient. Alternatively, lag compensation can be temporarily disabled which allows calling this function from anywhere, with the side effect of poor hit registration for high latency players. This can be achieved by setting the m_bLagCompensation netprop on the player to to false, calling this function, and reverting it back to true.
          * @warning This will play the weapon's fire sound to everyone except the owner. If the sound is desired, the sound can be played to the owner exclusively via EmitSoundEx. If the sound is not desired, it can be stopped by calling StopSound after this function.
          */
-        public SecondaryAttack(): void;
+        SecondaryAttack(): void;
 
         /**
          * Set current ammo in clip1.
          * @param amount
          */
-        public SetClip1(amount: number): void;
+        SetClip1(amount: number): void;
 
         /**
          * Set current ammo in clip2.
          * @param amount
          */
-        public SetClip2(amount: number): void;
+        SetClip2(amount: number): void;
 
         /**
          * Sets a custom view model for this weapon by model name.
          * @param model_name
          */
-        public SetCustomViewModel(model_name: string): void;
+        SetCustomViewModel(model_name: string): void;
 
         /**
          * Sets a custom view model for this weapon by modelindex.
          * @param model_index
          */
-        public SetCustomViewModelModelIndex(model_index: number): void;
+        SetCustomViewModelModelIndex(model_index: number): void;
 
         /**
          * Set the weapon subtype
          * @param subtype
          */
-        public SetSubType(subtype: number): void;
+        SetSubType(subtype: number): void;
 
         /**
          * Do we use clips for ammo 1?
          */
-        public UsesClipsForAmmo1(): boolean;
+        UsesClipsForAmmo1(): boolean;
 
         /**
          * Do we use clips for ammo 2?
          */
-        public UsesClipsForAmmo2(): boolean;
+        UsesClipsForAmmo2(): boolean;
 
         /**
          * Do we use primary ammo?
          */
-        public UsesPrimaryAmmo(): boolean;
+        UsesPrimaryAmmo(): boolean;
 
         /**
          * Do we use secondary ammo?
          */
-        public UsesSecondaryAmmo(): boolean;
+        UsesSecondaryAmmo(): boolean;
 
         /**
          * Is this weapon visible in weapon selection
          */
-        public VisibleInWeaponSelection(): boolean;
+        VisibleInWeaponSelection(): boolean;
     }
 }

@@ -7,12 +7,22 @@ export {};
 
 declare global {
     /**
-     * Script handle class for non-playable combat characters operating under the NextBot system.
+     * Base script handle class for any interfaces belonging to an individual NextBotCombatCharacter entity.
      */
-    interface CBaseCombatCharacter extends CBaseFlex {
+    interface INextBotComponent {
         /**
-         * Return the last nav area occupied, NULL if unknown.
+         * Recomputes the component update interval
          */
-        GetLastKnownArea(): unknown;
+        ComputeUpdateInterval(): boolean;
+
+        /**
+         * Returns the component update interval
+         */
+        GetUpdateInterval(): number;
+
+        /**
+         * Resets the internal update state
+         */
+        Reset(): void;
     }
 }
