@@ -254,7 +254,7 @@ declare global {
         /**
          * Get a KeyValue class instance on this entity's model
          */
-        GetModelKeyValues(): NutTable;
+        GetModelKeyValues(): CScriptKeyValues;
 
         /**
          *  Returns the name of the model
