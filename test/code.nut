@@ -4,7 +4,7 @@
 // https://github.com/MoonlyDays/VJScript
 //-------------------------------------------------------------------------------------//
 // Source Script Name: code.js
-// Compile Time: Tue Dec 26 2023 17:23:11 GMT+0200 (Eastern European Standard Time)
+// Compile Time: Wed Dec 27 2023 14:54:05 GMT+0200 (Eastern European Standard Time)
 // VJScript Version: 0.1.0
 //-------------------------------------------------------------------------------------//
 
@@ -43,5 +43,3 @@ function PlayerThink () {
   printl(self.GetName())
   return (- 1)
 }
-local player = GetListenServerHost()
-AddThinkToEnt(player, "PlayerThink")

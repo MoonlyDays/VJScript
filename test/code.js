@@ -24,6 +24,7 @@ class Light {
 const g_kScoreText = Entities.FindByName(null, 'text_score');
 const g_kRecordText = Entities.FindByName(null, 'text_record');
 
+
 const g_kColors = ['red', 'green', 'yellow', 'blue'];
 const g_kLights = {};
 for (const color of g_kColors) {

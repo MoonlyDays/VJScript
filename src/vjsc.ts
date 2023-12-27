@@ -8,18 +8,13 @@
 import * as fs from 'fs';
 import {parseModule} from 'meriyah';
 import * as path from 'path';
-import * as wasi from 'wasi';
 
 import {translate} from './index';
 import {MeriyahParseOptions} from './squirrel/helpers';
 
 const WATCH_INTERVAL = 500;
 const g_kOptions: {
-    watch?: boolean;
-    watchInterval: number;
-    file?: string;
-    dir?: string;
-    tree?: boolean;
+    watch?: boolean; watchInterval: number; file?: string; dir?: string; tree?: boolean;
 } = {
     watchInterval: WATCH_INTERVAL
 };
@@ -29,23 +24,14 @@ const validateOptions = () => {
 };
 
 const shortOptionMap: { [key: string]: keyof typeof g_kOptions } = {
-    w: 'watch',
-    f: 'file',
-    d: 'dir',
-    t: 'tree',
-    i: 'watchInterval'
+    w: 'watch', f: 'file', d: 'dir', t: 'tree', i: 'watchInterval'
 };
 
-const HEADER =
-    'This code was automatically generated using VJScript.\n' +
-    'VJScript is an automatic code translation tool from JavaScript to Squirrel\n' +
-    'https://github.com/MoonlyDays/VJScript';
+const HEADER = 'This code was automatically generated using VJScript.\n' + 'VJScript is an automatic code translation tool from JavaScript to Squirrel\n' + 'https://github.com/MoonlyDays/VJScript';
 
 const findOptionKey = (option: string) => {
     option = option.toLowerCase();
-    for (const key in g_kOptions)
-        if (key.toLowerCase() == option)
-            return key;
+    for (const key in g_kOptions) if (key.toLowerCase() == option) return key;
 
     return option;
 };
@@ -88,22 +74,27 @@ const generateHeader = (filePath: string) => {
 };
 
 const processFile = (filePath: string) => {
-    const jsCode = fs.readFileSync(filePath).toString('utf-8');
 
-    const inputPath = path.parse(filePath);
-    const baseDir = g_kOptions.dir || inputPath.dir;
-    const fileName = g_kOptions.file || '';
+    try {
+        const jsCode = fs.readFileSync(filePath).toString('utf-8');
 
-    if (g_kOptions.tree) {
-        const treePath = path.format({...inputPath, dir: baseDir, base: fileName, ext: '.txt'});
-        const jsTree = parseModule(jsCode, MeriyahParseOptions);
-        fs.writeFileSync(treePath, JSON.stringify(jsTree, undefined, 2));
+        const inputPath = path.parse(filePath);
+        const baseDir = g_kOptions.dir || inputPath.dir;
+        const fileName = g_kOptions.file || '';
+
+        if (g_kOptions.tree) {
+            const treePath = path.format({...inputPath, dir: baseDir, base: fileName, ext: '.txt'});
+            const jsTree = parseModule(jsCode, MeriyahParseOptions);
+            fs.writeFileSync(treePath, JSON.stringify(jsTree, undefined, 2));
+        }
+
+        const nutCode = translate(jsCode);
+        const header = generateHeader(filePath);
+        const outPath = path.format({...inputPath, dir: baseDir, base: fileName, ext: '.nut'});
+        fs.writeFileSync(outPath, header + nutCode);
+    } catch (e) {
+        console.log(e);
     }
-
-    const nutCode = translate(jsCode);
-    const header = generateHeader(filePath);
-    const outPath = path.format({...inputPath, dir: baseDir, base: fileName, ext: '.nut'});
-    fs.writeFileSync(outPath, header + nutCode);
 };
 
 const paths = [];
@@ -118,8 +109,7 @@ for (let i = 2; i < argv.length; i++) {
             i--;
         }
 
-        if (arg.startsWith('--')) processOption(arg.slice(1), value);
-        else processShortOption(arg.slice(1), value);
+        if (arg.startsWith('--')) processOption(arg.slice(1), value); else processShortOption(arg.slice(1), value);
 
         continue;
     }
@@ -134,17 +124,12 @@ for (const path of paths) {
     processFile(path);
 
     if (g_kOptions.watch) {
-        fs.watchFile(
-            path,
-            {
-                persistent: true,
-                interval: g_kOptions.watchInterval
-            },
-            x => {
-                console.log(`[Watch Mode]: ${path} has updated. Translating...`);
-                processFile(path);
-            }
-        );
+        fs.watchFile(path, {
+            persistent: true, interval: g_kOptions.watchInterval
+        }, () => {
+            console.log(`[Watch Mode]: ${path} has updated. Translating...`);
+            processFile(path);
+        });
     }
 }
 
