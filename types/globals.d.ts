@@ -788,4 +788,46 @@ declare global {
      * Unknown; presumably an internal function called by `UniqueString`, so call that instead.
      */
     function DoUniqueString(input: string): string;
+
+    function UsePlayerReadyStatusMode(): boolean;
+
+    /**
+     * Creates a new scope with the name of value in the submitted table (includes unique params).
+     */
+    function VSquirrel_OnCreateScope(value: unknown, scope: NutTable): NutTable;
+
+    /**
+     * Removes a scope created via VSquirrel_OnCreateScope.
+     */
+    function VSquirrel_OnReleaseScope(createdScope: NutTable): void;
+
+    /**
+     * Overloaded function. It's only used for this: __CollectEventCallbacks(scope, "OnGameEvent_",
+     * "GameEventCallbacks", ::RegisterScriptGameEventListener)
+     * @param scope
+     * @param prefix
+     * @param globalTableName
+     * @param regFunc
+     */
+    function __CollectEventCallbacks(scope: unknown, prefix: string, globalTableName: string, regFunc: unknown): void;
+
+    /**
+     * Wrapper that registers callbacks for both OnGameEvent_x and OnScriptEvent_ functions. Done using the
+     * __CollectEventCallbacks function.
+     */
+    function __CollectGameEventCallbacks(scope: NutTable): void;
+
+    function __ReplaceClosures(script: unknown, scope: unknown): void;
+
+    /**
+     * Call all functions in the callback array for the given game event
+     */
+    function __RunEventCallbacks(event: string, params: unknown, prefix: string, globalTableName: string, bWarnIfMissing: boolean): void;
+
+    /**
+     * Wrapper for __RunEventCallbacks()
+     */
+    function __RunGameEventCallbacks(event: string, params: unknown): void;
+
+    function __RunScriptHookCallbacks(event: string, param: unknown): void;
 }

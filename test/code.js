@@ -45,6 +45,3 @@ function PlayerThink() {
     console.log(self.GetName());
     return -1;
 }
-
-const player = GetListenServerHost();
-AddThinkToEnt(player, 'PlayerThink');
