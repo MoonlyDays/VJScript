@@ -6,10 +6,14 @@
 export {};
 
 import './constants';
+import './print';
 import './datatypes';
+import './debug';
+import './globals';
 // Squirrel
 import './squirrel/math';
 import './squirrel/blob';
+import './squirrel/standard';
 // Accessors
 import './accessors/entities';
 import './accessors/convars';
