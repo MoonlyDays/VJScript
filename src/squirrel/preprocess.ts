@@ -4,15 +4,22 @@
 //--------------------------------------------------------------------------------------------------
 
 import {
-    AssignmentExpression, AssignmentOperator, ClassBody, ClassDeclaration,
+    AssignmentExpression,
+    AssignmentOperator,
+    ClassBody,
+    ClassDeclaration,
     ForInStatement,
-    ForOfStatement, MethodDefinition, PropertyDefinition,
+    ForOfStatement,
+    Identifier,
+    MethodDefinition,
+    PropertyDefinition,
     VariableDeclarator
 } from 'estree';
 import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
 
 import {renameNode} from './rename';
+
 
 export function preprocess(program: ESTree.Program) {
     traverse(program, TraverseVisitors);
@@ -21,6 +28,7 @@ export function preprocess(program: ESTree.Program) {
 type TraverseVisitors = Parameters<typeof traverse>[1];
 const TraverseVisitors: TraverseVisitors = {
     $: {scope: true},
+
     Identifier: path => {
         renameNode(path);
     },
@@ -64,8 +72,7 @@ const TraverseVisitors: TraverseVisitors = {
         normalizeLoopStatement(path);
 
         if (node.left.type == 'ArrayPattern') {
-            if (node.left.elements.length > 2)
-                throw Error('For Loop: Array Pattern must not contain more than 2 elements.');
+            if (node.left.elements.length > 2) throw Error('For Loop: Array Pattern must not contain more than 2 elements.');
         }
     },
 
@@ -120,9 +127,7 @@ const TraverseVisitors: TraverseVisitors = {
             // Try to find a parent that is contained inside an array.
             const parentPath = path.find(x => Array.isArray(x.container));
             const tmp = parentPath.scope.generateUidIdentifier();
-            parentPath.insertBefore([b.variableDeclaration(
-                'let', [b.variableDeclarator(tmp, node.right)])
-            ]);
+            parentPath.insertBefore([b.variableDeclaration('let', [b.variableDeclarator(tmp, node.right)])]);
 
             for (let i = 0; i < left.elements.length; i++) {
                 const key = left.elements[i];
@@ -167,20 +172,29 @@ const TraverseVisitors: TraverseVisitors = {
 
         const ctor = getClassConstructor(path);
         if (!ctor) throw Error('Class Body doesn\'t have a constructor even though we ensured it?');
+    },
 
-        const props = getClassProperties(path);
-        for (const prop of props) {
+    PropertyDefinition: path => {
 
-            if (propDefinitionHasValue(prop)) {
-                ctor.value.body.body.unshift(b.expressionStatement(b.assignmentExpression(
-                    '=',
-                    b.memberExpression(b.thisExpression(), prop.key),
-                    prop.value
-                )));
-            }
+        const node = path.node;
+        const key = node.key;
+        if (!is.identifier(key))
+            return;
 
-            prop.value = b.literal(null);
+        if (propDefinitionHasValue(node)) {
+            const classBody = path.findParent<ClassBody>(is.classBody);
+            const ctor = getClassConstructor(classBody);
+
+            const assignment = b.assignmentExpression(
+                '=',
+                b.memberExpression(b.thisExpression(), node.key),
+                node.value
+            );
+
+            ctor.value.body.body.unshift(b.expressionStatement(assignment));
         }
+
+        node.value = b.literal(null);
     },
 
     FunctionExpression: path => {
@@ -217,10 +231,7 @@ const TraverseVisitors: TraverseVisitors = {
             funcBody.push(b.expressionStatement(expr));
         }
 
-        path.replaceWith(b.callExpression(
-            b.arrowFunctionExpression([], b.blockStatement(funcBody)),
-            []
-        ));
+        path.replaceWith(b.callExpression(b.arrowFunctionExpression([], b.blockStatement(funcBody)), []));
     },
 
     Super: path => {
@@ -229,10 +240,7 @@ const TraverseVisitors: TraverseVisitors = {
         if (is.callExpression(path.parent)) {
             const ctor = path.findParent(x => x.node.type == 'MethodDefinition' && x.node.kind == 'constructor');
             if (ctor) {
-                path.replaceWith(b.memberExpression(
-                    b.super(),
-                    b.identifier('constructor')
-                ));
+                path.replaceWith(b.memberExpression(b.super(), b.identifier('constructor')));
             }
         }
     }
@@ -243,32 +251,25 @@ const ensureConstructorInClass = (path: NodePath<ClassBody>) => {
     if (ctor) return;
 
     const parentPath = path.parentPath;
-    if (!is.classDeclaration(parentPath))
-        throw Error('Class Body is not inside Class Declaration?');
+    if (!is.classDeclaration(parentPath)) throw Error('Class Body is not inside Class Declaration?');
 
     const ctorBlock = b.blockStatement([]);
     const ctorParams = [];
 
     const superClass = getClassDeclarationSuper(parentPath);
     if (superClass) {
-        if (superClass.node == parentPath.node)
-            throw Error('Class Definition has itself as Super?');
+        if (superClass.node == parentPath.node) throw Error('Class Definition has itself as Super?');
 
         const superBody = superClass.get('body');
         ensureConstructorInClass(superBody);
         const superCtor = getClassConstructor(superClass.get('body'));
-        if (!superCtor)
-            throw Error('Super Class without a Constructor?');
+        if (!superCtor) throw Error('Super Class without a Constructor?');
 
         ctorParams.push(...superCtor.value.params);
         ctorBlock.body.push(b.expressionStatement(b.callExpression(b.super(), ctorParams)));
     }
 
-    ctor = b.methodDefinition(
-        'constructor',
-        b.identifier('constructor'),
-        b.functionExpression(null, ctorParams, ctorBlock)
-    );
+    ctor = b.methodDefinition('constructor', b.identifier('constructor'), b.functionExpression(null, ctorParams, ctorBlock));
 
     // Add constructor to the top of class body.
     path.unshiftContainer('body', [ctor]);
@@ -302,30 +303,26 @@ const normalizeLoopStatement = (forPath: NodePath<ForInStatement | ForOfStatemen
     }
 };
 
-export const getClassConstructor = (path: NodePath<ClassBody>): MethodDefinition => {
+const getClassConstructor = (path: NodePath<ClassBody>): MethodDefinition => {
     return path.node.body.find(x => is.methodDefinition(x) && x.kind == 'constructor') as MethodDefinition;
 };
 
-export const getClassProperties = (path: NodePath<ClassBody>): PropertyDefinition[] => {
+const getClassProperties = (path: NodePath<ClassBody>): PropertyDefinition[] => {
     return path.node.body.filter(x => is.propertyDefinition(x)) as PropertyDefinition[];
 };
 
-export const getClassDeclarationSuper = (path: NodePath<ClassDeclaration>): NodePath<ClassDeclaration> => {
+const getClassDeclarationSuper = (path: NodePath<ClassDeclaration>): NodePath<ClassDeclaration> => {
 
     const superIdent = path.node.superClass;
-    if (!superIdent)
-        return;
+    if (!superIdent) return;
 
-    if (!is.identifier(superIdent))
-        throw Error(`Unhandled Super Class Node of type ${superIdent.type}`);
+    if (!is.identifier(superIdent)) throw Error(`Unhandled Super Class Node of type ${superIdent.type}`);
 
     const superBinding = path.scope.getBinding(superIdent.name);
-    if (!superBinding)
-        throw Error(`Undefined Super Class Binding: ${superIdent.name}`);
+    if (!superBinding) throw Error(`Undefined Super Class Binding: ${superIdent.name}`);
 
     const superClassDeclaration = superBinding.path;
-    if (!is.classDeclaration(superClassDeclaration))
-        throw Error(`Super Class Binding is not a Class Declaration: ${superIdent.name}`);
+    if (!is.classDeclaration(superClassDeclaration)) throw Error(`Super Class Binding is not a Class Declaration: ${superIdent.name}`);
 
     return superClassDeclaration;
 };
@@ -335,8 +332,7 @@ const propDefinitionHasValue = (path: PropertyDefinition) => {
     const node = path;
     if (!node.value) return false;
 
-    if (is.literal(node.value) && node.value.value === null)
-        return false;
+    if (is.literal(node.value) && node.value.value === null) return false;
 
     return true;
 };

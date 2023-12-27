@@ -7,6 +7,7 @@ import {CallExpression, Identifier, MemberExpression, Node} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
 export type SearchPattern = {
+    encodedPattern: string;
     pattern: CollapsedIdentifier;
     call_only: boolean;
 };

@@ -4,8 +4,8 @@
 // https://github.com/MoonlyDays/VJScript
 //-------------------------------------------------------------------------------------//
 // Source Script Name: code.js
-// Compile Time: Wed Dec 27 2023 14:54:05 GMT+0200 (Eastern European Standard Time)
-// VJScript Version: 0.1.0
+// Compile Time: Thu Dec 28 2023 00:03:00 GMT+0200 (Eastern European Standard Time)
+// VJScript Version: 0.2.0
 //-------------------------------------------------------------------------------------//
 
 class Light {
@@ -39,7 +39,3 @@ function getLight (color) {
 }
 local l = getLight("blue")
 l.turnOn()
-function PlayerThink () {
-  printl(self.GetName())
-  return (- 1)
-}

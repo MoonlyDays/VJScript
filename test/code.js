@@ -1,8 +1,6 @@
 class Light {
-    Color = '';
-    /** @type {CBaseAnimating} */
+    Color = "";
     LightProp;
-    /** @type {CBaseEntity} */
     SoundEnt;
 
     constructor(color) {
@@ -41,11 +39,3 @@ function getLight(color) {
 
 const l = getLight('blue');
 l.turnOn();
-
-function PlayerThink() {
-    console.log(self.GetName());
-    return -1;
-}
-
-const player = GetListenServerHost();
-player.SetAbsVelocity(new Vector(0, 0, 100));

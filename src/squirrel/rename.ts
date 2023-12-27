@@ -3,20 +3,22 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import * as crypto from 'crypto';
-import {Node} from 'estree';
-import {NodePath} from 'estree-toolkit';
+import {Identifier, Program} from 'estree';
+import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
+import {ESTree, parseScript} from 'meriyah';
 
 import {IdentifierRenameList} from './config';
+import {MeriyahParseOptions} from './helpers';
 import {
-    CollapsedIdentifier,
-    collapseIdentifier, encodeIdentifier,
-    expandIdentifier,
-    findListEntryForIdentifier,
-    IdentifierNode
+    collapseIdentifier, expandIdentifier, findListEntryForIdentifier, IdentifierNode
 } from './identifier';
 
-const HASH_SALT = 'Club Sandwich!';
+export interface ExtraDeclaration {
+    Program: ESTree.Program;
+    Identifier: Identifier;
+}
+
+const g_kExtraDeclarations = new Map<string, ExtraDeclaration>();
 
 export function renameNode(path: NodePath<IdentifierNode>) {
     const rule = findListEntryForIdentifier(IdentifierRenameList, path);
@@ -26,30 +28,74 @@ export function renameNode(path: NodePath<IdentifierNode>) {
 
     const node = path.node;
     const nodeIdent = collapseIdentifier(node);
-    if (nodeIdent === false)
-        return;
+    if (nodeIdent === false) return;
 
     if ('declaration' in rule) {
-        const declareCode = rule.declaration;
-
-        /*
-        let declaration = ExtraDeclarations.get(decl);
+        let declaration = g_kExtraDeclarations.get(rule.encodedPattern);
         if (!declaration) {
-            const programCode = parseScript(decl);
-            const body = programCode.body;
-
-            if (body.length > 1) {
+            const declCode = rule.declaration;
+            const declProgram = parseScript(declCode, MeriyahParseOptions);
+            const declBody = declProgram.body;
+            if (declBody.length > 1) {
                 throw Error('More than one declaration is not allowed in Declare config.');
             }
 
-            declaration = normalizeDeclaration(body[0], rule.pattern);
-            ExtraDeclarations.set(decl, declaration);
+            const programPath = path.findParent<Program>(is.program);
+            if (!programPath) {
+                throw Error('Program path not found for declaration?');
+            }
+
+            let desiredDeclareIdent = `__js_${nodeIdent.join('_')}`;
+            desiredDeclareIdent = desiredDeclareIdent.replace(/[0-9]/g, '');
+            desiredDeclareIdent = desiredDeclareIdent.toLowerCase();
+            let declareIdentPath: NodePath<Identifier>;
+
+            traverse(declProgram, {
+                $: {scope: true},
+
+                ArrowFunctionExpression: path => {
+                    const node = path.node;
+                    const body = is.blockStatement(node.body) ? node.body : b.blockStatement([b.returnStatement(node.body)]);
+                    const ident = programPath.scope.generateUidIdentifier(desiredDeclareIdent);
+                    path.replaceWith(b.functionDeclaration(ident, node.params, body));
+                },
+
+                FunctionDeclaration: path => {
+                    declareIdentPath = path.get('id');
+                    programPath.unshiftContainer('body', [path.node]);
+                    programPath.scope.crawl();
+                },
+
+                Literal: path => {
+                    if (is.expressionStatement(path.parent)) {
+                        const ident = programPath.scope.generateUidIdentifier(desiredDeclareIdent);
+                        path.parentPath.replaceWith(b.variableDeclaration('const', [b.variableDeclarator(ident, path.cloneNode())]));
+                    }
+                },
+
+                VariableDeclaration: path => {
+                    programPath.unshiftContainer('body', [path.node]);
+                    programPath.scope.crawl();
+                },
+
+                VariableDeclarator: path => {
+                    const id = path.get('id');
+                    if (is.identifier(id)) {
+                        declareIdentPath = id;
+                    }
+                }
+            });
+
+            if (!declareIdentPath) {
+                console.log(declProgram.body[0]);
+                throw Error('Could not extract an identifier from the declaration.');
+            }
+
+            declaration = {Program: declProgram, Identifier: declareIdentPath.node};
+            g_kExtraDeclarations.set(rule.encodedPattern, declaration);
         }
 
-        const identName = extractIdentifierName(declaration);
-        const declaredIdent = decodeIdentifier(identName);
-
-        ctx.node = expandIdentifier(declaredIdent);*/
+        path.replaceWith(declaration.Identifier);
         return;
     }
 
@@ -63,34 +109,3 @@ export function renameNode(path: NodePath<IdentifierNode>) {
     path.replaceWith(expandIdentifier(newIdent, node));
 }
 
-function generateIdentifier(searchPattern: CollapsedIdentifier) {
-
-    const encodedIdent = encodeIdentifier(searchPattern);
-    const hash = crypto.createHash('SHA1');
-    hash.update(encodedIdent + HASH_SALT);
-    const digest = hash.digest('hex').slice(0, 4);
-
-    const inlineName = searchPattern
-        .filter(x => !!x)
-        .map(x => x.toLowerCase())
-        .join('_');
-
-    return `__js_${inlineName}_${digest}`;
-}
-
-function extractIdentifierName(node: Node): string {
-
-    if (node.type == 'FunctionDeclaration') {
-        return node.id.name;
-    }
-
-    if (node.type == 'Identifier')
-        return node.name;
-
-    if (node.type == 'VariableDeclaration') {
-        const declaration = node.declarations[0];
-        return extractIdentifierName(declaration.id);
-    }
-
-    throw Error(`Cannot extract identifier name from ${node.type}.`);
-}

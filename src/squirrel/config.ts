@@ -14,9 +14,7 @@ export type RenameRuleDeclare = SearchPattern & {
     declaration: string;
 };
 
-export type RenameRule =
-    RenameRuleAlias |
-    RenameRuleDeclare;
+export type RenameRule = RenameRuleAlias | RenameRuleDeclare;
 
 export const IdentifierRenameList: RenameRule[] = [];
 export const IdentifierBlackList: SearchPattern[] = [];
@@ -49,8 +47,7 @@ function parseSearchPattern<T extends SearchPattern>(encodedSearch: string): T {
     }
 
     return {
-        pattern: decodeIdentifier(encodedSearch),
-        call_only
+        encodedPattern: encodedSearch, pattern: decodeIdentifier(encodedSearch), call_only
     } as T;
 }
 
