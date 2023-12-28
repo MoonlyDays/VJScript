@@ -22,6 +22,7 @@
         "package.json"
     ],
     "scripts": {
+        "prepack": "npm run build",
         "test": "node dist/vjsc.js test/code.js -t",
         "test_watch": "node dist/vjsc.js test/code.js -t -w -i 100",
         "watch": "tsc -w",

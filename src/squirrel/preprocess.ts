@@ -307,10 +307,6 @@ const getClassConstructor = (path: NodePath<ClassBody>): MethodDefinition => {
     return path.node.body.find(x => is.methodDefinition(x) && x.kind == 'constructor') as MethodDefinition;
 };
 
-const getClassProperties = (path: NodePath<ClassBody>): PropertyDefinition[] => {
-    return path.node.body.filter(x => is.propertyDefinition(x)) as PropertyDefinition[];
-};
-
 const getClassDeclarationSuper = (path: NodePath<ClassDeclaration>): NodePath<ClassDeclaration> => {
 
     const superIdent = path.node.superClass;

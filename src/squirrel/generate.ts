@@ -41,14 +41,17 @@ const Generators: Generators = {
     Program: function* (node: Program) {
         yield* helpers.generateBody(node);
     },
+
     BlockStatement: function* (node: BlockStatement) {
         yield* helpers.withScope(() => helpers.generateBody(node));
     },
+
     VariableDeclaration: function* (node: VariableDeclaration) {
         yield node.kind == 'const' ? 'const' : 'local';
         yield ' ';
         yield* helpers.generateArguments(node.declarations);
     },
+
     VariableDeclarator: function* (node: VariableDeclarator) {
         yield generate(node.id);
         if (node.init) {
@@ -56,26 +59,33 @@ const Generators: Generators = {
             yield generate(node.init);
         }
     },
+
     Identifier: function* (node: Identifier) {
         yield node.name;
     },
+
     Literal: function* (node: Literal) {
         yield JSON.stringify(node.value);
     },
+
     BinaryExpression: function* (node: BinaryExpression) {
         yield '(';
         yield* helpers.generateLROperatorExpression(node);
         yield ')';
     },
+
     ExpressionStatement: function* (node: ExpressionStatement) {
         yield generate(node.expression);
     },
+
     LogicalExpression: function* (node) {
         yield* helpers.generateLROperatorExpression(node);
     },
+
     ThisExpression: function* () {
         yield 'this';
     },
+
     MemberExpression: function* (node) {
         yield generate(node.object);
 
@@ -89,6 +99,7 @@ const Generators: Generators = {
         yield '.';
         yield generate(node.property);
     },
+
     ConditionalExpression: function* (node) {
         yield generate(node.test);
         yield ' ? ';
@@ -96,12 +107,14 @@ const Generators: Generators = {
         yield ' : ';
         yield generate(node.alternate);
     },
+
     CallExpression: function* (node) {
         yield generate(node.callee);
         yield '(';
         yield* helpers.generateArguments(node.arguments);
         yield ')';
     },
+
     IfStatement: function* (node) {
         yield 'if (';
         yield generate(node.test);
@@ -113,9 +126,11 @@ const Generators: Generators = {
             yield generate(node.alternate);
         }
     },
+
     AssignmentExpression: function* (node) {
         yield* helpers.generateLROperatorExpression(node);
     },
+
     UnaryExpression: function* (node) {
         yield '(';
         yield node.operator;
@@ -123,9 +138,11 @@ const Generators: Generators = {
         yield generate(node.argument);
         yield ')';
     },
+
     ObjectExpression: function* (node: ObjectExpression) {
         yield* helpers.withScope(() => helpers.generateBody({body: node.properties}));
     },
+
     Property: function* (node) {
         if (['get', 'set'].includes(node.kind))
             throw Error('Getters and Setters are not supported!');
@@ -134,6 +151,7 @@ const Generators: Generators = {
         yield ' = ';
         yield generate(node.value);
     },
+
     ReturnStatement: function* (node) {
         yield 'return';
 
@@ -142,11 +160,13 @@ const Generators: Generators = {
             yield generate(node.argument);
         }
     },
+
     ArrayExpression: function* (node) {
         yield '[';
         yield* helpers.generateArguments(node.elements);
         yield ']';
     },
+
     ForOfStatement: function* (node) {
         yield 'foreach (';
 
@@ -161,12 +181,15 @@ const Generators: Generators = {
         yield ') ';
         yield generate(node.body);
     },
+
     FunctionExpression: function* (node) {
         yield* helpers.generateFunction(node);
     },
+
     FunctionDeclaration: function* (node) {
         yield* helpers.generateFunction(node);
     },
+
     TemplateLiteral: function* (node) {
         const parts = [];
         for (let i = 0; i < node.quasis.length; i++) {
@@ -181,15 +204,18 @@ const Generators: Generators = {
 
         yield parts.filter(x => !!x).join(' + ');
     },
+
     TemplateElement: function* (node) {
         yield JSON.stringify(node.value.cooked);
     },
+
     NewExpression: function* (node) {
         yield generate(node.callee);
         yield '(';
         yield* helpers.generateArguments(node.arguments);
         yield ')';
     },
+
     ClassDeclaration: function* (node) {
         yield 'class ';
         yield generate(node.id);
@@ -202,9 +228,11 @@ const Generators: Generators = {
         yield ' ';
         yield generate(node.body);
     },
+
     ClassBody: function* (node) {
         yield* helpers.withScope(() => helpers.generateBody(node));
     },
+
     PropertyDefinition: function* (node) {
         if (node.static) {
             yield 'static ';
@@ -217,6 +245,7 @@ const Generators: Generators = {
             yield generate(node.value);
         }
     },
+
     MethodDefinition: function* (node) {
         if (['get', 'set'].includes(node.kind)) {
             throw Error('Class getter and setter are not support.');
@@ -239,6 +268,7 @@ const Generators: Generators = {
 
         yield* helpers.withScope(() => helpers.generateBody(node.value.body));
     },
+
     Super: function* () {
         yield 'base';
     }

@@ -3,7 +3,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {Identifier, Program} from 'estree';
+import {Identifier, MemberExpression, Program} from 'estree';
 import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
 import {ESTree, parseScript} from 'meriyah';
 
@@ -21,14 +21,18 @@ export interface ExtraDeclaration {
 const g_kExtraDeclarations = new Map<string, ExtraDeclaration>();
 
 export function renameNode(path: NodePath<IdentifierNode>) {
+
     const rule = findListEntryForIdentifier(IdentifierRenameList, path);
-    if (!rule) {
+    if (!rule)
         return;
-    }
 
     const node = path.node;
-    const nodeIdent = collapseIdentifier(node);
-    if (nodeIdent === false) return;
+    const nodeIdent = collapseIdentifier(path);
+    if (!nodeIdent)
+        return;
+
+    if (identifierHasBinding(path))
+        return;
 
     if ('declaration' in rule) {
         let declaration = g_kExtraDeclarations.get(rule.encodedPattern);
@@ -109,3 +113,17 @@ export function renameNode(path: NodePath<IdentifierNode>) {
     path.replaceWith(expandIdentifier(newIdent, node));
 }
 
+const identifierHasBinding = (path: NodePath) => {
+
+    if (is.memberExpression(path)) {
+        const objectPath = path.get('object');
+        return identifierHasBinding(objectPath);
+    }
+
+    if (is.identifier(path)) {
+        const node = path.node;
+        return path.scope.hasBinding(node.name);
+    }
+
+    return false;
+};

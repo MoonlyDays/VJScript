@@ -3,8 +3,8 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {CallExpression, Identifier, MemberExpression, Node} from 'estree';
-import {NodePath} from 'estree-toolkit';
+import {Identifier, MemberExpression} from 'estree';
+import {is, NodePath} from 'estree-toolkit';
 
 export type SearchPattern = {
     encodedPattern: string;
@@ -13,41 +13,42 @@ export type SearchPattern = {
 };
 
 export type CollapsedIdentifier = string[];
-export type IdentifierNode = MemberExpression | Identifier | CallExpression;
+export type IdentifierNode = MemberExpression | Identifier;
 
 /**
  * Tries to convert an identifier or a member expression to a flattened identifier.
- * @param node
  */
-export function collapseIdentifier(node: IdentifierNode): false | CollapsedIdentifier {
+export function collapseIdentifier(path: NodePath): CollapsedIdentifier {
 
-    if (node.type == 'MemberExpression') {
-        // Member expression must not be computed,
-        // for us to be able to generate identifier path.
-        if (node.computed) {
-            return false;
-        }
+    if (is.memberExpression(path)) {
+        const node = path.node as MemberExpression;
+        // Member expression must not be computed, for us to be
+        // able to generate an identifier path.
+        if (node.computed)
+            return;
 
         // Object must be an identifier for this to work.
         const object = node.object;
-        const objectName = object.type == 'Identifier' ? object.name : null;
+        const objectName = is.identifier(object) ? object.name : null;
 
-        const property = node.property;
-        const propPath = collapseIdentifier(property as IdentifierNode);
+        const propertyPath = path.get('property');
+        const propertyIdent = collapseIdentifier(propertyPath);
+
         // Can't generate the path of the property, then we
         // can't build the entire path.
-        if (propPath === false) {
-            return false;
-        }
+        if (!propertyIdent)
+            return;
 
-        return [objectName, ...propPath];
+        return [objectName, ...propertyIdent];
     }
 
-    if (node.type == 'Identifier') {
+    if (is.identifier(path)) {
+
+        const node = path.node as Identifier;
         return [node.name];
     }
 
-    return false;
+    return;
 }
 
 export function expandIdentifier(collapsedIdent: CollapsedIdentifier, fallback?: IdentifierNode): IdentifierNode {
@@ -113,9 +114,8 @@ export function encodeIdentifier(decoded: CollapsedIdentifier): string {
 
 export function findListEntryForIdentifier<T extends SearchPattern>(list: Array<T>, path: NodePath<IdentifierNode>): T {
 
-    const node = path.node;
-    const ident = collapseIdentifier(node);
-    if (ident === false)
+    const ident = collapseIdentifier(path);
+    if (!ident)
         return;
 
     for (const renameRule of list) {
