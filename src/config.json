@@ -6,14 +6,13 @@
         "AddThinkToEnt": {
             "params": {
                 "1": [
-                    "PassValueAsRootVariable",
-                    "ParameterIsSelf:0"
+                    "PassValueAsRootVariable", "ParameterIsSelf:0"
                 ]
             }
         }
     },
     "Alias":      {
-        "*.toString":  "*.tostring",
+        "*.toString":  "$1.tostring",
         "console.log": "printl",
         "CConVars":    "Convars",
         "Math.PI":     "PI",

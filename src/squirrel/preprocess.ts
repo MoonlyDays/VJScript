@@ -10,7 +10,6 @@ import {
     ClassDeclaration,
     ForInStatement,
     ForOfStatement,
-    Identifier,
     MethodDefinition,
     PropertyDefinition,
     VariableDeclarator
@@ -19,7 +18,6 @@ import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
 
 import {renameNode} from './rename';
-
 
 export function preprocess(program: ESTree.Program) {
     traverse(program, TraverseVisitors);
@@ -30,7 +28,10 @@ const TraverseVisitors: TraverseVisitors = {
     $: {scope: true},
 
     Identifier: path => {
-        renameNode(path);
+        const isProperty = is.memberExpression(path.parentPath) && path.parentKey == 'property';
+        if (!isProperty) {
+            renameNode(path);
+        }
     },
 
     MemberExpression: path => {

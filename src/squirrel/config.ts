@@ -3,52 +3,58 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
+import {NodePath} from 'estree-toolkit';
+
 import Config from '../config.json';
-import {CollapsedIdentifier, decodeIdentifier, SearchPattern} from './identifier';
+import {IdentifierPattern} from './identifier';
 
-export type RenameRuleAlias = SearchPattern & {
-    rename: CollapsedIdentifier;
-};
+export interface SearchPattern {
+    pattern: IdentifierPattern;
+}
 
-export type RenameRuleDeclare = SearchPattern & {
+export interface RenameRuleAlias extends SearchPattern {
+    rename: IdentifierPattern;
+}
+
+export interface RenameRuleDeclare extends SearchPattern {
     declaration: string;
-};
+}
 
 export type RenameRule = RenameRuleAlias | RenameRuleDeclare;
 
-export const IdentifierRenameList: RenameRule[] = [];
-export const IdentifierBlackList: SearchPattern[] = [];
+class ConfigSearchPatternSet<T extends SearchPattern = SearchPattern> extends Set<T> {
+    public find(path: NodePath) {
+
+        for (const search of this) {
+            const pattern = search.pattern;
+            if (pattern.match(path) !== false)
+                return search;
+        }
+    }
+}
+
+export const IdentifierRenameList = new ConfigSearchPatternSet<RenameRule>();
+export const IdentifierBlackList = new ConfigSearchPatternSet();
 
 function parseAlias(encodedSearch: string, encodedRename: string) {
     const rule = parseSearchPattern<RenameRuleAlias>(encodedSearch);
-    rule.rename = decodeIdentifier(encodedRename);
-
-    IdentifierRenameList.push(rule);
+    rule.rename = new IdentifierPattern(encodedRename);
+    IdentifierRenameList.add(rule);
 }
 
 function parseDeclare(encodedSearch: string, declareCode: string) {
     const rule = parseSearchPattern<RenameRuleDeclare>(encodedSearch);
     rule.declaration = declareCode;
-
-    IdentifierRenameList.push(rule);
+    IdentifierRenameList.add(rule);
 }
 
 function parseBlacklist(pattern: string) {
     const item = parseSearchPattern(pattern);
-    IdentifierBlackList.push(item);
+    IdentifierBlackList.add(item);
 }
 
 function parseSearchPattern<T extends SearchPattern>(encodedSearch: string): T {
-
-    let call_only = false;
-    if (encodedSearch.endsWith('()')) {
-        encodedSearch = encodedSearch.slice(0, -2);
-        call_only = true;
-    }
-
-    return {
-        encodedPattern: encodedSearch, pattern: decodeIdentifier(encodedSearch), call_only
-    } as T;
+    return {pattern: new IdentifierPattern(encodedSearch)} as T;
 }
 
 function parse() {
@@ -64,14 +70,10 @@ function parse() {
         parseDeclare(encodedSearch, declarationCode);
     }
 
-    IdentifierRenameList.sort((a, b) => b.pattern.length - a.pattern.length);
-
     const blacklist = Config['Blacklist'];
     for (const ident of blacklist) {
         parseBlacklist(ident);
     }
-
-    IdentifierBlackList.sort((a, b) => b.pattern.length - a.pattern.length);
 }
 
 parse();
