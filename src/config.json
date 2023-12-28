@@ -1,5 +1,17 @@
 {
-    "Alias":     {
+    "Attributes": {
+        "printl":        [
+            "ConcatParameters"
+        ],
+        "AddThinkToEnt": {
+            "params": {
+                "1": [
+                    "PassValueAsRootVariable", "FirstParameterIsSelf"
+                ]
+            }
+        }
+    },
+    "Alias":      {
         "*.toString":  "*.tostring",
         "console.log": "printl",
         "CConVars":    "Convars",
@@ -20,7 +32,7 @@
         "Math.sqrt":   "sqrt",
         "Math.tan":    "tan"
     },
-    "Declare":   {
+    "Declare":    {
         "Number":                  "x => x.tofloat()",
         "Number.EPSILON":          "2.220446049250313e-16",
         "Number.MAX_SAFE_INTEGER": "9007199254740991",
@@ -44,7 +56,7 @@
         "Math.cosh":               "x => (Math.exp(x) + Math.exp(-x)) / 2",
         "Math.expm1":              "x => Math.exp(x) - 1"
     },
-    "Blacklist": [
+    "Blacklist":  [
         "Math.fround"
     ]
 }
