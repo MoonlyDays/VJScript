@@ -6,7 +6,8 @@
         "AddThinkToEnt": {
             "params": {
                 "1": [
-                    "PassValueAsRootVariable", "FirstParameterIsSelf"
+                    "PassValueAsRootVariable",
+                    "ParameterIsSelf:0"
                 ]
             }
         }

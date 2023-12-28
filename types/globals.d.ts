@@ -25,7 +25,7 @@ declare global {
      * @bug The think function name stored in the entity is not reset if null is passed as the function
      * name. However, this is harmless, and it will only show a warning in console.
      */
-    function AddThinkToEnt(entity: CBaseEntity, FuncName: string): void;
+    function AddThinkToEnt<T extends CBaseEntity>(entity: T, thinkFn: (ent: T) => number): void;
 
     function AddToScriptHelp(): void;
 
