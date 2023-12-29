@@ -11,12 +11,14 @@ import {
     ForInStatement,
     ForOfStatement,
     MethodDefinition,
-    PropertyDefinition,
+    PropertyDefinition, VariableDeclaration,
     VariableDeclarator
 } from 'estree';
 import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
+import * as path from 'path';
 
+import {processAttributes} from './attributes';
 import {renameNode} from './rename';
 
 export function preprocess(program: ESTree.Program) {
@@ -31,30 +33,33 @@ const TraverseVisitors: TraverseVisitors = {
         const isProperty = is.memberExpression(path.parentPath) && path.parentKey == 'property';
         if (!isProperty) {
             renameNode(path);
+            processAttributes(path);
         }
     },
 
     MemberExpression: path => {
         renameNode(path);
+        processAttributes(path);
     },
 
     VariableDeclaration: path => {
 
         const node = path.node;
-        if (node.kind == 'const') {
-            // Multiple declarators in a single const declaration is not allowed.
-            const declarators = node.declarations;
-            if (declarators.length > 1) {
-                for (let i = 1; i < declarators.length; i++) {
-                    const declarator = declarators[i];
-                    path.insertAfter([b.variableDeclaration('const', [declarator])]);
-                }
+        if (variableDeclarationNeedsToSplit(path)) {
 
-                node.declarations = node.declarations.slice(0, 1);
+            for (let i = 1; i < node.declarations.length; i++) {
+                const declarator = node.declarations[i];
+                path.insertAfter([b.variableDeclaration(node.kind, [declarator])]);
             }
+
+            node.declarations = node.declarations.slice(0, 1);
+        }
+
+        if (node.kind == 'const') {
 
             // Const can only accept a single literal value,
             // Otherwise it's a local.
+            const declarators = node.declarations;
             const declarator = declarators[0];
             if (declarator) {
 
@@ -332,4 +337,27 @@ const propDefinitionHasValue = (path: PropertyDefinition) => {
     if (is.literal(node.value) && node.value.value === null) return false;
 
     return true;
+};
+
+const variableDeclarationNeedsToSplit = (path: NodePath<VariableDeclaration>) => {
+
+    const node = path.node;
+    if (node.declarations.length <= 1)
+        return false;
+
+    if (node.kind == 'const') {
+
+        // Multiple declarators in a single const declaration is not allowed.
+        return true;
+    }
+
+    for (let i = 0; i < node.declarations.length; i++) {
+        const decl = node.declarations[i];
+        const id = decl.id;
+
+        if (is.identifier(id) && id.name.startsWith('__global_'))
+            return true;
+    }
+
+    return false;
 };

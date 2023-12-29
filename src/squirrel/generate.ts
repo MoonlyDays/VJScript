@@ -13,7 +13,7 @@ import {
     VariableDeclaration,
     VariableDeclarator
 } from 'estree';
-import {traverse, Visitor} from 'estree-toolkit';
+import {is, traverse, Visitor} from 'estree-toolkit';
 
 import {helpers} from './helpers';
 
@@ -47,6 +47,23 @@ const Generators: Generators = {
     },
 
     VariableDeclaration: function* (node: VariableDeclaration) {
+
+        // Special case for root table scoped variables.
+        const decl = node.declarations[0];
+        if (decl && is.identifier(decl.id) && decl.id.name.startsWith('__global_')) {
+
+            decl.id.name = decl.id.name.slice('__global_'.length);
+            yield '::';
+            yield generate(decl.id);
+
+            if (decl.init) {
+                yield ' <- ';
+                yield generate(decl.init);
+            }
+
+            return;
+        }
+
         yield node.kind == 'const' ? 'const' : 'local';
         yield ' ';
         yield* helpers.generateArguments(node.declarations);

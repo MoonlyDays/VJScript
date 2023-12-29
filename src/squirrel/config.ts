@@ -40,7 +40,7 @@ class ConfigSearchPatternSet<T extends SearchPattern = SearchPattern> extends Se
 
 export const IdentifierRenameList = new ConfigSearchPatternSet<RenameRule>();
 export const IdentifierBlackList = new ConfigSearchPatternSet();
-export const IdentifierAttributes = new ConfigSearchPatternSet();
+export const IdentifierAttributes = new ConfigSearchPatternSet<AttributeRule>();
 
 function parseSearchPattern<T extends SearchPattern>(encodedSearch: string): T {
     return {pattern: new IdentifierPattern(encodedSearch)} as T;
