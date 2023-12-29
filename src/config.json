@@ -1,13 +1,21 @@
 {
     "Attributes": {
-        "printl":        [
-            "ConcatParameters"
-        ],
+        "printl":        {
+            "Type":       "Function",
+            "Attributes": {
+                "ConcatParameters": []
+            }
+        },
         "AddThinkToEnt": {
-            "params": {
-                "1": [
-                    "PassValueAsRootVariable", "ParameterIsSelf:0"
-                ]
+            "Type":   "Function",
+            "Params": {
+                "1": {
+                    "Type":       "Identifier",
+                    "Attributes": {
+                        "PassValueAsRootVariable": [],
+                        "ParameterIsSelf":         [0]
+                    }
+                }
             }
         }
     },

@@ -6,6 +6,7 @@
 import {NodePath} from 'estree-toolkit';
 
 import Config from '../config.json';
+import {NodeAttributes} from './attributes';
 import {IdentifierPattern} from './identifier';
 
 export interface SearchPattern {
@@ -18,6 +19,10 @@ export interface RenameRuleAlias extends SearchPattern {
 
 export interface RenameRuleDeclare extends SearchPattern {
     declaration: string;
+}
+
+export interface AttributeRule extends SearchPattern {
+    attributes: NodeAttributes;
 }
 
 export type RenameRule = RenameRuleAlias | RenameRuleDeclare;
@@ -35,6 +40,11 @@ class ConfigSearchPatternSet<T extends SearchPattern = SearchPattern> extends Se
 
 export const IdentifierRenameList = new ConfigSearchPatternSet<RenameRule>();
 export const IdentifierBlackList = new ConfigSearchPatternSet();
+export const IdentifierAttributes = new ConfigSearchPatternSet();
+
+function parseSearchPattern<T extends SearchPattern>(encodedSearch: string): T {
+    return {pattern: new IdentifierPattern(encodedSearch)} as T;
+}
 
 function parseAlias(encodedSearch: string, encodedRename: string) {
     const rule = parseSearchPattern<RenameRuleAlias>(encodedSearch);
@@ -53,8 +63,10 @@ function parseBlacklist(pattern: string) {
     IdentifierBlackList.add(item);
 }
 
-function parseSearchPattern<T extends SearchPattern>(encodedSearch: string): T {
-    return {pattern: new IdentifierPattern(encodedSearch)} as T;
+function parseAttributes(encodedSearch: string, attributes: NodeAttributes) {
+    const item = parseSearchPattern<AttributeRule>(encodedSearch);
+    item.attributes = attributes;
+    IdentifierAttributes.add(item);
 }
 
 function parse() {
@@ -73,6 +85,12 @@ function parse() {
     const blacklist = Config['Blacklist'];
     for (const ident of blacklist) {
         parseBlacklist(ident);
+    }
+
+    const attributes = Config['Attributes'];
+    for (const pattern in attributes) {
+        const attribs = attributes[pattern];
+        parseAttributes(pattern, attribs);
     }
 }
 

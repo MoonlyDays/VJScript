@@ -3,6 +3,4 @@
  * https://github.com/MoonlyDays
  */
 
-export class ExportedClass {
-    Poggers = 2;
-}
+const player = GetListenServerHost();
