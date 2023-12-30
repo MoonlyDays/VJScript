@@ -14,10 +14,14 @@ import {
     VariableDeclarator
 } from 'estree';
 import {is, traverse, Visitor} from 'estree-toolkit';
+import {node} from 'estree-toolkit/dist/assert';
 
 import {helpers} from './helpers';
 
 export function generate(node: BaseNode) {
+
+    if (!node) return '';
+
     const generator = Generators[node.type];
     if (!generator) {
         console.log(node);
@@ -184,6 +188,19 @@ const Generators: Generators = {
         yield ']';
     },
 
+    ForStatement: function* (node) {
+
+        yield 'for(';
+        yield generate(node.init);
+        yield ';';
+        yield generate(node.test);
+        yield ';';
+        yield generate(node.update);
+        yield ')';
+
+        yield generate(node.body);
+    },
+
     ForOfStatement: function* (node) {
         yield 'foreach (';
 
@@ -288,5 +305,11 @@ const Generators: Generators = {
 
     Super: function* () {
         yield 'base';
+    },
+
+    UpdateExpression: function* (node) {
+        if (node.prefix) yield node.operator;
+        yield generate(node.argument);
+        if (!node.prefix) yield node.operator;
     }
 };

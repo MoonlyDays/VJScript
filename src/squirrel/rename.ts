@@ -18,6 +18,10 @@ export interface ExtraDeclaration {
 
 const g_kExtraDeclarations = new Map<string, ExtraDeclaration>();
 
+export function resetExtraDeclarations() {
+    g_kExtraDeclarations.clear();
+}
+
 export function renameNode(path: NodePath) {
 
     const rule = IdentifierRenameList.find(path);

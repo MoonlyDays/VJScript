@@ -75,7 +75,7 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
             const targetNode = sibling.cloneNode() as Expression;
 
             path.replaceWith(b.callExpression(
-                b.identifier('ResolveEntThink'),
+                b.identifier('resolveEntThink'),
                 [targetNode, fnNode]
             ));
 

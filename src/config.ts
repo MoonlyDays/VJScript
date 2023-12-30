@@ -45,11 +45,11 @@ export default {
         'Math.tan': 'tan'
     },
     Declare: {
-        'GetEntThinkSlot': 'ent => (ent.ValidateScriptScope(), "__js_EntThink_" + ent.GetScriptScope().__vname)',
-        'ResolveEntThink': `(ent, fn) => { 
-            const name = GetEntThinkSlot(ent); 
+        'getEntThinkSlot': 'ent => (ent.ValidateScriptScope(), "__js_EntThink_" + ent.GetScriptScope().__vname)',
+        'resolveEntThink': `(ent, fn) => { 
+            const name = getEntThinkSlot(ent); 
             fn = fn.bindenv(this); 
-            getroottable()[name] = fn.getinfos().parameters.len() > 0 
+            getroottable()[name] = fn.getinfos().parameters.len() > 1
                 ? (() => fn(self))
                 : (() => fn());
             return name; 

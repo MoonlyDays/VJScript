@@ -16,12 +16,12 @@ import {
 } from 'estree';
 import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
-import * as path from 'path';
 
 import {processAttributes} from './attributes';
-import {renameNode} from './rename';
+import {renameNode, resetExtraDeclarations} from './rename';
 
 export function preprocess(program: ESTree.Program) {
+    resetExtraDeclarations();
     traverse(program, TraverseVisitors);
 }
 
