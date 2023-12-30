@@ -19,6 +19,7 @@
     "files": [
         "dist",
         "types",
+        "polyfill",
         "package.json"
     ],
     "scripts": {
