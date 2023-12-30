@@ -130,6 +130,16 @@ const Generators: Generators = {
     },
 
     CallExpression: function* (node) {
+
+        const callee = node.callee;
+        if (is.identifier(callee) && callee.name == '__js_raw') {
+            const code = node.arguments[0];
+            if (is.literal(code)) {
+                yield code.value.toString();
+                return;
+            }
+        }
+
         yield generate(node.callee);
         yield '(';
         yield* helpers.generateArguments(node.arguments);

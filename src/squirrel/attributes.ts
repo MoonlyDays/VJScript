@@ -78,10 +78,8 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
                 b.identifier('resolveEntThink'),
                 [targetNode, fnNode]
             ));
-
         }
     });
-
 
     if ('Parameters' in attrs) {
         const parent = path.parentPath;
