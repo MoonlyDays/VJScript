@@ -44,22 +44,17 @@ export default {
         'Math.sqrt': 'sqrt',
         'Math.tan': 'tan'
     },
+    /**
+     * Declarations used for parity between Languages.
+     */
     Declare: {
-        'getEntThinkSlot': 'ent => (ent.ValidateScriptScope(), "__js_EntThink_" + ent.GetScriptScope().__vname)',
-        'resolveEntThink': `(ent, fn) => { 
-            const name = getEntThinkSlot(ent); 
-            fn = fn.bindenv(this); 
-            getroottable()[name] = fn.getinfos().parameters.len() > 1
-                ? (() => fn(self))
-                : (() => fn());
-            return name; 
-        }`,
         'Number': 'x => x.tofloat()',
         'Number.EPSILON': '2.220446049250313e-16',
         'Number.MAX_SAFE_INTEGER': '9007199254740991',
         'Number.MAX_VALUE': '1.7976931348623157e+308',
         'Number.MIN_SAFE_INTEGER': '-9007199254740991',
         'Number.MIN_VALUE': '5e-324',
+
         'Math.E': '2.718281828459045',
         'Math.LN10': '2.302585092994046',
         'Math.LN3': '1.111',
@@ -75,7 +70,27 @@ export default {
         'Math.cbrt': 'x => x === 0 ? x : (x < 0 ? -Math.pow(-x, 1/3) : Math.pow(x, 1/3))',
         'Math.clz32': 'x => 31 - Math.floor(Math.log2(x >>> 0) + 1)',
         'Math.cosh': 'x => (Math.exp(x) + Math.exp(-x)) / 2',
-        'Math.expm1': 'x => Math.exp(x) - 1'
+        'Math.expm1': 'x => Math.exp(x) - 1',
+
+        'resolveEntThink': `(ent, fn) => { 
+            ent.ValidateScriptScope();
+            const name = "__js_EntThink_" + ent.GetScriptScope().__vname; 
+            fn = fn.bindenv(this); 
+            getroottable()[name] = fn.getinfos().parameters.len() > 1
+                ? (() => fn(self))
+                : (() => fn());
+            return name; 
+        }`,
+
+        '__js_Array': `class Array {
+            arr;
+            constructor(arr)    { this.arr = arr; }
+            _get(k)             { return k == "length" ? this.arr.len() : this.arr[k]; } 
+            _set(k, v)          { this.arr[k] = v; }
+            _newslot(k, v)      { this.arr[k] = v; } 
+            _nexti(k)           { k ??= -1; k++; return k < this.length ? k : null;  }
+            concat()            {} 
+        }`
     },
     Blacklist: [
         'Math.fround'
