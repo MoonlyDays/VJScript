@@ -3,7 +3,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {CallExpression, Program, TemplateElement} from 'estree';
+import {CallExpression, Expression, TemplateElement} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {IdentifierAttributes as ConfigAttributes} from './config';
@@ -15,7 +15,7 @@ type AttributeTypes =
 
 export interface NodeAttributes {
     Attributes: Record<AttributeTypes, string[]>,
-    Params?: { [key: number]: NodeAttributes }
+    Parameters?: { [key: number]: NodeAttributes }
 }
 
 export function processAttributes(path: NodePath) {
@@ -34,9 +34,15 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
 
     runAppliers(path, attrs, {
         ConcatParameters: p => {
+
+
             const callExpr = p.parentPath;
             if (!is.callExpression(callExpr))
                 return;
+
+            if (path.parentKey != 'callee')
+                return;
+
             const node = callExpr.node;
             if (node.arguments.length <= 1)
                 return;
@@ -61,34 +67,26 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
         },
 
         EntityThinkCallback: path => {
-            if (!is.function(path))
-                return;
 
-            const clone = path.cloneNode();
-            if (is.functionDeclaration(clone))
-                return;
+            const sibling = path.getPrevSibling();
+            if (!sibling) return;
 
-            const programPath = path.scope.getProgramScope().path as NodePath<Program>;
-            if (!programPath)
-                return;
+            const fnNode = path.cloneNode() as Expression;
+            const targetNode = sibling.cloneNode() as Expression;
 
-            const ident = path.scope.generateUidIdentifier('__global___js_EntThink');
-            const decl = b.variableDeclaration('const', [
-                b.variableDeclarator(ident, b.functionExpression(null, [], b.blockStatement([
-                    b.returnStatement(b.callExpression(clone, [b.identifier('self')]))
-                ])))
-            ]);
+            path.replaceWith(b.callExpression(
+                b.identifier('ResolveEntThink'),
+                [targetNode, fnNode]
+            ));
 
-            programPath.unshiftContainer('body', [decl]);
-            path.replaceWith(ident);
         }
     });
 
-    if ('Params' in attrs) {
+
+    if ('Parameters' in attrs) {
         const parent = path.parentPath;
         if (is.callExpression(parent))
-            applyAttributesToParams(parent, attrs['Params']);
-
+            applyAttributesToParams(parent, attrs['Parameters']);
     }
 }
 
@@ -105,7 +103,7 @@ function runAppliers(path: NodePath, attrs: NodeAttributes, appliers: {
     }
 }
 
-function applyAttributesToParams(path: NodePath<CallExpression>, params: NodeAttributes['Params']) {
+function applyAttributesToParams(path: NodePath<CallExpression>, params: NodeAttributes['Parameters']) {
 
     for (const paramIdx in params) {
         const attrs = params[paramIdx];
@@ -114,5 +112,40 @@ function applyAttributesToParams(path: NodePath<CallExpression>, params: NodeAtt
 
         applyAttributes(param, attrs);
     }
+}
 
+const SelfScriptScopeIdentifier = '__js_selfSC';
+const SelfScriptScopeIdents = new Set<string>();
+
+function figureOutNameForScriptScope(key: string) {
+
+    if (SelfScriptScopeIdents.has(key)) {
+        const numMatch = key.match(/[0-9]+$/);
+        let idx = 1;
+        if (numMatch) {
+            const num = numMatch[0];
+            key = key.slice(0, -num.length);
+            idx = Number(num) + 1;
+        }
+
+        key += idx;
+        return figureOutNameForScriptScope(key);
+    }
+
+    return key;
+}
+
+function copyToScriptScope(key: string, path: NodePath<Expression>, near: NodePath = path) {
+
+    key = figureOutNameForScriptScope(key || path.scope.generateUid());
+    SelfScriptScopeIdents.add(key);
+    const keyIdent = b.identifier('__' + key);
+
+    near.insertAfter([
+        b.assignmentExpression('=', b.memberExpression(
+            b.identifier(SelfScriptScopeIdentifier),
+            keyIdent
+        ), path.cloneNode())
+    ]);
+    return keyIdent;
 }

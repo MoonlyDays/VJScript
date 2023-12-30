@@ -5,7 +5,7 @@
 
 import {NodePath} from 'estree-toolkit';
 
-import Config from '../config.json';
+import Config from '../config';
 import {NodeAttributes} from './attributes';
 import {IdentifierPattern} from './identifier';
 

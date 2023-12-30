@@ -205,7 +205,6 @@ export class IdentifierPattern {
     public codeGenerate() {
 
         let lastNode;
-
         for (const item of this.items) {
 
             let curNode = item;
@@ -233,3 +232,5 @@ function shallowestIdentifier(path: NodePath) {
 
     return path;
 }
+
+

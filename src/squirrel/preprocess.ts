@@ -32,14 +32,14 @@ const TraverseVisitors: TraverseVisitors = {
     Identifier: path => {
         const isProperty = is.memberExpression(path.parentPath) && path.parentKey == 'property';
         if (!isProperty) {
-            renameNode(path);
             processAttributes(path);
+            renameNode(path);
         }
     },
 
     MemberExpression: path => {
-        renameNode(path);
         processAttributes(path);
+        renameNode(path);
     },
 
     VariableDeclaration: path => {
