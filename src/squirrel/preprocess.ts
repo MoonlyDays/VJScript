@@ -10,7 +10,7 @@ import {
     ClassDeclaration,
     ForInStatement,
     ForOfStatement,
-    MethodDefinition,
+    MethodDefinition, Node,
     PropertyDefinition, VariableDeclaration,
     VariableDeclarator
 } from 'estree';
@@ -126,6 +126,17 @@ const TraverseVisitors: TraverseVisitors = {
     AssignmentExpression: path => {
         const node = path.node;
 
+        if (node.operator == '??=') {
+
+            if (is.expression(node.left)) {
+                path.replaceWith(b.ifStatement(
+                    b.binaryExpression('==', node.left, b.literal(null)),
+                    b.expressionStatement(b.assignmentExpression('=', node.left, node.right))
+                ));
+                return;
+            }
+        }
+
         const left = node.left;
         if (is.arrayPattern(left)) {
             const replace: AssignmentExpression[] = [];
@@ -158,10 +169,14 @@ const TraverseVisitors: TraverseVisitors = {
             }
         }
 
-        // We can't use slot creation for changing class fields through
-        // this keyword.
-        if (is.memberExpression(left)) {
-            if (is.thisExpression(left.object) && is.identifier(left.property)) {
+        // We can't use slot creation for changing class fields through this keyword.
+        let deepestMemberExpr: Node = left;
+        while (is.memberExpression(deepestMemberExpr) && is.memberExpression(deepestMemberExpr.object)) {
+            deepestMemberExpr = deepestMemberExpr.object;
+        }
+
+        if (is.memberExpression(deepestMemberExpr)) {
+            if (is.thisExpression(deepestMemberExpr.object) && is.identifier(deepestMemberExpr.property)) {
                 const classBody = path.findParent<ClassBody>(is.classBody);
                 if (classBody) useSlotOperator = false;
             }
@@ -249,6 +264,20 @@ const TraverseVisitors: TraverseVisitors = {
                 path.replaceWith(b.memberExpression(b.super(), b.identifier('constructor')));
             }
         }
+    },
+
+    ArrayExpression: path => {
+
+        if (is.newExpression(path.parent)) {
+            const callee = path.parent.callee;
+            if (is.identifier(callee) && callee.name == '__js_Array')
+                return;
+        }
+
+        path.replaceWith(b.newExpression(
+            b.identifier('__js_Array'),
+            [path.node]
+        ));
     }
 };
 
