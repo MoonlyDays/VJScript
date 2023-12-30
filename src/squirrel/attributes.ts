@@ -6,20 +6,27 @@
 import {CallExpression, Expression, TemplateElement} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {IdentifierAttributes as ConfigAttributes} from './config';
-import {IdentifierPattern} from './identifier';
+import Attributes from '../data/attributes';
+import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './identifier';
+import {polyfillFromFile} from './polyfill';
 
-type AttributeTypes =
+export type AttributeType =
     'ConcatParameters' |
     'EntityThinkCallback';
 
+const AttributeSet = new ConfigSearchPatternSet<AttributeRule>();
+
+export interface AttributeRule extends SearchPattern {
+    attributes: NodeAttributes
+}
+
 export interface NodeAttributes {
-    Attributes: Record<AttributeTypes, string[]>,
+    Attributes?: { [K in keyof AttributeType]?: string[] },
     Parameters?: { [key: number]: NodeAttributes }
 }
 
 export function processAttributes(path: NodePath) {
-    const rule = ConfigAttributes.find(path);
+    const rule = AttributeSet.find(path);
     if (!rule)
         return;
 
@@ -34,7 +41,6 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
 
     runAppliers(path, attrs, {
         ConcatParameters: p => {
-
 
             const callExpr = p.parentPath;
             if (!is.callExpression(callExpr))
@@ -71,11 +77,13 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
             const sibling = path.getPrevSibling();
             if (!sibling) return;
 
+            const entThinkPolyfill = polyfillFromFile(path, 'resolveEntThink', './polyfill/entthink.js');
+
             const fnNode = path.cloneNode() as Expression;
             const targetNode = sibling.cloneNode() as Expression;
 
             path.replaceWith(b.callExpression(
-                b.identifier('resolveEntThink'),
+                b.identifier(entThinkPolyfill.Identifier),
                 [targetNode, fnNode]
             ));
         }
@@ -83,13 +91,14 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
 
     if ('Parameters' in attrs) {
         const parent = path.parentPath;
-        if (is.callExpression(parent))
+        if (is.callExpression(parent)) {
             applyAttributesToParams(parent, attrs['Parameters']);
+        }
     }
 }
 
 function runAppliers(path: NodePath, attrs: NodeAttributes, appliers: {
-    [K in keyof Record<AttributeTypes, unknown>]?: (p: NodePath, params: string[]) => void;
+    [K in keyof Record<AttributeType, unknown>]?: (p: NodePath, params: string[]) => void;
 }) {
     for (const attribName in attrs.Attributes) {
         const params = attrs.Attributes[attribName];
@@ -112,38 +121,54 @@ function applyAttributesToParams(path: NodePath<CallExpression>, params: NodeAtt
     }
 }
 
-const SelfScriptScopeIdentifier = '__js_selfSC';
-const SelfScriptScopeIdents = new Set<string>();
+function parseAttributeArray(array: AttributeType[]): object {
+    const obj = {};
 
-function figureOutNameForScriptScope(key: string) {
-
-    if (SelfScriptScopeIdents.has(key)) {
-        const numMatch = key.match(/[0-9]+$/);
-        let idx = 1;
-        if (numMatch) {
-            const num = numMatch[0];
-            key = key.slice(0, -num.length);
-            idx = Number(num) + 1;
-        }
-
-        key += idx;
-        return figureOutNameForScriptScope(key);
+    for (const attr of array) {
+        const t = parseAttribute(attr);
+        obj[t[0]] = t[1];
     }
 
-    return key;
+    return obj;
 }
 
-function copyToScriptScope(key: string, path: NodePath<Expression>, near: NodePath = path) {
+function parseAttributeBlock(block: object) {
 
-    key = figureOutNameForScriptScope(key || path.scope.generateUid());
-    SelfScriptScopeIdents.add(key);
-    const keyIdent = b.identifier('__' + key);
+    if (Array.isArray(block)) {
+        return {Attributes: parseAttributeArray(block)};
+    }
 
-    near.insertAfter([
-        b.assignmentExpression('=', b.memberExpression(
-            b.identifier(SelfScriptScopeIdentifier),
-            keyIdent
-        ), path.cloneNode())
-    ]);
-    return keyIdent;
+    const attributes = block['Attributes'];
+    if (Array.isArray(attributes)) {
+        block['Attributes'] = parseAttributeArray(attributes);
+    }
+
+    const parameters = block['Parameters'];
+    if (parameters) {
+        for (const idx in parameters) {
+            const paramBlock = parameters[idx];
+            block['Parameters'][idx] = parseAttributeBlock(paramBlock);
+        }
+    }
+
+    return block;
 }
+
+function parseAttribute(attr: string): [string, string[]] {
+    const split = attr.split(':');
+    return [split[0], split[1]?.split(',') || []];
+}
+
+function parse() {
+    for (const pattern in Attributes) {
+        const data = Attributes[pattern];
+        const block = parseAttributeBlock(data);
+
+        const rule = parseSearchPattern<AttributeRule>(pattern);
+        rule.attributes = block;
+
+        AttributeSet.add(rule);
+    }
+}
+
+parse();

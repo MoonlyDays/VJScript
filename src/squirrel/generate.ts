@@ -14,7 +14,6 @@ import {
     VariableDeclarator
 } from 'estree';
 import {is, traverse, Visitor} from 'estree-toolkit';
-import {node} from 'estree-toolkit/dist/assert';
 
 import {helpers} from './helpers';
 

@@ -57,7 +57,7 @@ declare global {
 
         public flush(): void;
 
-        public len(): void;
+        public len(): number;
 
         public readblob(size: number): blob;
 

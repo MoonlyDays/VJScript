@@ -18,10 +18,10 @@ import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
 import {ESTree} from 'meriyah';
 
 import {processAttributes} from './attributes';
-import {renameNode, resetExtraDeclarations} from './rename';
+import {polyfillFromFile} from './polyfill';
+import {renameNode} from './rename';
 
 export function preprocess(program: ESTree.Program) {
-    resetExtraDeclarations();
     traverse(program, TraverseVisitors);
 }
 
@@ -267,15 +267,16 @@ const TraverseVisitors: TraverseVisitors = {
     },
 
     ArrayExpression: path => {
+        const arrayPolyfill = polyfillFromFile(path, 'JSArray', './polyfill/array.js');
 
         if (is.newExpression(path.parent)) {
             const callee = path.parent.callee;
-            if (is.identifier(callee) && callee.name == '__js_Array')
+            if (is.identifier(callee) && callee.name == arrayPolyfill.Identifier)
                 return;
         }
 
         path.replaceWith(b.newExpression(
-            b.identifier('__js_Array'),
+            b.identifier(arrayPolyfill.Identifier),
             [path.node]
         ));
     }

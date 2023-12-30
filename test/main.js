@@ -1,18 +1,9 @@
-/*
- * Copyright (C) Moonly Days
- * https://github.com/MoonlyDays
- */
+const player = GetListenServerHost();
 
-const __js_Array = {};
+const __js_JSArray = {};
 
-const array = [4, 3, 2, 1];
-array[1] = 99;
+const __js_resolveEntThink = 1;
 
-// Testing iteration and item extraction
-for (const [k, v] of array)
-    console.log(k, v);
-
-// Testing length
-console.log(array.length);
-// Testing NRE
-console.log(array[4]);
+AddThinkToEnt(player, player => {
+    console.log(player.GetName(), [1, 2, Math.random()]);
+})

@@ -233,4 +233,28 @@ function shallowestIdentifier(path: NodePath) {
     return path;
 }
 
+function deepestIdentifier(path: NodePath) {
+    if (is.memberExpression(path))
+        return deepestIdentifier(path.get('object'));
 
+    return path;
+}
+
+export interface SearchPattern {
+    pattern: IdentifierPattern;
+}
+
+export function parseSearchPattern<T extends SearchPattern>(pattern: string): T {
+    return {pattern: new IdentifierPattern(pattern)} as T;
+}
+
+export class ConfigSearchPatternSet<T extends SearchPattern = SearchPattern> extends Set<T> {
+    public find(path: NodePath) {
+
+        for (const search of this) {
+            const pattern = search.pattern;
+            if (pattern.match(path) !== false)
+                return search;
+        }
+    }
+}

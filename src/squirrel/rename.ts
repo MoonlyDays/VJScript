@@ -3,28 +3,24 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {Identifier, Node, Program, Statement} from 'estree';
+import {Identifier} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
-import {ESTree, parseScript} from 'meriyah';
+import {ESTree} from 'meriyah';
 
-import {IdentifierRenameList, RenameRuleAlias, RenameRuleDeclare} from './config';
-import {MeriyahParseOptions} from './helpers';
-import {IdentifierPattern} from './identifier';
+import * as Dictionary from '../data/dictionary';
+import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './identifier';
+import {polyfillFromString} from './polyfill';
 
-export interface ExtraDeclaration {
+export interface DictionaryDeclaration {
     Program: ESTree.Program;
     Identifier: Identifier;
 }
 
-const g_kExtraDeclarations = new Map<string, ExtraDeclaration>();
-
-export function resetExtraDeclarations() {
-    g_kExtraDeclarations.clear();
-}
+const IdentifierDictionary = new ConfigSearchPatternSet<RenameRule>();
 
 export function renameNode(path: NodePath) {
 
-    const rule = IdentifierRenameList.find(path);
+    const rule = IdentifierDictionary.find(path);
     if (!rule)
         return;
 
@@ -38,10 +34,10 @@ export function renameNode(path: NodePath) {
         return;
     }
 
-    renameDeclaration(path, rule);
+    renameInline(path, rule);
 }
 
-const renameDeclaration = (path: NodePath, rule: RenameRuleAlias) => {
+const renameInline = (path: NodePath, rule: RenameRuleInline) => {
     const match = rule.pattern.match(path);
 
     const renamedPattern = new IdentifierPattern();
@@ -60,103 +56,52 @@ const renameDeclaration = (path: NodePath, rule: RenameRuleAlias) => {
     path.replaceWith(node);
 };
 
-const createDeclaration = (path: NodePath, rule: RenameRuleDeclare) => {
-    const encodedPattern = rule.pattern.toString();
-    let declaration = g_kExtraDeclarations.get(encodedPattern);
+const createDeclaration = (path: NodePath, rule: RenameRuleDeclaration) => {
 
-    if (!declaration) {
-        const declCode = rule.declaration;
-        const declProgram = parseScript(declCode, MeriyahParseOptions);
-        const declBody = declProgram.body;
-        if (declBody.length > 1) {
-            throw Error('More than one declaration is not allowed in Declare config.');
-        }
-
-        let desiredDeclareIdent = rule.pattern.items.join('_');
-        desiredDeclareIdent = desiredDeclareIdent.replace(/[0-9]/g, '');
-
-        const declare = declBody[0] as Statement;
-        const normalDeclare = normalizeDeclarationNode(declare, path, desiredDeclareIdent);
-        const declareIdent = extractDeclarationIdent(normalDeclare);
-
-        if (!declareIdent) {
-            throw Error('Could not extract an identifier from the declaration.');
-        }
-
-        declaration = {Program: declProgram, Identifier: declareIdent};
-        g_kExtraDeclarations.set(encodedPattern, declaration);
-    }
+    const ident = rule.pattern.items.join('_');
+    const polyfill = polyfillFromString(path, ident, rule.declaration);
 
     if (is.identifier(path)) {
-        if (path.node.name == declaration.Identifier.name)
+        if (path.node.name == polyfill.Identifier)
             return;
     }
 
-    path.replaceWith(declaration.Identifier);
+    path.replaceWith(b.identifier(polyfill.Identifier));
 };
 
-function extractDeclarationIdent(node: Node) {
 
-    if (is.variableDeclaration(node)) {
-        const decl = node.declarations[0];
-        const id = decl.id;
-        if (is.identifier(id))
-            return id;
+function parseAlias(encodedSearch: string, encodedRename: string) {
+    const rule = parseSearchPattern<RenameRuleInline>(encodedSearch);
+    rule.rename = new IdentifierPattern(encodedRename);
+    IdentifierDictionary.add(rule);
+}
+
+function parseDeclare(encodedSearch: string, declareCode: string) {
+    const rule = parseSearchPattern<RenameRuleDeclaration>(encodedSearch);
+    rule.declaration = declareCode;
+    IdentifierDictionary.add(rule);
+}
+
+export interface RenameRuleInline extends SearchPattern {
+    rename: IdentifierPattern;
+}
+
+export interface RenameRuleDeclaration extends SearchPattern {
+    declaration: string;
+}
+
+export type RenameRule = RenameRuleInline | RenameRuleDeclaration;
+
+function parse() {
+    for (const encodedSearch in Dictionary.Alias) {
+        const encodedRename = Dictionary.Alias[encodedSearch];
+        parseAlias(encodedSearch, encodedRename);
     }
 
-    if (is.functionDeclaration(node)) {
-        return node.id;
-    }
-
-    if (is.classDeclaration(node)) {
-        return node.id;
+    for (const encodedSearch in Dictionary.Declare) {
+        const declarationCode = Dictionary.Declare[encodedSearch];
+        parseDeclare(encodedSearch, declarationCode);
     }
 }
 
-function normalizeDeclarationNode(node: Node, path: NodePath, desiredDeclareIdent: string) {
-
-    if (is.expressionStatement(node)) {
-        const expr = node.expression;
-        return normalizeDeclarationNode(expr, path, desiredDeclareIdent);
-    }
-
-    if (is.arrowFunctionExpression(node)) {
-        const body = is.blockStatement(node.body) ? node.body : b.blockStatement([b.returnStatement(node.body)]);
-        const ident = path.scope.generateUidIdentifier(desiredDeclareIdent);
-        const decl = b.functionDeclaration(ident, node.params, body);
-        return normalizeDeclarationNode(decl, path, desiredDeclareIdent);
-    }
-
-    if (is.functionDeclaration(node)) {
-        const programPath = path.scope.getProgramScope().path as NodePath<Program>;
-        programPath.unshiftContainer('body', [node]);
-        return node;
-    }
-
-    if (is.literal(node)) {
-        if (is.expressionStatement(path.parent)) {
-            const ident = path.scope.generateUidIdentifier(desiredDeclareIdent);
-            const expr = b.variableDeclaration(
-                'const',
-                [b.variableDeclarator(ident, node)]
-            );
-
-            return normalizeDeclarationNode(expr, path, desiredDeclareIdent);
-        }
-    }
-
-    if (is.variableDeclaration(node)) {
-        const programPath = path.scope.getProgramScope().path as NodePath<Program>;
-        programPath.unshiftContainer('body', [node]);
-        return node;
-    }
-
-    if (is.classDeclaration(node)) {
-        node.id = path.scope.generateUidIdentifier(desiredDeclareIdent);
-        const programPath = path.scope.getProgramScope().path as NodePath<Program>;
-        programPath.unshiftContainer('body', [node]);
-        return node;
-    }
-
-    throw Error(`Unsupported Extra Declaration type: ${node.type}`);
-}
+parse();
