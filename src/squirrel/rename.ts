@@ -4,7 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Identifier, Node, Program, Statement} from 'estree';
-import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
+import {builders as b, is, NodePath} from 'estree-toolkit';
 import {ESTree, parseScript} from 'meriyah';
 
 import {IdentifierRenameList, RenameRuleAlias, RenameRuleDeclare} from './config';
@@ -72,7 +72,7 @@ const createDeclaration = (path: NodePath, rule: RenameRuleDeclare) => {
             throw Error('More than one declaration is not allowed in Declare config.');
         }
 
-        let desiredDeclareIdent = `__js_${rule.pattern.items.join('_')}`;
+        let desiredDeclareIdent = rule.pattern.items.join('_');
         desiredDeclareIdent = desiredDeclareIdent.replace(/[0-9]/g, '');
 
         const declare = declBody[0] as Statement;
@@ -85,6 +85,11 @@ const createDeclaration = (path: NodePath, rule: RenameRuleDeclare) => {
 
         declaration = {Program: declProgram, Identifier: declareIdent};
         g_kExtraDeclarations.set(encodedPattern, declaration);
+    }
+
+    if (is.identifier(path)) {
+        if (path.node.name == declaration.Identifier.name)
+            return;
     }
 
     path.replaceWith(declaration.Identifier);
@@ -100,6 +105,10 @@ function extractDeclarationIdent(node: Node) {
     }
 
     if (is.functionDeclaration(node)) {
+        return node.id;
+    }
+
+    if (is.classDeclaration(node)) {
         return node.id;
     }
 }
@@ -141,4 +150,13 @@ function normalizeDeclarationNode(node: Node, path: NodePath, desiredDeclareIden
         programPath.unshiftContainer('body', [node]);
         return node;
     }
+
+    if (is.classDeclaration(node)) {
+        node.id = path.scope.generateUidIdentifier(desiredDeclareIdent);
+        const programPath = path.scope.getProgramScope().path as NodePath<Program>;
+        programPath.unshiftContainer('body', [node]);
+        return node;
+    }
+
+    throw Error(`Unsupported Extra Declaration type: ${node.type}`);
 }
