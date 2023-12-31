@@ -19,7 +19,8 @@
     "files": [
         "dist",
         "types",
-        "polyfill",
+        "polyfill/*.js",
+        "polyfill/*.nut",
         "package.json"
     ],
     "scripts": {

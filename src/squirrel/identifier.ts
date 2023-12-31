@@ -26,6 +26,7 @@ export class IdentifierPattern {
                 this.items.push(item);
                 continue;
             }
+
             this.items.push(item);
         }
     }
@@ -88,6 +89,7 @@ export class IdentifierPattern {
         for (; patternIdx < this.items.length; patternIdx++) {
             const patternItem = this.items[patternIdx];
             const pathItem = pathPattern.items[pathIdx++];
+
             // console.log(`pattern(${patternIdx}): ${patternItem}, path(${pathIdx - 1}): ${pathItem}`);
 
             // Pattern is requesting wildcard mode. Do all the necessary
@@ -136,7 +138,9 @@ export class IdentifierPattern {
                 continue;
             }
 
-            if (patternItem != pathItem)
+            const normalPatternItem = normalizeItem(patternItem);
+            const normalPathItem = normalizeItem(pathItem);
+            if (normalPatternItem != normalPathItem)
                 return false;
 
             matchArr[patternIdx + 1] ??= [];
@@ -225,15 +229,23 @@ export class IdentifierPattern {
     }
 }
 
+function normalizeItem(item: IdentifierPatternItem) {
+    if (item) {
+        if (typeof item == 'string' && item.startsWith('::'))
+            item = item.slice(2);
+    }
 
-function shallowestIdentifier(path: NodePath) {
+    return item;
+}
+
+export function shallowestIdentifier(path: NodePath) {
     if (is.memberExpression(path.parentPath))
         return shallowestIdentifier(path.parentPath);
 
     return path;
 }
 
-function deepestIdentifier(path: NodePath) {
+export function deepestIdentifier(path: NodePath) {
     if (is.memberExpression(path))
         return deepestIdentifier(path.get('object'));
 

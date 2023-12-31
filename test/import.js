@@ -3,6 +3,5 @@
  * https://github.com/MoonlyDays
  */
 
-export class ExportedClass {
-    Poggers = 2;
+export function testtest() {
 }

@@ -58,7 +58,7 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
 
             for (let i = 0; i < node.arguments.length; i++) {
                 if (i == 0) quasis.push(b.templateElement({cooked: '', raw: ''}, false));
-                else quasis.push(b.templateElement({cooked: ', ', raw: ', '}, false));
+                else quasis.push(b.templateElement({cooked: ' ', raw: ' '}, false));
 
                 expr.push(node.arguments[i]);
             }
@@ -74,12 +74,15 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
 
         EntityThinkCallback: path => {
 
+            const fnNode = path.cloneNode() as Expression;
+            if (is.literal(fnNode))
+                return;
+
             const sibling = path.getPrevSibling();
             if (!sibling) return;
 
-            const entThinkPolyfill = polyfillFromFile(path, 'resolveEntThink', './polyfill/entthink.js');
+            const entThinkPolyfill = polyfillFromFile(path, '::resolveEntThink', './polyfill/entthink.js');
 
-            const fnNode = path.cloneNode() as Expression;
             const targetNode = sibling.cloneNode() as Expression;
 
             path.replaceWith(b.callExpression(

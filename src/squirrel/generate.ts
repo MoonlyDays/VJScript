@@ -81,6 +81,12 @@ const Generators: Generators = {
     },
 
     Identifier: function* (node: Identifier) {
+
+        if (node.name.includes('__global_')) {
+            node.name = node.name.replace(/__global_/, '');
+            yield '::';
+        }
+
         yield node.name;
     },
 
@@ -89,6 +95,10 @@ const Generators: Generators = {
     },
 
     BinaryExpression: function* (node: BinaryExpression) {
+
+        if (node.operator == '===')
+            node.operator = '==';
+
         yield '(';
         yield* helpers.generateLROperatorExpression(node);
         yield ')';
@@ -320,5 +330,15 @@ const Generators: Generators = {
         if (node.prefix) yield node.operator;
         yield generate(node.argument);
         if (!node.prefix) yield node.operator;
+    },
+
+    RestElement: function* () {
+        yield '...';
+    },
+
+    AssignmentPattern: function* (node) {
+        yield generate(node.left);
+        yield ' = ';
+        yield generate(node.right);
     }
 };

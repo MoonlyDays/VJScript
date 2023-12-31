@@ -73,6 +73,10 @@ function getPolyfillFor(ident: string) {
 
 function normalizeIdentifier(desired: string) {
     desired = desired.replace(/[0-9]/g, '');
+
+    if (desired.startsWith('::'))
+        desired = '__global_' + desired;
+
     desired = '__js_' + desired;
     return desired;
 }

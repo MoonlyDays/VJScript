@@ -5,7 +5,7 @@
 
 export const Alias = {
     '*.toString': '$1.tostring',
-    'console.log': 'printl',
+    'console.log': '::printl',
     'CConVars': 'Convars',
     'Math.PI': 'PI',
     'Math.abs': 'fabs',

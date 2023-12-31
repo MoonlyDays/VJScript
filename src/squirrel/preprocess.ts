@@ -15,15 +15,33 @@ import {
     VariableDeclarator
 } from 'estree';
 import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
-import {ESTree} from 'meriyah';
+import fs from 'fs';
+import {ESTree, parseModule} from 'meriyah';
+import path from 'path';
 
 import {processAttributes} from './attributes';
+import {MeriyahParseOptions} from './helpers';
 import {polyfillFromFile} from './polyfill';
 import {renameNode} from './rename';
 
-export function preprocess(program: ESTree.Program) {
+export function preprocess(sourcePath: string) {
+
+    let jsCode = fs.readFileSync(sourcePath).toString('utf-8');
+    jsCode = removeShebangs(jsCode);
+
+    const program = parseModule(jsCode, MeriyahParseOptions);
     traverse(program, TraverseVisitors);
+    return program;
 }
+
+function processProgram(program: ESTree.Program)
+{
+
+}
+
+const removeShebangs = (jsCode: string): string => {
+    return jsCode.replace(/^#!.*$/, '');
+};
 
 type TraverseVisitors = Parameters<typeof traverse>[1];
 const TraverseVisitors: TraverseVisitors = {
@@ -178,7 +196,18 @@ const TraverseVisitors: TraverseVisitors = {
         if (is.memberExpression(deepestMemberExpr)) {
             if (is.thisExpression(deepestMemberExpr.object) && is.identifier(deepestMemberExpr.property)) {
                 const classBody = path.findParent<ClassBody>(is.classBody);
-                if (classBody) useSlotOperator = false;
+                if (classBody) {
+                    useSlotOperator = false;
+
+                    // Make sure class has such a property declared.
+                    const propDecl = getClassPropertyDefinition(classBody, deepestMemberExpr.property.name);
+                    if (!propDecl) {
+                        classBody.unshiftContainer('body', [b.propertyDefinition(
+                            b.identifier(deepestMemberExpr.property.name),
+                            b.literal(null)
+                        )]);
+                    }
+                }
             }
         }
 
@@ -238,7 +267,6 @@ const TraverseVisitors: TraverseVisitors = {
     },
 
     SequenceExpression: path => {
-
         const node = path.node;
         const funcBody = [];
         for (let i = 0; i < node.expressions.length; i++) {
@@ -267,7 +295,7 @@ const TraverseVisitors: TraverseVisitors = {
     },
 
     ArrayExpression: path => {
-        const arrayPolyfill = polyfillFromFile(path, 'JSArray', './polyfill/array.js');
+        const arrayPolyfill = polyfillFromFile(path, '::JSArray', './polyfill/array.js');
 
         if (is.newExpression(path.parent)) {
             const callee = path.parent.callee;
@@ -279,6 +307,45 @@ const TraverseVisitors: TraverseVisitors = {
             b.identifier(arrayPolyfill.Identifier),
             [path.node]
         ));
+    },
+
+    AssignmentPattern: path => {
+
+        const node = path.node;
+
+        // If we're using assignment pattern inside a class method.
+        const methodPath = path.findParent<MethodDefinition>(x => is.methodDefinition(x));
+        if (methodPath) {
+            // We better be doing that assignment right at the top
+            // of the method body.
+            const functionPath = methodPath.get('value');
+            const bodyPath = functionPath.get('body');
+
+            bodyPath.unshiftContainer('body', [
+                b.expressionStatement(b.assignmentExpression('??=', node.left, node.right))
+            ]);
+
+            node.right = b.literal(null);
+        }
+
+    },
+
+    RestElement: path => {
+        const node = path.node;
+        if (is.identifier(node.argument)) {
+            const arg = node.argument;
+            if (is.identifier(arg))
+                path.scope.renameBinding(arg.name, 'vargv');
+        }
+    },
+
+    ImportDeclaration: nodepath => {
+
+        const node = nodepath.node;
+        const source = node.source;
+
+        const importPath = source.value;
+        const importAbsPath = path.parse(source);
     }
 };
 
@@ -337,6 +404,10 @@ const normalizeLoopStatement = (forPath: NodePath<ForInStatement | ForOfStatemen
 
         throw Error(`Unhandled left-side node of an for loop expression: ${node.type}`);
     }
+};
+
+const getClassPropertyDefinition = (path: NodePath<ClassBody>, key: string) => {
+    return path.get('body').find(x => is.propertyDefinition(x) && is.identifier(x.node.key) && x.node.key.name == key) as NodePath<PropertyDefinition>;
 };
 
 const getClassConstructor = (path: NodePath<ClassBody>): MethodDefinition => {
