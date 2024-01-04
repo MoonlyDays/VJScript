@@ -25,23 +25,21 @@ export class Translator {
 
     public bundle() {
 
-        if (this.modules.size == 1) {
-            return this.entryModule.program;
-        }
 
         const program = b.program([], 'module');
-        const modulePolyfill = this.polyfillFor('./polyfill/module.js');
-        if (!modulePolyfill) {
-            throw Error('Multiple modules with no Polyfill for its support?');
-        }
-
         for (const polyfill of this.polyfill) {
             program.body.push(...polyfill.declaration.body);
         }
 
+        const modulePolyfill = this.polyfillFor('./polyfill/module.js');
+        if (!modulePolyfill) {
+            program.body.push(...this.entryModule.program.body);
+            return program;
+        }
+
         for (const pair of this.modules) {
             const module = pair[1];
-            const body = module.program.body.filter(x => is.statement(x)) as Statement[];
+            const body = module.program.body as Statement[];
 
             program.body.push(b.expressionStatement(b.callExpression(
                 b.identifier(modulePolyfill.get('declareModule')),
@@ -50,12 +48,12 @@ export class Translator {
                     b.functionExpression(null, [], b.blockStatement(body))
                 ]
             )));
-        }
 
-        program.body.push(b.expressionStatement(b.callExpression(
-            b.identifier(modulePolyfill.get('resolveModule')),
-            [b.literal(this.entryModule.name)]
-        )));
+            program.body.push(b.expressionStatement(b.callExpression(
+                b.identifier(modulePolyfill.get('resolveModule')),
+                [b.literal(this.entryModule.name)]
+            )));
+        }
 
         return program;
     }
@@ -68,6 +66,9 @@ export class Translator {
         modulePath = path.resolve(process.cwd(), modulePath);
         let module = this.modules.get(modulePath);
         if (module) return module;
+
+        if (!fs.existsSync(modulePath))
+            return null;
 
         // console.log(`Exploring new module: ${modulePath}`);
         module = new Module(this, modulePath);

@@ -19,7 +19,8 @@ import {helpers} from './helpers';
 
 export function generate(node: BaseNode) {
 
-    if (!node) return '';
+    if (!node)
+        return '';
 
     const generator = Generators[node.type];
     if (!generator) {

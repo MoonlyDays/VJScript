@@ -1,5 +1,3 @@
-import {Player} from "./player";
+const { GetListenServerHost } = require("../types/index");
 
-const player = GetListenServerHost();
-const ent = new Player(player);
-console.log(ent.base);
+GetListenServerHost();

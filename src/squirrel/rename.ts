@@ -30,7 +30,6 @@ export function renameNode(path: NodePath, module?: Module) {
 
     // Given rule is a declaration.
     if ('declaration' in rule) {
-
         if (!module) {
             throw Error('Attempt to rename through Polyfill without a Module provided.');
         }

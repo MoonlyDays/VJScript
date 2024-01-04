@@ -7,7 +7,6 @@ import {
     AssignmentExpression,
     AssignmentOperator,
     ClassBody,
-    ClassDeclaration,
     ForInStatement,
     ForOfStatement,
     MethodDefinition,
@@ -63,9 +62,7 @@ export function preprocess(node: Node, module?: Module) {
             }
 
             if (node.kind == 'const') {
-
-                // Const can only accept a single literal value,
-                // Otherwise it's a local.
+                // Const can only accept a single literal value, otherwise it's a local.
                 const declarators = node.declarations;
                 const declarator = declarators[0];
                 if (declarator) {
@@ -114,15 +111,43 @@ export function preprocess(node: Node, module?: Module) {
 
         VariableDeclarator: path => {
             const node = path.node;
-            if (node.id.type == 'ArrayPattern') {
-                const replace: VariableDeclarator[] = [];
-                const pattern = node.id;
-                const init = node.init;
 
-                for (let i = 0; i < pattern.elements.length; i++) {
-                    const el = pattern.elements[i];
-                    const elInit = init && b.memberExpression(init, b.literal(i), true);
+            const id = node.id;
+            if (is.arrayPattern(id)) {
+                const replace: VariableDeclarator[] = [];
+                const init = node.init;
+                const arrayIdent = path.scope.generateUidIdentifier();
+                path.parentPath.insertBefore([b.variableDeclaration('const', [b.variableDeclarator(arrayIdent, init)])]);
+
+                for (let i = 0; i < id.elements.length; i++) {
+                    const el = id.elements[i];
+                    const elInit = arrayIdent && b.memberExpression(arrayIdent, b.literal(i), true);
                     replace.push(b.variableDeclarator(el, elInit));
+                }
+
+                path.replaceWithMultiple(replace);
+                return;
+            }
+
+            if (is.objectPattern(id)) {
+                const replace: VariableDeclarator[] = [];
+                const init = node.init;
+                const objectIdent = path.scope.generateUidIdentifier();
+                path.parentPath.insertBefore([b.variableDeclaration('const', [b.variableDeclarator(objectIdent, init)])]);
+
+                for (let i = 0; i < id.properties.length; i++) {
+                    const property = id.properties[i];
+                    if (is.property(property)) {
+
+                        const key = property.key;
+                        if (is.pattern(key)) {
+                            const propInit = objectIdent && b.memberExpression(objectIdent, property.key);
+                            replace.push(b.variableDeclarator(objectIdent, propInit));
+                        }
+
+                    } else {
+                        throw Error(`Cannot use ${property.type} in Object Pattern in Variable Declarator.`);
+                    }
                 }
 
                 path.replaceWithMultiple(replace);
@@ -284,11 +309,11 @@ export function preprocess(node: Node, module?: Module) {
             }
         },
 
-        ArrayExpression: path => {
-            /*
-            const arrayPolyfill = polyfillFromFile(path, './polyfill/array.js');
+        ArrayExpression: (path, state) => {
+            const arrayPolyfill = state.module.translator.polyfillFromFile(state.module, path, './polyfill/array.js');
             const polyfill = arrayPolyfill.get('JSArray');
 
+            /*
             if (is.newExpression(path.parent)) {
                 const callee = path.parent.callee;
                 if (is.identifier(callee) && callee.name == polyfill.Identifier)
@@ -346,7 +371,15 @@ export function preprocess(node: Node, module?: Module) {
             const node = nodePath.node;
             const scopeIdent = nodePath.scope.generateUidIdentifier();
 
-            const importedModule = resolveImportedModule(node.source.value.toString(), module);
+            const importPath = node.source.value.toString();
+            const importedModule = resolveImportedModule(importPath, module);
+            if (!importedModule) {
+                nodePath.remove();
+                if (importPath.startsWith('./') || importPath.startsWith('../'))
+                    return;
+
+                throw Error(`Could not resolve module: ${importPath}`);
+            }
 
             for (const specifier of node.specifiers) {
                 if (is.importSpecifier(specifier)) {

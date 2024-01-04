@@ -48,5 +48,11 @@ export const Declare = {
     'Math.cbrt': 'x => x === 0 ? x : (x < 0 ? -Math.pow(-x, 1/3) : Math.pow(x, 1/3))',
     'Math.clz32': 'x => 31 - Math.floor(Math.log2(x >>> 0) + 1)',
     'Math.cosh': 'x => (Math.exp(x) + Math.exp(-x)) / 2',
-    'Math.expm1': 'x => Math.exp(x) - 1'
+    'Math.expm1': 'x => Math.exp(x) - 1',
+
+    'require': `path => {
+        const scope = {};
+        IncludeScript(path, scope);
+        return scope;
+    }`
 };

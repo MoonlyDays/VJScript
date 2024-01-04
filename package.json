@@ -24,14 +24,6 @@
                 "default": "./dist/index.js",
                 "types": "./dist/index.d.ts"
             }
-        },
-        "./native": {
-            "require": {
-                "types": "./types/index.d.ts"
-            },
-            "import": {
-                "types": "./types/index.d.ts"
-            }
         }
     },
     "files": [

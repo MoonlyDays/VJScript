@@ -22,7 +22,7 @@ class Helpers {
 
             yield code;
 
-            if(is.statement(element))
+            if (is.statement(element))
                 yield ';';
 
             yield '\n';
