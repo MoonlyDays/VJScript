@@ -4,27 +4,27 @@
 //--------------------------------------------------------------------------------------------------
 
 import {BaseNode, FunctionDeclaration, FunctionExpression, Node} from 'estree';
-import {Options} from 'meriyah';
+import {is} from 'estree-toolkit';
 
 import {generate} from './generate';
-
-export const MeriyahParseOptions: Options = {
-    next: true
-};
 
 class Helpers {
 
     private scopeDepth = 0;
 
-    public* generateBody(node: { body: BaseNode[] }) {
+    public* generateBody(node: { body: Node[] }) {
         for (const element of node.body) {
             let code = generate(element);
 
             if (this.scopeDepth > 0) {
-                code = code.split('\n').map(x => '  ' + x).join('\n');
+                code = code.split('\n').map(x => '    ' + x).join('\n');
             }
 
             yield code;
+
+            if(is.statement(element))
+                yield ';';
+
             yield '\n';
         }
     }

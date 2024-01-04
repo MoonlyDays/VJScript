@@ -6,86 +6,51 @@
 import {Declaration, Identifier, Node, Program} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit/dist/builders';
-import * as fs from 'fs';
-import {parseScript} from 'meriyah';
-import * as path from 'path';
 
-import {MeriyahParseOptions} from './helpers';
+type PolyfillIdentifier = [string, string];
 
-interface PolyfillDeclaration {
-    DesiredIdentifier: string;
-    Identifier: string;
-    Declaration: Declaration;
-}
+export class Polyfill {
+    public name: string;
+    public identifiers: PolyfillIdentifier[] = [];
+    public declaration: Program;
 
-const PolyfillMap = new Map<string, PolyfillDeclaration>();
-
-export function resetPolyfill() {
-    PolyfillMap.clear();
-}
-
-export function polyfillFromFile(nodePath: NodePath, ident: string, file: string) {
-
-    const polyfill = getPolyfillFor(ident);
-    if (polyfill) return polyfill;
-
-    const absFile = path.resolve(__dirname, '../../', file);
-    const code = fs.readFileSync(absFile, {encoding: 'utf-8'});
-
-    return polyfillFromString(nodePath, ident, code);
-}
-
-export function polyfillFromString(path: NodePath, ident: string, code: string) {
-
-    let polyfill = getPolyfillFor(ident);
-    if (polyfill) return polyfill;
-
-    const program = parseScript(code, MeriyahParseOptions) as Program;
-    const body = program.body;
-    if (body.length > 1) {
-        throw Error('More than one statement is not allowed in Polyfill.');
+    public get(name: string): string {
+        return this.identifiers.find(x => x[0] == name)[1];
     }
 
-    const normalizedIdent = normalizeIdentifier(ident);
-    const generatedIdent = path.scope.generateUidIdentifier(normalizedIdent);
-    const declaration = normalizePolyfillStatement(body[0], generatedIdent);
+    public add(desired: string, actual: string) {
+        this.identifiers.push([desired, actual]);
+    }
 
-    const programPath = path.scope.getProgramScope().path;
-    if (!is.program(programPath))
-        return;
-
-    // Add declaration to the program body.
-    programPath.unshiftContainer('body', [declaration]);
-
-    polyfill = {
-        DesiredIdentifier: ident,
-        Identifier: generatedIdent.name,
-        Declaration: declaration
-    };
-
-    PolyfillMap.set(ident, polyfill);
-    return polyfill;
+    public first() {
+        return this.identifiers[0];
+    }
 }
 
-function getPolyfillFor(ident: string) {
-    return PolyfillMap.get(ident);
+export function normalizePolyfillIdentifier(node: Identifier, modulePath: NodePath, polyfillPath: NodePath, polyfill: Polyfill): Identifier {
+    let actualIdent: string;
+    let desiredIdent: string;
+    if (node) {
+        desiredIdent = node.name;
+        actualIdent = '__js_' + desiredIdent;
+    }
+
+    actualIdent = modulePath.scope.generateUid(actualIdent);
+    if (!desiredIdent) {
+        desiredIdent = actualIdent;
+    }
+
+    polyfill.add(desiredIdent, actualIdent);
+    polyfillPath.scope.renameBinding(desiredIdent, actualIdent);
+
+    return b.identifier(actualIdent);
 }
 
-function normalizeIdentifier(desired: string) {
-    desired = desired.replace(/[0-9]/g, '');
-
-    if (desired.startsWith('::'))
-        desired = '__global_' + desired;
-
-    desired = '__js_' + desired;
-    return desired;
-}
-
-function normalizePolyfillStatement(node: Node, ident: Identifier): Declaration {
+export function normalizePolyfillStatement(node: Node, modulePath: NodePath, polyfillPath: NodePath, polyfill: Polyfill): Declaration {
 
     if (is.expressionStatement(node)) {
         const expr = node.expression;
-        return normalizePolyfillStatement(expr, ident);
+        return normalizePolyfillStatement(expr, modulePath, polyfillPath, polyfill);
     }
 
     if (is.arrowFunctionExpression(node)) {
@@ -93,36 +58,43 @@ function normalizePolyfillStatement(node: Node, ident: Identifier): Declaration 
             ? node.body
             : b.blockStatement([b.returnStatement(node.body)]);
 
-        const decl = b.functionDeclaration(ident, node.params, body);
-        return normalizePolyfillStatement(decl, ident);
+        const decl = b.functionDeclaration(null, node.params, body);
+        return normalizePolyfillStatement(decl, modulePath, polyfillPath, polyfill);
+    }
+
+    if (is.functionExpression(node)) {
+        const decl = b.functionDeclaration(null, node.params, node.body);
+        return normalizePolyfillStatement(decl, modulePath, polyfillPath, polyfill);
     }
 
     if (is.literal(node)) {
+        const ident = modulePath.scope.generateUidIdentifier();
         const expr = b.variableDeclaration('const', [
             b.variableDeclarator(ident, node)
         ]);
 
-        return normalizePolyfillStatement(expr, ident);
+        return normalizePolyfillStatement(expr, modulePath, polyfillPath, polyfill);
     }
 
     if (is.classDeclaration(node)) {
-        node.id = ident;
+        node.id = normalizePolyfillIdentifier(node.id, modulePath, polyfillPath, polyfill);
         return node;
     }
 
     if (is.functionDeclaration(node)) {
-        node.id = ident;
+        node.id = normalizePolyfillIdentifier(node.id, modulePath, polyfillPath, polyfill);
         return node;
     }
 
     if (is.variableDeclaration(node)) {
-
         const declarators = node.declarations;
         if (declarators.length > 1)
             throw Error('More than one variable declarator is not allowed in Polyfill.');
 
         const first = declarators[0];
-        first.id = ident;
+        if (is.identifier(first.id)) {
+            first.id = normalizePolyfillIdentifier(first.id, modulePath, polyfillPath, polyfill);
+        }
         return node;
     }
 

@@ -1,3 +1,5 @@
-import {testtest} from "./import";
+import {Player} from "./player";
 
-console.log(testtest());
+const player = GetListenServerHost();
+const ent = new Player(player);
+console.log(ent.base);

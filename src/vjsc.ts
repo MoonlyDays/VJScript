@@ -6,11 +6,9 @@
 //--------------------------------------------------------------------------------------------------
 
 import * as fs from 'fs';
-import {parseModule} from 'meriyah';
 import * as path from 'path';
 
 import {translate} from './index';
-import {MeriyahParseOptions} from './squirrel/helpers';
 
 const WATCH_INTERVAL = 500;
 const g_kOptions: {
@@ -55,9 +53,7 @@ const processFile = (filePath: string) => {
         const fileName = g_kOptions.file || '';
         const outPath = path.format({...inputPath, dir: baseDir, base: fileName, ext: '.nut'});
 
-        translate(filePath, outPath, {
-            tree: g_kOptions.tree
-        });
+        translate(filePath, outPath);
     } catch (e) {
         console.log(e);
     }
@@ -75,7 +71,11 @@ for (let i = 2; i < argv.length; i++) {
             i--;
         }
 
-        if (arg.startsWith('--')) processOption(arg.slice(1), value); else processShortOption(arg.slice(1), value);
+        if (arg.startsWith('--')) {
+            processOption(arg.slice(1), value);
+        } else {
+            processShortOption(arg.slice(1), value);
+        }
 
         continue;
     }

@@ -4,29 +4,17 @@
 //--------------------------------------------------------------------------------------------------
 
 import fs from 'fs';
-import {parseModule} from 'meriyah';
 import path from 'path';
 
-import {generate} from './squirrel/generate';
-import {MeriyahParseOptions} from './squirrel/helpers';
-import {preprocess} from './squirrel/preprocess';
+import {Translator} from './squirrel/translator';
 
-export function translate(sourcePath: string, outPath: string, options?: {
-    tree: boolean
-}) {
+export function translate(sourcePath: string, outPath: string) {
 
-    const program = preprocess(sourcePath);
-    const nutCode = generate(program);
-    console.log(JSON.stringify(program));
+    const translator = new Translator(sourcePath);
+    const nutCode = translator.translate();
 
     const header = generateHeader(sourcePath);
     fs.writeFileSync(outPath, header + nutCode);
-
-    if (options?.tree) {
-        const parsedPath = path.parse(sourcePath);
-        const treePath = path.format({dir: parsedPath.dir, name: parsedPath.name, ext: '.txt'});
-        fs.writeFileSync(treePath, JSON.stringify(program, undefined, 2));
-    }
 }
 
 

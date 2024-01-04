@@ -7,7 +7,7 @@
  * Wrapper class for Squirrel array that adds JavaScript
  * logic to Squirrel.
  */
-class _ {
+class __global_JSArray {
     constructor(arr) {
         this.arr = arr;
         this.length = 0;

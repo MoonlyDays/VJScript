@@ -3,12 +3,11 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {CallExpression, Expression, TemplateElement} from 'estree';
+import {CallExpression, TemplateElement} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import Attributes from '../data/attributes';
 import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './identifier';
-import {polyfillFromFile} from './polyfill';
 
 export type AttributeType =
     'ConcatParameters' |
@@ -72,8 +71,8 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
             )]);
         },
 
+        /*
         EntityThinkCallback: path => {
-
             const fnNode = path.cloneNode() as Expression;
             if (is.literal(fnNode))
                 return;
@@ -89,7 +88,7 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
                 b.identifier(entThinkPolyfill.Identifier),
                 [targetNode, fnNode]
             ));
-        }
+        }*/
     });
 
     if ('Parameters' in attrs) {

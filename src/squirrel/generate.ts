@@ -340,5 +340,10 @@ const Generators: Generators = {
         yield generate(node.left);
         yield ' = ';
         yield generate(node.right);
+    },
+
+    ThrowStatement: function* (node) {
+        yield 'throw ';
+        yield generate(node.argument);
     }
 };

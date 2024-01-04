@@ -10,372 +10,444 @@ import {
     ClassDeclaration,
     ForInStatement,
     ForOfStatement,
-    MethodDefinition, Node,
-    PropertyDefinition, VariableDeclaration,
+    MethodDefinition,
+    Node,
+    PropertyDefinition,
+    VariableDeclaration,
     VariableDeclarator
 } from 'estree';
 import {builders as b, is, NodePath, traverse} from 'estree-toolkit';
-import fs from 'fs';
-import {ESTree, parseModule} from 'meriyah';
 import path from 'path';
 
 import {processAttributes} from './attributes';
-import {MeriyahParseOptions} from './helpers';
-import {polyfillFromFile} from './polyfill';
+import {Module} from './module';
 import {renameNode} from './rename';
 
-export function preprocess(sourcePath: string) {
+export function preprocess(node: Node, module?: Module) {
+    traverse(node, {
+        $: {scope: true},
 
-    let jsCode = fs.readFileSync(sourcePath).toString('utf-8');
-    jsCode = removeShebangs(jsCode);
+        Identifier: (path, state) => {
 
-    const program = parseModule(jsCode, MeriyahParseOptions);
-    traverse(program, TraverseVisitors);
-    return program;
-}
+            const node = path.node;
 
-function processProgram(program: ESTree.Program)
-{
+            // base is a reserved keyword and we're only allowed to use it if we're
+            // inside a call and base is the deepest identifier.
+            if (node.name == 'base') {
+                node.name = '_base';
+            }
 
-}
+            const isProperty = is.memberExpression(path.parentPath) && path.parentKey == 'property';
+            if (!isProperty) {
+                processAttributes(path);
+                renameNode(path, state.module);
+            }
+        },
 
-const removeShebangs = (jsCode: string): string => {
-    return jsCode.replace(/^#!.*$/, '');
-};
-
-type TraverseVisitors = Parameters<typeof traverse>[1];
-const TraverseVisitors: TraverseVisitors = {
-    $: {scope: true},
-
-    Identifier: path => {
-        const isProperty = is.memberExpression(path.parentPath) && path.parentKey == 'property';
-        if (!isProperty) {
+        MemberExpression: (path, state) => {
             processAttributes(path);
-            renameNode(path);
-        }
-    },
+            renameNode(path, state.module);
+        },
 
-    MemberExpression: path => {
-        processAttributes(path);
-        renameNode(path);
-    },
+        VariableDeclaration: path => {
 
-    VariableDeclaration: path => {
+            const node = path.node;
+            if (variableDeclarationNeedsToSplit(path)) {
 
-        const node = path.node;
-        if (variableDeclarationNeedsToSplit(path)) {
-
-            for (let i = 1; i < node.declarations.length; i++) {
-                const declarator = node.declarations[i];
-                path.insertAfter([b.variableDeclaration(node.kind, [declarator])]);
-            }
-
-            node.declarations = node.declarations.slice(0, 1);
-        }
-
-        if (node.kind == 'const') {
-
-            // Const can only accept a single literal value,
-            // Otherwise it's a local.
-            const declarators = node.declarations;
-            const declarator = declarators[0];
-            if (declarator) {
-
-                // We assume it's always not null, because parser won't allow uninitialized
-                // const variables.
-                const init = declarator.init;
-                if (!init || init.type != 'Literal') {
-                    node.kind = 'let';
+                for (let i = 1; i < node.declarations.length; i++) {
+                    const declarator = node.declarations[i];
+                    path.insertAfter([b.variableDeclaration(node.kind, [declarator])]);
                 }
-            }
-        }
-    },
 
-    ForOfStatement: path => {
-        const node = path.node;
-        normalizeLoopStatement(path);
-
-        if (node.left.type == 'ArrayPattern') {
-            if (node.left.elements.length > 2) throw Error('For Loop: Array Pattern must not contain more than 2 elements.');
-        }
-    },
-
-    ForInStatement: path => {
-        const node = path.node;
-        normalizeLoopStatement(path);
-
-        if (node.left.type == 'VariableDeclaration') {
-            throw Error('ForInStatement: left must not be VariableDeclaration! Something went wrong!');
-        }
-
-        let left = node.left;
-        const leftPath = path.get('left');
-        if (left.type != 'ArrayPattern') {
-            left = b.arrayPattern([left]);
-            leftPath.replaceWith(left);
-        }
-
-        if (left.elements.length < 2) {
-            const extraIdent = leftPath.scope.generateUidIdentifier();
-            left.elements.push(extraIdent);
-        }
-
-        path.replaceWith(b.forOfStatement(left, node.right, node.body, false));
-    },
-
-    VariableDeclarator: path => {
-        const node = path.node;
-        if (node.id.type == 'ArrayPattern') {
-            const replace: VariableDeclarator[] = [];
-            const pattern = node.id;
-            const init = node.init;
-
-            for (let i = 0; i < pattern.elements.length; i++) {
-                const el = pattern.elements[i];
-                const elInit = init && b.memberExpression(init, b.literal(i), true);
-                replace.push(b.variableDeclarator(el, elInit));
+                node.declarations = node.declarations.slice(0, 1);
             }
 
-            path.replaceWithMultiple(replace);
-            return;
-        }
-    },
+            if (node.kind == 'const') {
 
-    AssignmentExpression: path => {
-        const node = path.node;
+                // Const can only accept a single literal value,
+                // Otherwise it's a local.
+                const declarators = node.declarations;
+                const declarator = declarators[0];
+                if (declarator) {
 
-        if (node.operator == '??=') {
-
-            if (is.expression(node.left)) {
-                path.replaceWith(b.ifStatement(
-                    b.binaryExpression('==', node.left, b.literal(null)),
-                    b.expressionStatement(b.assignmentExpression('=', node.left, node.right))
-                ));
-                return;
-            }
-        }
-
-        const left = node.left;
-        if (is.arrayPattern(left)) {
-            const replace: AssignmentExpression[] = [];
-
-            // Try to find a parent that is contained inside an array.
-            const parentPath = path.find(x => Array.isArray(x.container));
-            const tmp = parentPath.scope.generateUidIdentifier();
-            parentPath.insertBefore([b.variableDeclaration('let', [b.variableDeclarator(tmp, node.right)])]);
-
-            for (let i = 0; i < left.elements.length; i++) {
-                const key = left.elements[i];
-                const value = b.memberExpression(tmp, b.literal(i), true);
-                replace.push(b.assignmentExpression('=', key, value));
-            }
-
-            parentPath.insertBefore(replace);
-            path.remove();
-        }
-
-        // For some cases we can't use the slot creation operator
-        // therefore we need to check for those cases.
-        let useSlotOperator = true;
-
-        // If we assign to a previously declared identifier,
-        // we don't need to use the operator.
-        if (is.identifier(left)) {
-            const leftPath = path.get('left');
-            if (leftPath.scope.hasBinding(left.name)) {
-                useSlotOperator = false;
-            }
-        }
-
-        // We can't use slot creation for changing class fields through this keyword.
-        let deepestMemberExpr: Node = left;
-        while (is.memberExpression(deepestMemberExpr) && is.memberExpression(deepestMemberExpr.object)) {
-            deepestMemberExpr = deepestMemberExpr.object;
-        }
-
-        if (is.memberExpression(deepestMemberExpr)) {
-            if (is.thisExpression(deepestMemberExpr.object) && is.identifier(deepestMemberExpr.property)) {
-                const classBody = path.findParent<ClassBody>(is.classBody);
-                if (classBody) {
-                    useSlotOperator = false;
-
-                    // Make sure class has such a property declared.
-                    const propDecl = getClassPropertyDefinition(classBody, deepestMemberExpr.property.name);
-                    if (!propDecl) {
-                        classBody.unshiftContainer('body', [b.propertyDefinition(
-                            b.identifier(deepestMemberExpr.property.name),
-                            b.literal(null)
-                        )]);
+                    // We assume it's always not null, because parser won't allow uninitialized
+                    // const variables.
+                    const init = declarator.init;
+                    if (!init || init.type != 'Literal') {
+                        node.kind = 'let';
                     }
                 }
             }
-        }
+        },
 
-        if (useSlotOperator) {
-            (node.operator as AssignmentOperator | '<-') = '<-';
-        }
-    },
+        ForOfStatement: path => {
+            const node = path.node;
+            normalizeLoopStatement(path);
 
-    ClassBody: path => {
-        // We generally assume that each class definition must have a constructor.
-        ensureConstructorInClass(path);
+            if (node.left.type == 'ArrayPattern') {
+                if (node.left.elements.length > 2) throw Error('For Loop: Array Pattern must not contain more than 2 elements.');
+            }
+        },
 
-        const ctor = getClassConstructor(path);
-        if (!ctor) throw Error('Class Body doesn\'t have a constructor even though we ensured it?');
-    },
+        ForInStatement: path => {
+            const node = path.node;
+            normalizeLoopStatement(path);
 
-    PropertyDefinition: path => {
-
-        const node = path.node;
-        const key = node.key;
-        if (!is.identifier(key))
-            return;
-
-        if (propDefinitionHasValue(node)) {
-            const classBody = path.findParent<ClassBody>(is.classBody);
-            const ctor = getClassConstructor(classBody);
-
-            const assignment = b.assignmentExpression(
-                '=',
-                b.memberExpression(b.thisExpression(), node.key),
-                node.value
-            );
-
-            ctor.value.body.body.unshift(b.expressionStatement(assignment));
-        }
-
-        node.value = b.literal(null);
-    },
-
-    FunctionExpression: path => {
-        // Function expression must not contain a name.
-        const node = path.node;
-        node.id = null;
-    },
-
-    ArrowFunctionExpression: path => {
-        const node = path.node;
-        if (node.body.type != 'BlockStatement') {
-            node.body = b.blockStatement([b.returnStatement(node.body)]);
-        }
-
-        path.replaceWith(b.functionExpression(null, node.params, node.body, node.generator, node.async));
-    },
-
-    SpreadElement: () => {
-        throw Error('Spread Operator (...) is not supported by Squirrel.');
-    },
-
-    SequenceExpression: path => {
-        const node = path.node;
-        const funcBody = [];
-        for (let i = 0; i < node.expressions.length; i++) {
-            const expr = node.expressions[i];
-
-            if (i == (node.expressions.length - 1)) {
-                funcBody.push(b.returnStatement(expr));
-                continue;
+            if (node.left.type == 'VariableDeclaration') {
+                throw Error('ForInStatement: left must not be VariableDeclaration! Something went wrong!');
             }
 
-            funcBody.push(b.expressionStatement(expr));
-        }
-
-        path.replaceWith(b.callExpression(b.arrowFunctionExpression([], b.blockStatement(funcBody)), []));
-    },
-
-    Super: path => {
-
-        // Is super is being directly invoked in a constructor
-        if (is.callExpression(path.parent)) {
-            const ctor = path.findParent(x => x.node.type == 'MethodDefinition' && x.node.kind == 'constructor');
-            if (ctor) {
-                path.replaceWith(b.memberExpression(b.super(), b.identifier('constructor')));
+            let left = node.left;
+            const leftPath = path.get('left');
+            if (left.type != 'ArrayPattern') {
+                left = b.arrayPattern([left]);
+                leftPath.replaceWith(left);
             }
-        }
-    },
 
-    ArrayExpression: path => {
-        const arrayPolyfill = polyfillFromFile(path, '::JSArray', './polyfill/array.js');
+            if (left.elements.length < 2) {
+                const extraIdent = leftPath.scope.generateUidIdentifier();
+                left.elements.push(extraIdent);
+            }
 
-        if (is.newExpression(path.parent)) {
-            const callee = path.parent.callee;
-            if (is.identifier(callee) && callee.name == arrayPolyfill.Identifier)
+            path.replaceWith(b.forOfStatement(left, node.right, node.body, false));
+        },
+
+        VariableDeclarator: path => {
+            const node = path.node;
+            if (node.id.type == 'ArrayPattern') {
+                const replace: VariableDeclarator[] = [];
+                const pattern = node.id;
+                const init = node.init;
+
+                for (let i = 0; i < pattern.elements.length; i++) {
+                    const el = pattern.elements[i];
+                    const elInit = init && b.memberExpression(init, b.literal(i), true);
+                    replace.push(b.variableDeclarator(el, elInit));
+                }
+
+                path.replaceWithMultiple(replace);
                 return;
+            }
+        },
+
+        AssignmentExpression: path => {
+            const node = path.node;
+
+            if (node.operator == '??=') {
+
+                if (is.expression(node.left)) {
+                    path.replaceWith(b.ifStatement(
+                        b.binaryExpression('==', node.left, b.literal(null)),
+                        b.expressionStatement(b.assignmentExpression('=', node.left, node.right))
+                    ));
+                    return;
+                }
+            }
+
+            const left = node.left;
+            if (is.arrayPattern(left)) {
+                const replace: AssignmentExpression[] = [];
+
+                // Try to find a parent that is contained inside an array.
+                const parentPath = path.find(x => Array.isArray(x.container));
+                const tmp = parentPath.scope.generateUidIdentifier();
+                parentPath.insertBefore([b.variableDeclaration('let', [b.variableDeclarator(tmp, node.right)])]);
+
+                for (let i = 0; i < left.elements.length; i++) {
+                    const key = left.elements[i];
+                    const value = b.memberExpression(tmp, b.literal(i), true);
+                    replace.push(b.assignmentExpression('=', key, value));
+                }
+
+                parentPath.insertBefore(replace);
+                path.remove();
+            }
+
+            // For some cases we can't use the slot creation operator
+            // therefore we need to check for those cases.
+            let useSlotOperator = true;
+
+            // If we assign to a previously declared identifier,
+            // we don't need to use the operator.
+            if (is.identifier(left)) {
+                const leftPath = path.get('left');
+                if (leftPath.scope.hasBinding(left.name)) {
+                    useSlotOperator = false;
+                }
+            }
+
+            // We can't use slot creation for changing class fields through this keyword.
+            let deepestMemberExpr: Node = left;
+            while (is.memberExpression(deepestMemberExpr) && is.memberExpression(deepestMemberExpr.object)) {
+                deepestMemberExpr = deepestMemberExpr.object;
+            }
+
+            if (is.memberExpression(deepestMemberExpr)) {
+                if (is.thisExpression(deepestMemberExpr.object) && is.identifier(deepestMemberExpr.property)) {
+                    const classBody = path.findParent<ClassBody>(is.classBody);
+                    if (classBody) {
+                        useSlotOperator = false;
+
+                        // Make sure class has such a property declared.
+                        const propDecl = getClassPropertyDefinition(classBody, deepestMemberExpr.property.name);
+                        if (!propDecl) {
+                            classBody.unshiftContainer('body', [b.propertyDefinition(
+                                b.identifier(deepestMemberExpr.property.name),
+                                b.literal(null)
+                            )]);
+                        }
+                    }
+                }
+            }
+
+            if (useSlotOperator) {
+                (node.operator as AssignmentOperator | '<-') = '<-';
+            }
+        },
+
+        ClassBody: path => {
+            // We generally assume that each class definition must have a constructor.
+            ensureConstructorInClass(path);
+
+            const ctor = getClassConstructor(path);
+            if (!ctor) throw Error('Class Body doesn\'t have a constructor even though we ensured it?');
+        },
+
+        PropertyDefinition: path => {
+
+            const node = path.node;
+            const key = node.key;
+            if (!is.identifier(key)) {
+                throw Error('Property Definition key is not Identifier!');
+            }
+
+            if (propDefinitionHasValue(node)) {
+                const classBody = path.findParent<ClassBody>(is.classBody);
+                const ctor = getClassConstructor(classBody);
+
+                const assignment = b.assignmentExpression(
+                    '=',
+                    b.memberExpression(b.thisExpression(), node.key),
+                    node.value
+                );
+
+                ctor.value.body.body.unshift(b.expressionStatement(assignment));
+            }
+
+            node.value = b.literal(null);
+        },
+
+        FunctionExpression: path => {
+            // Function expression must not contain a name.
+            const node = path.node;
+            node.id = null;
+        },
+
+        ArrowFunctionExpression: path => {
+            const node = path.node;
+            if (node.body.type != 'BlockStatement') {
+                node.body = b.blockStatement([b.returnStatement(node.body)]);
+            }
+
+            path.replaceWith(b.functionExpression(null, node.params, node.body, node.generator, node.async));
+        },
+
+        SpreadElement: () => {
+            throw Error('Spread Operator (...) is not supported by Squirrel.');
+        },
+
+        SequenceExpression: path => {
+            const node = path.node;
+            const funcBody = [];
+            for (let i = 0; i < node.expressions.length; i++) {
+                const expr = node.expressions[i];
+
+                if (i == (node.expressions.length - 1)) {
+                    funcBody.push(b.returnStatement(expr));
+                    continue;
+                }
+
+                funcBody.push(b.expressionStatement(expr));
+            }
+
+            path.replaceWith(b.callExpression(b.arrowFunctionExpression([], b.blockStatement(funcBody)), []));
+        },
+
+        Super: path => {
+
+            // Is super is being directly invoked in a constructor
+            if (is.callExpression(path.parent)) {
+                const ctor = path.findParent(x => x.node.type == 'MethodDefinition' && x.node.kind == 'constructor');
+                if (ctor) {
+                    path.replaceWith(b.memberExpression(b.super(), b.identifier('constructor')));
+                }
+            }
+        },
+
+        ArrayExpression: path => {
+            /*
+            const arrayPolyfill = polyfillFromFile(path, './polyfill/array.js');
+            const polyfill = arrayPolyfill.get('JSArray');
+
+            if (is.newExpression(path.parent)) {
+                const callee = path.parent.callee;
+                if (is.identifier(callee) && callee.name == polyfill.Identifier)
+                    return;
+            }
+
+            path.replaceWith(b.newExpression(
+                b.identifier(polyfill.Identifier),
+                [path.node]
+            ));*/
+        },
+
+        AssignmentPattern: path => {
+
+            const node = path.node;
+
+            // If we're using assignment pattern inside a class method.
+            const methodPath = path.findParent<MethodDefinition>(x => is.methodDefinition(x));
+            if (methodPath) {
+                // We better be doing that assignment right at the top
+                // of the method body.
+                const functionPath = methodPath.get('value');
+                const bodyPath = functionPath.get('body');
+
+                bodyPath.unshiftContainer('body', [
+                    b.expressionStatement(b.assignmentExpression('??=', node.left, node.right))
+                ]);
+
+                node.right = b.literal(null);
+            }
+
+        },
+
+        RestElement: path => {
+            const node = path.node;
+            if (is.identifier(node.argument)) {
+                const arg = node.argument;
+                if (is.identifier(arg))
+                    path.scope.renameBinding(arg.name, 'vargv');
+            }
+        },
+
+        ImportDefaultSpecifier: path => {
+            const node = path.node;
+            path.replaceWith(b.importSpecifier(node.local, node.local));
+        },
+
+        ImportDeclaration: (nodePath, state) => {
+            const module = state.module;
+            if (!module) {
+                throw Error('Import Declaration in preprocess without Module provided.');
+            }
+
+            const polyfill = module.translator.polyfillFromFile(module, nodePath, './polyfill/module.js');
+            const node = nodePath.node;
+            const scopeIdent = nodePath.scope.generateUidIdentifier();
+
+            const importedModule = resolveImportedModule(node.source.value.toString(), module);
+
+            for (const specifier of node.specifiers) {
+                if (is.importSpecifier(specifier)) {
+                    nodePath.insertAfter([
+                        b.variableDeclaration('const', [
+                            b.variableDeclarator(specifier.local, b.memberExpression(scopeIdent, specifier.imported)),
+                        ])
+                    ]);
+                }
+
+                if (is.importDefaultSpecifier(specifier)) {
+                    const defaultImport = importedModule.defaultExportIdent;
+                    if (!defaultImport) {
+                        throw Error('Import Default Specifier without a Default Export.');
+                    }
+
+                    nodePath.insertAfter([
+                        b.variableDeclaration('const', [
+                            b.variableDeclarator(specifier.local, b.memberExpression(scopeIdent, defaultImport)),
+                        ])
+                    ]);
+                }
+            }
+
+            nodePath.replaceWith(b.variableDeclaration('const', [
+                b.variableDeclarator(scopeIdent, b.callExpression(
+                    b.identifier(polyfill.get('resolveModule')),
+                    [b.literal(importedModule.name)]
+                ))
+            ]));
+        },
+
+        ExportDeclaration: (path, state) => {
+            const node = path.node;
+            if (is.exportNamedDeclaration(node)) {
+                path.replaceWith(node.declaration);
+            }
+
+            if (is.exportDefaultDeclaration(node)) {
+                const module = state.module;
+                module.defaultExportIdent = path.scope.generateUidIdentifier('__js_export_default');
+
+                let declaration = node.declaration;
+                if (is.classDeclaration(declaration)) {
+                    declaration = b.classExpression(declaration.id, declaration.body);
+                }
+
+                if (is.functionDeclaration(declaration)) {
+                    declaration = b.functionExpression(declaration.id, declaration.params, declaration.body, declaration.generator, declaration.async);
+                }
+
+                path.replaceWith(b.expressionStatement(b.assignmentExpression(
+                    '=',
+                    module.defaultExportIdent,
+                    declaration
+                )));
+            }
         }
 
-        path.replaceWith(b.newExpression(
-            b.identifier(arrayPolyfill.Identifier),
-            [path.node]
-        ));
-    },
+    }, {module});
+}
 
-    AssignmentPattern: path => {
-
-        const node = path.node;
-
-        // If we're using assignment pattern inside a class method.
-        const methodPath = path.findParent<MethodDefinition>(x => is.methodDefinition(x));
-        if (methodPath) {
-            // We better be doing that assignment right at the top
-            // of the method body.
-            const functionPath = methodPath.get('value');
-            const bodyPath = functionPath.get('body');
-
-            bodyPath.unshiftContainer('body', [
-                b.expressionStatement(b.assignmentExpression('??=', node.left, node.right))
-            ]);
-
-            node.right = b.literal(null);
-        }
-
-    },
-
-    RestElement: path => {
-        const node = path.node;
-        if (is.identifier(node.argument)) {
-            const arg = node.argument;
-            if (is.identifier(arg))
-                path.scope.renameBinding(arg.name, 'vargv');
-        }
-    },
-
-    ImportDeclaration: nodepath => {
-
-        const node = nodepath.node;
-        const source = node.source;
-
-        const importPath = source.value;
-        const importAbsPath = path.parse(source);
-    }
-};
 
 const ensureConstructorInClass = (path: NodePath<ClassBody>) => {
-    let ctor = getClassConstructor(path);
+    const ctor = getClassConstructor(path);
     if (ctor) return;
 
-    const parentPath = path.parentPath;
-    if (!is.classDeclaration(parentPath)) throw Error('Class Body is not inside Class Declaration?');
-
-    const ctorBlock = b.blockStatement([]);
-    const ctorParams = [];
-
-    const superClass = getClassDeclarationSuper(parentPath);
-    if (superClass) {
-        if (superClass.node == parentPath.node) throw Error('Class Definition has itself as Super?');
-
-        const superBody = superClass.get('body');
-        ensureConstructorInClass(superBody);
-        const superCtor = getClassConstructor(superClass.get('body'));
-        if (!superCtor) throw Error('Super Class without a Constructor?');
-
-        ctorParams.push(...superCtor.value.params);
-        ctorBlock.body.push(b.expressionStatement(b.callExpression(b.super(), ctorParams)));
-    }
-
-    ctor = b.methodDefinition('constructor', b.identifier('constructor'), b.functionExpression(null, ctorParams, ctorBlock));
-
     // Add constructor to the top of class body.
-    path.unshiftContainer('body', [ctor]);
+    path.unshiftContainer('body', [b.methodDefinition(
+        'constructor',
+        b.identifier('constructor'),
+        b.functionExpression(
+            null,
+            [
+                b.restElement(b.identifier('vargv'))
+            ],
+            b.blockStatement([
+                b.expressionStatement(b.callExpression(
+                    b.memberExpression(
+                        b.memberExpression(
+                            b.super(),
+                            b.identifier('constructor')
+                        ),
+                        b.identifier('acall')
+                    ),
+                    [
+                        b.callExpression(
+                            b.memberExpression(
+                                b.identifier('vargv'),
+                                b.identifier('insert')
+                            ),
+                            [
+                                b.literal(0),
+                                b.thisExpression()
+                            ]
+                        )
+                    ]
+                ))
+            ])
+        )
+    )]);
 };
 
 const normalizeLoopStatement = (forPath: NodePath<ForInStatement | ForOfStatement>) => {
@@ -406,28 +478,20 @@ const normalizeLoopStatement = (forPath: NodePath<ForInStatement | ForOfStatemen
     }
 };
 
+const resolveImportedModule = (relPath: string, module: Module) => {
+    const importPath = path.resolve(module.formattedPath.dir, relPath);
+    const importFormatPath = path.parse(importPath);
+    const importAbsPath = path.format({...importFormatPath, base: '', ext: module.formattedPath.ext});
+
+    return module.translator.addModule(importAbsPath);
+};
+
 const getClassPropertyDefinition = (path: NodePath<ClassBody>, key: string) => {
     return path.get('body').find(x => is.propertyDefinition(x) && is.identifier(x.node.key) && x.node.key.name == key) as NodePath<PropertyDefinition>;
 };
 
 const getClassConstructor = (path: NodePath<ClassBody>): MethodDefinition => {
     return path.node.body.find(x => is.methodDefinition(x) && x.kind == 'constructor') as MethodDefinition;
-};
-
-const getClassDeclarationSuper = (path: NodePath<ClassDeclaration>): NodePath<ClassDeclaration> => {
-
-    const superIdent = path.node.superClass;
-    if (!superIdent) return;
-
-    if (!is.identifier(superIdent)) throw Error(`Unhandled Super Class Node of type ${superIdent.type}`);
-
-    const superBinding = path.scope.getBinding(superIdent.name);
-    if (!superBinding) throw Error(`Undefined Super Class Binding: ${superIdent.name}`);
-
-    const superClassDeclaration = superBinding.path;
-    if (!is.classDeclaration(superClassDeclaration)) throw Error(`Super Class Binding is not a Class Declaration: ${superIdent.name}`);
-
-    return superClassDeclaration;
 };
 
 const propDefinitionHasValue = (path: PropertyDefinition) => {

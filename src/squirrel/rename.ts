@@ -9,7 +9,7 @@ import {ESTree} from 'meriyah';
 
 import * as Dictionary from '../data/dictionary';
 import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './identifier';
-import {polyfillFromString} from './polyfill';
+import {Module} from './module';
 
 export interface DictionaryDeclaration {
     Program: ESTree.Program;
@@ -18,7 +18,7 @@ export interface DictionaryDeclaration {
 
 const IdentifierDictionary = new ConfigSearchPatternSet<RenameRule>();
 
-export function renameNode(path: NodePath) {
+export function renameNode(path: NodePath, module?: Module) {
 
     const rule = IdentifierDictionary.find(path);
     if (!rule)
@@ -30,7 +30,12 @@ export function renameNode(path: NodePath) {
 
     // Given rule is a declaration.
     if ('declaration' in rule) {
-        createDeclaration(path, rule);
+
+        if (!module) {
+            throw Error('Attempt to rename through Polyfill without a Module provided.');
+        }
+
+        createDeclaration(path, rule, module);
         return;
     }
 
@@ -56,17 +61,18 @@ const renameInline = (path: NodePath, rule: RenameRuleInline) => {
     path.replaceWith(node);
 };
 
-const createDeclaration = (path: NodePath, rule: RenameRuleDeclaration) => {
+const createDeclaration = (path: NodePath, rule: RenameRuleDeclaration, module: Module) => {
 
     const ident = rule.pattern.items.join('_');
-    const polyfill = polyfillFromString(path, ident, rule.declaration);
+    const polyfill = module.translator.polyfillFromString(module, path, ident, rule.declaration);
+    const first = polyfill.first();
 
     if (is.identifier(path)) {
-        if (path.node.name == polyfill.Identifier)
+        if (path.node.name == first[1])
             return;
     }
 
-    path.replaceWith(b.identifier(polyfill.Identifier));
+    path.replaceWith(b.identifier(first[1]));
 };
 
 
