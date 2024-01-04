@@ -1,6 +1,6 @@
 {
     "name": "vjscript",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "description": "Framework that automagically translates your JavaScript code to VScript supported Squirrel language.",
     "main": "dist/index.js",
     "author": "Moonly Days",
