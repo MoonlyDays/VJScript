@@ -3,26 +3,23 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
 
-declare global {
+/**
+ * Base script handle class for any interfaces belonging to an individual NextBotCombatCharacter entity.
+ */
+export interface INextBotComponent {
     /**
-     * Base script handle class for any interfaces belonging to an individual NextBotCombatCharacter entity.
+     * Recomputes the component update interval
      */
-    interface INextBotComponent {
-        /**
-         * Recomputes the component update interval
-         */
-        ComputeUpdateInterval(): boolean;
+    ComputeUpdateInterval(): boolean;
 
-        /**
-         * Returns the component update interval
-         */
-        GetUpdateInterval(): number;
+    /**
+     * Returns the component update interval
+     */
+    GetUpdateInterval(): number;
 
-        /**
-         * Resets the internal update state
-         */
-        Reset(): void;
-    }
+    /**
+     * Resets the internal update state
+     */
+    Reset(): void;
 }

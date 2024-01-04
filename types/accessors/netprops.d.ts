@@ -3,14 +3,13 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+import {NutTable, Vector} from '../datatypes';
+import {CBaseEntity} from '../engine/baseentity';
 
-declare global {
-    /**
-     * Allows reading and updating the network properties of an entity.
-     */
-    const NetProps: CNetPropManager;
-}
+/**
+ * Allows reading and updating the network properties of an entity.
+ */
+export const NetProps: CNetPropManager;
 
 /**
  * Allows reading and updating the network properties and datamaps of an entity.
@@ -25,7 +24,7 @@ declare global {
  * @warning Each netprop has a set size in bits, exceeding the size may desync the clients from the server causing unpredictable behavior.
  * @note Netprops containing the substring EntityQuality or AccountID are banned and cannot be set nor fetched, to prevent spoofing economy items as legitimate.
  */
-declare interface CNetPropManager {
+export interface CNetPropManager {
     /**
      * Returns the size of an netprop array, or -1.
      * @param entity

@@ -3,19 +3,16 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
-
-declare global {
-    /**
-     * Tracks if any player is using voice and for how long.
-     */
-    const PlayerVoiceListener: CPlayerVoiceListener;
-}
 
 /**
  * Tracks if any player is using voice and for how long.
  */
-declare interface CPlayerVoiceListener {
+export const PlayerVoiceListener: CPlayerVoiceListener;
+
+/**
+ * Tracks if any player is using voice and for how long.
+ */
+export interface CPlayerVoiceListener {
     /**
      * Returns the number of seconds the player has been continuously speaking.
      */

@@ -3,13 +3,11 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+import {CBasePlayer} from './baseplayer';
 
-declare global {
-    /**
-     * Script handle sub-class for player entities in multiplayer games. No additional methods.
-     */
-    interface CBaseMultiplayerPlayer extends CBasePlayer {
+/**
+ * Script handle sub-class for player entities in multiplayer games. No additional methods.
+ */
+export interface CBaseMultiplayerPlayer extends CBasePlayer {
 
-    }
 }

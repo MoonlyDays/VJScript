@@ -3,16 +3,14 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+import {CBaseFlex} from './baseflex';
 
-declare global {
+/**
+ * Script handle class for non-playable combat characters operating under the NextBot system.
+ */
+export interface CBaseCombatCharacter extends CBaseFlex {
     /**
-     * Script handle class for non-playable combat characters operating under the NextBot system.
+     * Return the last nav area occupied, NULL if unknown.
      */
-    interface CBaseCombatCharacter extends CBaseFlex {
-        /**
-         * Return the last nav area occupied, NULL if unknown.
-         */
-        GetLastKnownArea(): unknown;
-    }
+    GetLastKnownArea(): unknown;
 }

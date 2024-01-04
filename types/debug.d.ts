@@ -3,63 +3,58 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+export function BeginScriptDebug(): void;
 
-declare global {
+export function EndScriptDebug(): void;
 
-    function BeginScriptDebug(): void;
+export function ScriptDebugAddTextFilter(): void;
 
-    function EndScriptDebug(): void;
+export function ScriptDebugAddTrace(): void;
 
-    function ScriptDebugAddTextFilter(): void;
+export function ScriptDebugAddWatch(): void;
 
-    function ScriptDebugAddTrace(): void;
+export function ScriptDebugAddWatches(): void;
 
-    function ScriptDebugAddWatch(): void;
+export function ScriptDebugAddWatchPattern(): void;
 
-    function ScriptDebugAddWatches(): void;
+export function ScriptDebugClearTraces(): void;
 
-    function ScriptDebugAddWatchPattern(): void;
+export function ScriptDebugClearWatches(): void;
 
-    function ScriptDebugClearTraces(): void;
+export function ScriptDebugDefaultWatchColor(): void;
 
-    function ScriptDebugClearWatches(): void;
+export function ScriptDebugDraw(): void;
 
-    function ScriptDebugDefaultWatchColor(): void;
+export function ScriptDebugDrawWatches(): void;
 
-    function ScriptDebugDraw(): void;
+export function ScriptDebugDumpKeys(): void;
 
-    function ScriptDebugDrawWatches(): void;
+export function ScriptDebugHook(): void;
 
-    function ScriptDebugDumpKeys(): void;
+export function ScriptDebugIterateKeys(): void;
 
-    function ScriptDebugHook(): void;
+export function ScriptDebugIterateKeysRecursive(): void;
 
-    function ScriptDebugIterateKeys(): void;
+export function ScriptDebugRemoveTextFilter(): void;
 
-    function ScriptDebugIterateKeysRecursive(): void;
+export function ScriptDebugRemoveTrace(): void;
 
-    function ScriptDebugRemoveTextFilter(): void;
+export function ScriptDebugRemoveWatch(): void;
 
-    function ScriptDebugRemoveTrace(): void;
+export function ScriptDebugRemoveWatches(): void;
 
-    function ScriptDebugRemoveWatch(): void;
+export function ScriptDebugRemoveWatchPattern(): void;
 
-    function ScriptDebugRemoveWatches(): void;
+export function ScriptDebugText(): void;
 
-    function ScriptDebugRemoveWatchPattern(): void;
+export function ScriptDebugTextDraw(): void;
 
-    function ScriptDebugText(): void;
+export function ScriptDebugTextPrint(): void;
 
-    function ScriptDebugTextDraw(): void;
+export function ScriptDebugTextTrace(): void;
 
-    function ScriptDebugTextPrint(): void;
+export function ScriptDebugTraceAll(): void;
 
-    function ScriptDebugTextTrace(): void;
+export function ScriptDebugWatches(): void;
 
-    function ScriptDebugTraceAll(): void;
-
-    function ScriptDebugWatches(): void;
-
-    function __VScriptServerDebugHook(): void;
-}
+export function __VScriptServerDebugHook(): void;

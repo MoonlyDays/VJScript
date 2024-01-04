@@ -3,13 +3,9 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+export const Convars: CConVars;
 
-declare global {
-    const Convars: CConVars;
-}
-
-declare interface CConVars {
+export interface CConVars {
     /**
      * Returns the convar as a bool. May return null if no such convar.
      */
@@ -61,7 +57,7 @@ declare interface CConVars {
     SetValue(name: ConVarNames, value: unknown): void;
 }
 
-type ConVarNames =
+export type ConVarNames =
     ClientConVarNames |
     'bot_crouch' |
     'bot_forceattack' |
@@ -770,7 +766,7 @@ type ConVarNames =
     'weapon_vaccinator_resist_duration' |
     string;
 
-type ClientConVarNames =
+export type ClientConVarNames =
     'cl_autoreload' |
     'cl_autorezoom' |
     'cl_flipviewmodels' |

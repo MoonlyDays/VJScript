@@ -3,14 +3,13 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+import {NutTable} from '../datatypes';
+import {CBaseEntity} from '../engine/baseentity';
 
-declare global {
-    /**
-     * Allows manipulation of entity output data
-     */
-    const EntityOutputs: CScriptEntityOutputs;
-}
+/**
+ * Allows manipulation of entity output data
+ */
+export const EntityOutputs: CScriptEntityOutputs;
 
 /**
  * Allows reading and manipulation of entity output data.

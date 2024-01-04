@@ -3,14 +3,13 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+import {Vector} from '../datatypes';
+import {CBaseEntity} from '../engine/baseentity';
 
-declare global {
-    /**
-     * Provides access to currently spawned entities
-     */
-    const Entities: CEntities;
-}
+/**
+ * Provides access to currently spawned entities
+ */
+export const Entities: CEntities;
 
 /**
  * An interface to find and iterate over the script handles for the entities in
@@ -18,7 +17,7 @@ declare global {
  * in the appropriate method to start an iteration. A reference to a previously-found
  * entity can be used instead to continue a search.
  */
-declare interface CEntities {
+export declare interface CEntities {
     /**
      * Creates an entity by classname.
      * @param classname
@@ -116,7 +115,7 @@ declare interface CEntities {
 }
 
 
-type EntityClassName =
+export type EntityClassName =
     '_firesmoke' |
     '_plasma' |
     'ai_ally_speech_manager' |

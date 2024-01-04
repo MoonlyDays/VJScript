@@ -3,8 +3,9 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+export * from './accessors/index';
 
+/*
 import './constants';
 import './print';
 import './datatypes';
@@ -36,4 +37,4 @@ import './engine/nextbotcomponent';
 import './engine/nextbotlocomotion';
 import './engine/tfbot';
 import './engine/tfnavarea';
-import './engine/tfplayer';
+import './engine/tfplayer';*/

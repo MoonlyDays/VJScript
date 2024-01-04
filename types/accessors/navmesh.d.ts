@@ -3,19 +3,19 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-export {};
+import {NutTable, Vector} from '../datatypes';
+import {CBaseEntity} from '../engine/baseentity';
+import {CTFNavArea} from '../engine/tfnavarea';
 
-declare global {
-    /**
-     * Provides access to the maps NavMesh and NavAreas.
-     */
-    const NavMesh: CNavMesh;
-}
+/**
+ * Provides access to the maps NavMesh and NavAreas.
+ */
+export const NavMesh: CNavMesh;
 
 /**
  * An interface to collect nav areas from, especially for pathfinding needs.
  */
-declare interface CNavMesh {
+export interface CNavMesh {
     /**
      * get nav area from ray
      * @param startpos
