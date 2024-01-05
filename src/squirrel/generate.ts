@@ -3,37 +3,11 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {Node} from 'estree';
-
-import {handler} from './handler';
-
-
 /*
 const Generators: Generators = {
 
-    UnaryExpression: function* (node) {
-    },
-
     ObjectExpression: function* (node: ObjectExpression) {
         yield* helpers.withScope(() => helpers.generateBody({body: node.properties}));
-    },
-
-    Property: function* (node) {
-        if (['get', 'set'].includes(node.kind))
-            throw Error('Getters and Setters are not supported!');
-
-        yield generate(node.key);
-        yield ' = ';
-        yield generate(node.value);
-    },
-
-    ReturnStatement: function* (node) {
-        yield 'return';
-
-        if (node.argument) {
-            yield ' ';
-            yield generate(node.argument);
-        }
     },
 
     ArrayExpression: function* (node) {
@@ -73,34 +47,4 @@ const Generators: Generators = {
     TemplateElement: function* (node) {
         yield JSON.stringify(node.value.cooked);
     },
-
-    NewExpression: function* (node) {
-    },
-
-    ClassDeclaration: function* (node) {
-    },
-
-    MethodDefinition: function* (node) {
-    },
-
-    Super: function* () {
-        yield 'base';
-    },
-
-    UpdateExpression: function* (node) {
-        if (node.prefix) yield node.operator;
-        yield generate(node.argument);
-        if (!node.prefix) yield node.operator;
-    },
-
-    RestElement: function* () {
-    },
-
-    AssignmentPattern: function* (node) {
-    },
-
-    ThrowStatement: function* (node) {
-        yield 'throw ';
-        yield generate(node.argument);
-    }
 };*/

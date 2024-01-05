@@ -8,7 +8,7 @@
 import {Function as FunctionNode, Node} from 'estree';
 import {is} from 'estree-toolkit';
 
-import {generate} from '../generate';
+import {generate} from '../handler';
 
 export function* generateFunction(node: FunctionNode) {
     yield 'function';

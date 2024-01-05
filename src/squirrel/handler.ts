@@ -35,7 +35,9 @@ import RestElement from './nodes/RestElement';
 import SequenceExpression from './nodes/SequenceExpression';
 import Super from './nodes/Super';
 import ThisExpression from './nodes/ThisExpression';
+import ThrowStatement from './nodes/ThrowStatement';
 import UnaryExpression from './nodes/UnaryExpression';
+import UpdateExpression from './nodes/UpdateExpression';
 import VariableDeclaration from './nodes/VariableDeclaration';
 import VariableDeclarator from './nodes/VariableDeclarator';
 
@@ -53,6 +55,8 @@ const NodeHandlerMap = {
     ForOfStatement: ForOfStatement,
     FunctionDeclaration: FunctionDeclaration,
     FunctionExpression: FunctionExpression,
+    UpdateExpression: UpdateExpression,
+    ThrowStatement: ThrowStatement,
     Identifier: Identifier,
     IfStatement: IfStatement,
     ImportDefaultSpecifier: ImportDefaultSpecifier,

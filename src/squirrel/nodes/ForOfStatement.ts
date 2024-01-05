@@ -6,7 +6,7 @@
 import {ForOfStatement} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
-import {generate} from '../generate';
+import {generate} from '../handler';
 import {generateArguments} from '../helpers/generator';
 import {normalizeLoopStatement} from '../helpers/loop';
 import {NodeHandler} from './NodeHandler';

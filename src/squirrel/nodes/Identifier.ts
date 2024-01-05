@@ -7,7 +7,7 @@ import {Identifier} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
 import {processAttributes} from '../attributes';
-import {IDENTIFIER_MODIFIER_GLOBAL} from '../helpers';
+import {IDENTIFIER_MODIFIER_GLOBAL} from '../helpers/consts';
 import {renameNode} from '../rename';
 import {NodeHandler, TraverseState} from './NodeHandler';
 

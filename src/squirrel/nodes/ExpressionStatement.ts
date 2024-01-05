@@ -5,7 +5,7 @@
 
 import {ExpressionStatement} from 'estree';
 
-import {generate} from '../generate';
+import {generate} from '../handler';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ExpressionStatement> {

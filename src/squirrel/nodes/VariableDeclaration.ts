@@ -7,8 +7,8 @@ import {VariableDeclaration} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit/dist/builders';
 
-import {generate} from '../generate';
-import {IDENTIFIER_MODIFIER_GLOBAL} from '../helpers';
+import {generate} from '../handler';
+import {IDENTIFIER_MODIFIER_GLOBAL} from '../helpers/consts';
 import {variableDeclarationNeedsToSplit} from '../helpers/general';
 import {generateArguments} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';

@@ -3,17 +3,18 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {UnaryExpression} from 'estree';
+import {ReturnStatement} from 'estree';
 
 import {generate} from '../handler';
 import {NodeHandler} from './NodeHandler';
 
-export default class extends NodeHandler<UnaryExpression> {
-    * handleGenerate(node: UnaryExpression): Generator<string, void, unknown> {
-        yield '(';
-        yield node.operator;
-        yield ' ';
-        yield generate(node.argument);
-        yield ')';
+export default class extends NodeHandler<ReturnStatement> {
+    * handleGenerate(node: ReturnStatement): Generator<string, void, unknown> {
+        yield 'return';
+
+        if (node.argument) {
+            yield ' ';
+            yield generate(node.argument);
+        }
     }
 }

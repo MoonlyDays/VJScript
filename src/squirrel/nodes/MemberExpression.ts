@@ -7,7 +7,7 @@ import {MemberExpression} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
 import {processAttributes} from '../attributes';
-import {generate} from '../generate';
+import {generate} from '../handler';
 import {renameNode} from '../rename';
 import {NodeHandler, TraverseState} from './NodeHandler';
 

@@ -5,7 +5,7 @@
 
 import {NewExpression} from 'estree';
 
-import {generate} from '../generate';
+import {generate} from '../handler';
 import {generateArguments} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
 

@@ -5,7 +5,7 @@
 
 import {MethodDefinition} from 'estree';
 
-import {generate} from '../generate';
+import {generate} from '../handler';
 import {generateArguments, generateBody, generateWithScope} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
 
