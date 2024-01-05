@@ -29,17 +29,15 @@ export function propertyDefinitionHasValue(path: PropertyDefinition) {
     return !(is.literal(node.value) && node.value.value === null);
 }
 
-export function ensurePropertyDefinitionInClass(path: NodePath<ClassBody>, propertyKey: PropertyDefinition['key']) {
+export function ensurePropertyDefinitionInClass(path: NodePath<ClassBody>, propertyKey: string) {
 
-    // TODO: this.
-    /*
-    const propDecl = getClassPropertyDefinition(classBody, prop.node.name);
-    if (!propDecl) {
-        classBody.unshiftContainer('body', [b.propertyDefinition(
-            b.identifier(deepestMemberExpr.property.name),
-            b.literal(null)
-        )]);
-    }*/
+    const propDecl = getClassPropertyDefinition(path, propertyKey);
+    if (propDecl)
+        return;
+
+    path.unshiftContainer('body', [
+        b.propertyDefinition(b.identifier(propertyKey), b.literal(null))
+    ]);
 }
 
 export function ensureConstructorInClass(path: NodePath<ClassBody>) {

@@ -45,13 +45,13 @@ export class Translator {
                     b.functionExpression(null, [], b.blockStatement(body))
                 ]
             )));
-
-            program.body.push(b.expressionStatement(b.callExpression(
-                b.identifier(modulePolyfill.get('resolveModule')),
-                [b.literal(this.entryModule.name)]
-            )));
         }
 
+
+        program.body.push(b.expressionStatement(b.callExpression(
+            b.identifier(modulePolyfill.get('resolveModule')),
+            [b.literal(this.entryModule.name)]
+        )));
         return program;
     }
 
