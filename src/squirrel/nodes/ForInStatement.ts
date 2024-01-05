@@ -4,8 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {ForInStatement} from 'estree';
-import {is, NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit/dist/builders';
+import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {normalizeLoopStatement} from '../helpers/loop';
 import {NodeHandler} from './NodeHandler';

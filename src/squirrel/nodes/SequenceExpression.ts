@@ -4,8 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {SequenceExpression} from 'estree';
-import {NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit/dist/builders';
+import {builders as b,NodePath} from 'estree-toolkit';
 
 import {NodeHandler} from './NodeHandler';
 

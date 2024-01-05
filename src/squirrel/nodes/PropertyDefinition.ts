@@ -5,7 +5,7 @@
 
 import {ClassBody, PropertyDefinition} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit/dist/builders';
+import {builders as b} from 'estree-toolkit';
 
 import {generate} from '../handler';
 import {getClassConstructor, propertyDefinitionHasValue} from '../helpers/class';

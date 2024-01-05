@@ -4,8 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {ArrowFunctionExpression} from 'estree';
-import {is, NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit/dist/builders';
+import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {NodeHandler} from './NodeHandler';
 

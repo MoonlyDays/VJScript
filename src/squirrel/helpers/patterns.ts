@@ -5,7 +5,7 @@
 
 import {ArrayPattern, Expression, MemberExpression, Node, ObjectPattern, Pattern, VariableDeclarator} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit/dist/builders';
+import {builders as b} from 'estree-toolkit';
 
 import {findPathInsideArray} from './general';
 

@@ -4,8 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {ForInStatement, ForOfStatement} from 'estree';
-import {is, NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit/dist/builders';
+import {builders as b, is, NodePath} from 'estree-toolkit';
 
 /**
  * For loop statement should be normalized to having "left" property of either

@@ -4,8 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Declaration, Identifier, Node, Program} from 'estree';
-import {is, NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit/dist/builders';
+import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {IDENTIFIER_MODIFIER_POLYFILLED} from './helpers/consts';
 

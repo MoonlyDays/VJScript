@@ -3,9 +3,8 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {ClassBody, MethodDefinition, Property, PropertyDefinition} from 'estree';
-import {is, NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit/dist/builders';
+import {ClassBody, MethodDefinition, PropertyDefinition} from 'estree';
+import {builders as b, is, NodePath} from 'estree-toolkit';
 
 export function getClassPropertyDefinition(path: NodePath<ClassBody>, key: string) {
     return path.get('body')
@@ -32,13 +31,15 @@ export function propertyDefinitionHasValue(path: PropertyDefinition) {
 
 export function ensurePropertyDefinitionInClass(path: NodePath<ClassBody>, propertyKey: PropertyDefinition['key']) {
 
+    // TODO: this.
+    /*
     const propDecl = getClassPropertyDefinition(classBody, prop.node.name);
     if (!propDecl) {
         classBody.unshiftContainer('body', [b.propertyDefinition(
             b.identifier(deepestMemberExpr.property.name),
             b.literal(null)
         )]);
-    }
+    }*/
 }
 
 export function ensureConstructorInClass(path: NodePath<ClassBody>) {
