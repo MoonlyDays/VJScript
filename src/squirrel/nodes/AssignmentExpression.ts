@@ -4,10 +4,11 @@
 //--------------------------------------------------------------------------------------------------
 
 import {AssignmentExpression, AssignmentOperator} from 'estree';
-import {builders as b,is, NodePath} from 'estree-toolkit';
+import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {findPathInsideArray, shouldUseSlotOperator} from '../helpers/general';
+import {shouldUseSlotOperator} from '../helpers/general';
 import {generateBinaryOperatorExpression} from '../helpers/generator';
+import {resolveArrayPattern, resolveObjectPattern} from '../helpers/patterns';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<AssignmentExpression> {
@@ -15,6 +16,18 @@ export default class extends NodeHandler<AssignmentExpression> {
     handlePrepare(path: NodePath<AssignmentExpression>) {
 
         const node = path.node;
+
+
+        if (is.arrayPattern(node.left)) {
+            resolveArrayPattern(path, node.left, node.right, (k, v) => b.assignmentExpression(node.operator, k, v));
+            return;
+        }
+
+        if (is.objectPattern(node.left)) {
+            resolveObjectPattern(path, node.left, node.right, (k, v) => b.assignmentExpression(node.operator, k, v));
+            return;
+        }
+
 
         // Handle nullish coalescing assignment operator.
         if (node.operator == '??=') {
@@ -28,47 +41,6 @@ export default class extends NodeHandler<AssignmentExpression> {
             }
 
             throw Error('AssignmentExpression: left side of the nullish coalescing assignment operator is not an expression?');
-        }
-
-        const left = node.left;
-        if (is.arrayPattern(left)) {
-
-            // TODO: Provide helper functions to deal with Array/ObjectPattern nodes.
-            const replace: AssignmentExpression[] = [];
-
-            // Try to find a path that is contained inside an array.
-            const parentPath = findPathInsideArray(path);
-            if (!parentPath) {
-                throw Error('AssignmentExpression: Parent node inside a container was not found.');
-            }
-
-            // To collapse the array pattern, we first create a separate variable, which will
-            // store the result of the right side expression. We insert it right before we
-            // perform assignments.
-            const value = node.right;
-            const tmp = parentPath.scope.generateUidIdentifier();
-
-            parentPath.insertBefore([
-                b.variableDeclaration('const', [
-                    b.variableDeclarator(tmp, value)
-                ])
-            ]);
-
-            // For each element in the array pattern, we create an assignment expression,
-            // which each takes the ith element of the right expression.
-            for (let i = 0; i < left.elements.length; i++) {
-                const elementIdent = left.elements[i];
-                const elementValue = b.memberExpression(
-                    tmp, b.literal(i), true
-                );
-
-                replace.push(
-                    b.assignmentExpression('=', elementIdent, elementValue)
-                );
-            }
-
-            path.replaceWithMultiple(replace);
-            return;
         }
 
         if (shouldUseSlotOperator(path)) {

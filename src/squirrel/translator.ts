@@ -77,6 +77,11 @@ export class Translator {
     }
 
     public polyfillFromFile(module: Module, nodePath: NodePath, file: string) {
+
+        if (!file.startsWith('./')) {
+            file = './polyfill/' + file;
+        }
+
         const polyfill = this.polyfillFor(file);
         if (polyfill) {
             return polyfill;

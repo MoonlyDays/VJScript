@@ -7,6 +7,7 @@ import {Node} from 'estree';
 import {NodePath, traverse} from 'estree-toolkit';
 
 import {Module} from './module';
+import ArrayExpression from './nodes/ArrayExpression';
 import ArrowFunctionExpression from './nodes/ArrowFunctionExpression';
 import AssignmentExpression from './nodes/AssignmentExpression';
 import AssignmentPattern from './nodes/AssignmentPattern';
@@ -15,13 +16,18 @@ import BlockStatement from './nodes/BlockStatement';
 import CallExpression from './nodes/CallExpression';
 import ClassBody from './nodes/ClassBody';
 import ClassDeclaration from './nodes/ClassDeclaration';
+import ConditionalExpression from './nodes/ConditionalExpression';
+import ExportDefaultDeclaration from './nodes/ExportDefaultDeclaration';
+import ExportNamedDeclaration from './nodes/ExportNamedDeclaration';
 import ExpressionStatement from './nodes/ExpressionStatement';
 import ForInStatement from './nodes/ForInStatement';
 import ForOfStatement from './nodes/ForOfStatement';
+import ForStatement from './nodes/ForStatement';
 import FunctionDeclaration from './nodes/FunctionDeclaration';
 import FunctionExpression from './nodes/FunctionExpression';
 import Identifier from './nodes/Identifier';
 import IfStatement from './nodes/IfStatement';
+import ImportDeclaration from './nodes/ImportDeclaration';
 import ImportDefaultSpecifier from './nodes/ImportDefaultSpecifier';
 import Literal from './nodes/Literal';
 import LogicalExpression from './nodes/LogicalExpression';
@@ -29,11 +35,16 @@ import MemberExpression from './nodes/MemberExpression';
 import MethodDefinition from './nodes/MethodDefinition';
 import NewExpression from './nodes/NewExpression';
 import {NodeHandler, TraverseState} from './nodes/NodeHandler';
+import ObjectExpression from './nodes/ObjectExpression';
 import Program from './nodes/Program';
+import Property from './nodes/Property';
 import PropertyDefinition from './nodes/PropertyDefinition';
 import RestElement from './nodes/RestElement';
+import ReturnStatement from './nodes/ReturnStatement';
 import SequenceExpression from './nodes/SequenceExpression';
 import Super from './nodes/Super';
+import TemplateElement from './nodes/TemplateElement';
+import TemplateLiteral from './nodes/TemplateLiteral';
 import ThisExpression from './nodes/ThisExpression';
 import ThrowStatement from './nodes/ThrowStatement';
 import UnaryExpression from './nodes/UnaryExpression';
@@ -43,6 +54,7 @@ import VariableDeclarator from './nodes/VariableDeclarator';
 
 const NodeHandlerMap = {
     ArrowFunctionExpression: ArrowFunctionExpression,
+    ArrayExpression: ArrayExpression,
     AssignmentExpression: AssignmentExpression,
     AssignmentPattern: AssignmentPattern,
     BinaryExpression: BinaryExpression,
@@ -50,9 +62,16 @@ const NodeHandlerMap = {
     CallExpression: CallExpression,
     ClassBody: ClassBody,
     ClassDeclaration: ClassDeclaration,
+    ForStatement: ForStatement,
     ExpressionStatement: ExpressionStatement,
+    ObjectExpression: ObjectExpression,
+    Property: Property,
     ForInStatement: ForInStatement,
     ForOfStatement: ForOfStatement,
+    ReturnStatement: ReturnStatement,
+    ConditionalExpression: ConditionalExpression,
+    ExportNamedDeclaration: ExportNamedDeclaration,
+    ExportDefaultDeclaration: ExportDefaultDeclaration,
     FunctionDeclaration: FunctionDeclaration,
     FunctionExpression: FunctionExpression,
     UpdateExpression: UpdateExpression,
@@ -71,6 +90,9 @@ const NodeHandlerMap = {
     SequenceExpression: SequenceExpression,
     Super: Super,
     ThisExpression: ThisExpression,
+    ImportDeclaration: ImportDeclaration,
+    TemplateLiteral: TemplateLiteral,
+    TemplateElement: TemplateElement,
     UnaryExpression: UnaryExpression,
     VariableDeclaration: VariableDeclaration,
     VariableDeclarator: VariableDeclarator
@@ -98,21 +120,31 @@ function handler<T extends Node>(node: T): NodeHandler<T> {
 
 export function generate(node: Node) {
 
+    if (!node) {
+        return '';
+    }
+
     let fragments = [...handler(node).handleGenerate(node)];
     fragments = fragments.filter(x => !!x);
     return fragments.join('');
 }
 
+const prepareVisitors = Object.keys(NodeHandlerMap)
+    .reduce((a, v) => ({
+        ...a,
+        [v]: ((p: NodePath<Node>, s: TraverseState) => {
+            handler(p.node).handlePrepare(p, s);
+        })
+    }), {});
+
 export function prepare(node: Node, module?: Module) {
 
-    const generated = Object.keys(NodeHandlerMap);
     traverse(node, {
         $: {scope: true},
-        [generated.join('|')]: (path: NodePath<Node>, state: TraverseState) => {
-            handler(path.node).handlePrepare(path, state);
-        }
+        ...prepareVisitors,
     }, {
-        module: module
+        module: module,
+        translator: module?.translator
     });
 
 }

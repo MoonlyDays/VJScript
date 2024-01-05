@@ -13,7 +13,7 @@ import {generate} from '../handler';
 export function* generateFunction(node: FunctionNode) {
     yield 'function';
 
-    if ('id' in node) {
+    if ('id' in node && node.id) {
         yield ' ';
         yield generate(node.id);
     }

@@ -3,14 +3,15 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-/*
-const Generators: Generators = {
+import {TemplateLiteral} from 'estree';
 
-    ForStatement: function* (node) {
+import {generate} from '../handler';
+import {NodeHandler} from './NodeHandler';
 
-    },
+export default class extends NodeHandler<TemplateLiteral> {
 
-    TemplateLiteral: function* (node) {
+    * handleGenerate(node: TemplateLiteral): Generator<string, void, unknown> {
+
         const parts = [];
         for (let i = 0; i < node.quasis.length; i++) {
             const element = node.quasis[i];
@@ -23,8 +24,5 @@ const Generators: Generators = {
         }
 
         yield parts.filter(x => !!x).join(' + ');
-    },
-
-    TemplateElement: function* (node) {
-    },
-};*/
+    }
+}

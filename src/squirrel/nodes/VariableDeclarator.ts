@@ -17,12 +17,20 @@ export default class extends NodeHandler<VariableDeclarator> {
 
         const id = node.id;
         if (is.arrayPattern(id)) {
-            resolveArrayPattern(path, id, node.init, (k, v) => b.variableDeclarator(k, v));
+            resolveArrayPattern(
+                path, id, node.init,
+                (k, v) => b.variableDeclarator(k, v),
+                path.parentPath
+            );
             return;
         }
 
         if (is.objectPattern(id)) {
-            resolveObjectPattern(path, id, node.init, (k, v) => b.variableDeclarator(k, v));
+            resolveObjectPattern(
+                path, id, node.init,
+                (k, v) => b.variableDeclarator(k, v),
+                path.parentPath
+            );
             return;
         }
     }

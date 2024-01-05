@@ -3,7 +3,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {ArrayPattern, Expression, MemberExpression, Node, ObjectPattern, Pattern, VariableDeclarator} from 'estree';
+import {ArrayPattern, Expression, MemberExpression, Node, ObjectPattern, Pattern} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit';
 
@@ -13,11 +13,12 @@ export function resolveArrayPattern<T extends Node>(
     path: NodePath<T>,
     id: ArrayPattern,
     init: Expression,
-    createFn: (pattern: Pattern, value: MemberExpression) => T
+    createFn: (pattern: Pattern, value: MemberExpression) => T,
+    pivotPath: NodePath = path
 ) {
     const replace: T[] = [];
 
-    const parentPath = findPathInsideArray(path);
+    const parentPath = findPathInsideArray(pivotPath);
     if (!parentPath) {
         throw Error('resolveArrayPattern: Parent node inside a container was not found.');
     }
@@ -51,11 +52,12 @@ export function resolveObjectPattern<T extends Node>(
     path: NodePath<T>,
     id: ObjectPattern,
     init: Expression,
-    createFn: (pattern: Pattern, value: MemberExpression) => T
+    createFn: (pattern: Pattern, value: MemberExpression) => T,
+    pivotPath: NodePath = path
 ) {
     const replace: T[] = [];
 
-    const parentPath = findPathInsideArray(path);
+    const parentPath = findPathInsideArray(pivotPath);
     if (!parentPath) {
         throw Error('resolveArrayPattern: Parent node inside a container was not found.');
     }

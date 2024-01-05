@@ -40,7 +40,7 @@ export function normalizePolyfillIdentifier(node: Identifier, modulePath: NodePa
     actualIdent = modulePath.scope.generateUid(actualIdent);
     desiredIdent ??= actualIdent;
 
-    console.log(desiredIdent, actualIdent);
+    // console.log(desiredIdent, actualIdent);
     polyfill.add(desiredIdent, actualIdent);
     polyfillPath.scope.renameBinding(desiredIdent, actualIdent);
 

@@ -23,7 +23,7 @@ export class Module {
 
     program: Program;
     translator: Translator;
-    defaultExportIdent?: Identifier;
+    defaultExportIdentifier?: Identifier;
 
     constructor(translator: Translator, scriptPath: string) {
         this.translator = translator;
