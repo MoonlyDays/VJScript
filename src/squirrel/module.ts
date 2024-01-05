@@ -28,9 +28,9 @@ export class Module {
     constructor(translator: Translator, scriptPath: string) {
         this.translator = translator;
         this.path = scriptPath;
-        this.name = `import_${translator.modules.size}`;
-        this.translator.modules.set(scriptPath, this);
         this.formattedPath = path.parse(scriptPath);
+        this.name = `import_${this.formattedPath.name}_${translator.modules.size}`;
+        this.translator.modules.set(scriptPath, this);
 
         let jsCode = fs.readFileSync(scriptPath).toString('utf-8');
         jsCode = jsCode.replace(/^#!.*$/, '');
