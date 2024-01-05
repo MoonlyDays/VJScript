@@ -50,7 +50,7 @@ export const Declare = {
     'Math.cosh': 'x => (Math.exp(x) + Math.exp(-x)) / 2',
     'Math.expm1': 'x => Math.exp(x) - 1',
 
-    'require': `path => {
+    'require': `function require (path) {
         const scope = {};
         IncludeScript(path, scope);
         return scope;

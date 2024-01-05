@@ -45,7 +45,6 @@ export function translate(sourcePath: string, outPath: string) {
     fs.writeFileSync(outPath, header + nutCode);
 }
 
-
 const WATCH_INTERVAL = 500;
 const g_kOptions: {
     watch?: boolean; watchInterval: number; file?: string; dir?: string; tree?: boolean;

@@ -1,3 +1,3 @@
-const { GetListenServerHost } = require("../types/index");
-
-GetListenServerHost();
+function test(a = 2) {
+    console.log(a);
+}

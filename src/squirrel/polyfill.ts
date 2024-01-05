@@ -7,6 +7,8 @@ import {Declaration, Identifier, Node, Program} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit/dist/builders';
 
+import {IDENTIFIER_MODIFIER_POLYFILLED} from './helpers/consts';
+
 type PolyfillIdentifier = [string, string];
 
 export class Polyfill {
@@ -32,14 +34,14 @@ export function normalizePolyfillIdentifier(node: Identifier, modulePath: NodePa
     let desiredIdent: string;
     if (node) {
         desiredIdent = node.name;
-        actualIdent = '__js_' + desiredIdent;
+        actualIdent = desiredIdent;
     }
 
+    actualIdent = IDENTIFIER_MODIFIER_POLYFILLED + actualIdent;
     actualIdent = modulePath.scope.generateUid(actualIdent);
-    if (!desiredIdent) {
-        desiredIdent = actualIdent;
-    }
+    desiredIdent ??= actualIdent;
 
+    console.log(desiredIdent, actualIdent);
     polyfill.add(desiredIdent, actualIdent);
     polyfillPath.scope.renameBinding(desiredIdent, actualIdent);
 

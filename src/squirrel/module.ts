@@ -8,7 +8,7 @@ import fs from 'fs';
 import {Options, parseModule} from 'meriyah';
 import path from 'path';
 
-import {preprocess} from './preprocess';
+import {prepare} from './handler';
 import {Translator} from './translator';
 
 export const MeriyahParseOptions: Options = {
@@ -37,6 +37,6 @@ export class Module {
         this.scriptCode = jsCode;
 
         this.program = parseModule(this.scriptCode, MeriyahParseOptions) as Program;
-        preprocess(this.program, this);
+        prepare(this.program, this);
     }
 }

@@ -9,10 +9,9 @@ import fs from 'fs';
 import {parseScript} from 'meriyah';
 import path from 'path';
 
-import {generate} from './generate';
+import {generate, prepare} from './handler';
 import {MeriyahParseOptions, Module} from './module';
 import {normalizePolyfillStatement, Polyfill} from './polyfill';
-import {preprocess} from './preprocess';
 
 export class Translator {
     public polyfill: Polyfill[] = [];
@@ -24,8 +23,6 @@ export class Translator {
     }
 
     public bundle() {
-
-
         const program = b.program([], 'module');
         for (const polyfill of this.polyfill) {
             program.body.push(...polyfill.declaration.body);
@@ -109,7 +106,7 @@ export class Translator {
 
         program.body = program.body.map(x => normalizePolyfillStatement(x, modulePath, polyfillPath, polyfill));
 
-        preprocess(program, module);
+        prepare(program, module);
         polyfill.name = name;
         polyfill.declaration = program;
         this.polyfill.push(polyfill);
