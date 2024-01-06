@@ -9,16 +9,16 @@ import {builders as b} from 'estree-toolkit';
 
 import {findPathInsideArray} from './general';
 
-export function resolveArrayPattern<T extends Node>(
-    path: NodePath<T>,
+export function replaceArrayPattern<T extends Node>(
     id: ArrayPattern,
     init: Expression,
+    scopePath: NodePath<T>,
     createFn: (pattern: Pattern, value: MemberExpression) => T,
-    pivotPath: NodePath = path
+    insertPath: NodePath = scopePath
 ) {
     const replace: T[] = [];
 
-    const parentPath = findPathInsideArray(pivotPath);
+    const parentPath = findPathInsideArray(insertPath);
     if (!parentPath) {
         throw Error('resolveArrayPattern: Parent node inside a container was not found.');
     }
@@ -26,38 +26,40 @@ export function resolveArrayPattern<T extends Node>(
     // To collapse the array pattern, we first create a separate variable, which will
     // store the result of the init expression. We insert it right before we
     // perform assignments.
-    const tmp = path.scope.generateUidIdentifier();
-    parentPath.insertBefore([
-        b.variableDeclaration('const', [
-            b.variableDeclarator(tmp, init)
-        ])
-    ]);
+    if (!is.identifier(init)) {
+        const tmp = scopePath.scope.generateUidIdentifier();
+        parentPath.insertBefore([
+            b.variableDeclaration('const', [
+                b.variableDeclarator(tmp, init)
+            ])
+        ]);
+        init = tmp;
+    }
 
     // For each element in the array pattern, we create an assignment expression,
     // which each takes the ith element of the right expression.
     for (let i = 0; i < id.elements.length; i++) {
         const elementIdent = id.elements[i];
         const elementValue = b.memberExpression(
-            tmp, b.literal(i), true
+            init, b.literal(i), true
         );
 
         replace.push(createFn(elementIdent, elementValue));
     }
 
-    path.replaceWithMultiple(replace);
+    scopePath.replaceWithMultiple(replace);
 }
 
-
-export function resolveObjectPattern<T extends Node>(
-    path: NodePath<T>,
+export function replaceObjectPattern<T extends Node>(
     id: ObjectPattern,
     init: Expression,
+    scopePath: NodePath<T>,
     createFn: (pattern: Pattern, value: MemberExpression) => T,
-    pivotPath: NodePath = path
+    insertPath: NodePath = scopePath
 ) {
     const replace: T[] = [];
 
-    const parentPath = findPathInsideArray(pivotPath);
+    const parentPath = findPathInsideArray(insertPath);
     if (!parentPath) {
         throw Error('resolveArrayPattern: Parent node inside a container was not found.');
     }
@@ -65,12 +67,15 @@ export function resolveObjectPattern<T extends Node>(
     // To collapse the array pattern, we first create a separate variable, which will
     // store the result of the init expression. We insert it right before we
     // perform assignments.
-    const tmp = path.scope.generateUidIdentifier();
-    parentPath.insertBefore([
-        b.variableDeclaration('const', [
-            b.variableDeclarator(tmp, init)
-        ])
-    ]);
+    if (!is.identifier(init)) {
+        const tmp = scopePath.scope.generateUidIdentifier();
+        parentPath.insertBefore([
+            b.variableDeclaration('const', [
+                b.variableDeclarator(tmp, init)
+            ])
+        ]);
+        init = tmp;
+    }
 
     // For each element in the array pattern, we create an assignment expression,
     // which each takes the ith element of the right expression.
@@ -81,10 +86,10 @@ export function resolveObjectPattern<T extends Node>(
         }
 
         const elementIdent = property.value;
-        const elementValue = b.memberExpression(tmp, property.key);
+        const elementValue = b.memberExpression(init, property.key);
 
         replace.push(createFn(elementIdent, elementValue));
     }
 
-    path.replaceWithMultiple(replace);
+    scopePath.replaceWithMultiple(replace);
 }

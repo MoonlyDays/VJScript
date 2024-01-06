@@ -10,25 +10,33 @@ import {parseScript} from 'meriyah';
 import path from 'path';
 
 import {generate, prepare} from './handler';
+import {determinePackageRoot} from './helpers/module';
 import {MeriyahParseOptions, Module} from './module';
 import {normalizePolyfillStatement, Polyfill} from './polyfill';
 
 export class Translator {
     public polyfill: Polyfill[] = [];
+    public packageDir: string;
     public modules = new Map<string, Module>();
     public entryModule: Module;
 
     constructor(entryScript: string) {
+        this.packageDir = determinePackageRoot(entryScript);
         this.entryModule = this.addModule(entryScript);
     }
 
+    public resolvePackageFile(absPath: string) {
+        return absPath.replace(this.packageDir + '\\', '');
+    }
+
     public bundle() {
+
         const program = b.program([], 'module');
         for (const polyfill of this.polyfill) {
             program.body.push(...polyfill.declaration.body);
         }
 
-        const modulePolyfill = this.polyfillFor('./polyfill/module.js');
+        const modulePolyfill = this.polyfillFor('module.js');
         if (!modulePolyfill) {
             program.body.push(...this.entryModule.program.body);
             return program;
@@ -46,7 +54,6 @@ export class Translator {
                 ]
             )));
         }
-
 
         program.body.push(b.expressionStatement(b.callExpression(
             b.identifier(modulePolyfill.get('resolveModule')),
@@ -67,7 +74,6 @@ export class Translator {
         if (!fs.existsSync(modulePath))
             return null;
 
-        // console.log(`Exploring new module: ${modulePath}`);
         module = new Module(this, modulePath);
         return module;
     }
@@ -78,16 +84,12 @@ export class Translator {
 
     public polyfillFromFile(module: Module, nodePath: NodePath, file: string) {
 
-        if (!file.startsWith('./')) {
-            file = './polyfill/' + file;
-        }
-
         const polyfill = this.polyfillFor(file);
         if (polyfill) {
             return polyfill;
         }
 
-        const absFile = path.resolve(__dirname, '../../', file);
+        const absFile = path.resolve(__dirname, '../../polyfill', file);
         const code = fs.readFileSync(absFile, {encoding: 'utf-8'});
 
         return this.polyfillFromString(module, nodePath, file, code);

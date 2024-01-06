@@ -23,10 +23,11 @@ export default class extends NodeHandler<Identifier> {
         }
 
         const isProperty = is.memberExpression(path.parentPath) && path.parentKey == 'property';
-        if (!isProperty) {
-            processAttributes(path);
-            renameNode(path, state.module);
-        }
+        if (isProperty)
+            return;
+
+        processAttributes(path, state.module);
+        renameNode(path, state.module);
     }
 
     * handleGenerate(node: Identifier): Generator<string, void, unknown> {

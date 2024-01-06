@@ -1,12 +1,6 @@
-import sum from "./sum";
-
-const {
-    a: [a, b, c],
-    b: [e, d, f]
-} = {
-    a: [1, 2, 3],
-    b: [4, 5, 6]
-};
-
-console.log(a, b, c, e, d, f)
-console.log(sum(1, 2));
+export * from "module-name";
+export * as name1 from "module-name";
+export { name1, /* …, */ nameN } from "module-name";
+export { import1 as name1, import2 as name2, /* …, */ nameN } from "module-name";
+export { default, /* …, */ } from "module-name";
+export { default as name1 } from "module-name";

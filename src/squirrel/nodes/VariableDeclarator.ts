@@ -3,11 +3,13 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {VariableDeclarator} from 'estree';
+import {Identifier, Literal, VariableDeclarator} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {generate} from '../handler';
-import {resolveArrayPattern, resolveObjectPattern} from '../helpers/patterns';
+import {isRequireCallExpression} from '../helpers/identify';
+import {replaceArrayPattern,replaceObjectPattern} from '../helpers/patterns';
+import {deepestIdentifier} from '../identifier';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<VariableDeclarator> {
@@ -17,8 +19,8 @@ export default class extends NodeHandler<VariableDeclarator> {
 
         const id = node.id;
         if (is.arrayPattern(id)) {
-            resolveArrayPattern(
-                path, id, node.init,
+            replaceArrayPattern(
+                id, node.init, path,
                 (k, v) => b.variableDeclarator(k, v),
                 path.parentPath
             );
@@ -26,13 +28,15 @@ export default class extends NodeHandler<VariableDeclarator> {
         }
 
         if (is.objectPattern(id)) {
-            resolveObjectPattern(
-                path, id, node.init,
+            replaceObjectPattern(
+                id, node.init, path,
                 (k, v) => b.variableDeclarator(k, v),
                 path.parentPath
             );
             return;
         }
+
+        handleRequireCallExpression(path);
     }
 
     * handleGenerate(node: VariableDeclarator): Generator<string, void, unknown> {
@@ -41,5 +45,34 @@ export default class extends NodeHandler<VariableDeclarator> {
             yield ' = ';
             yield generate(node.init);
         }
+    }
+}
+
+function handleRequireCallExpression(path: NodePath<VariableDeclarator>) {
+
+    const initPath = deepestIdentifier(path.get('init'));
+    if (!isRequireCallExpression(initPath))
+        return;
+
+    const node = path.node;
+    const parentPath = path.parentPath;
+    if (!is.variableDeclaration(parentPath)) {
+        throw Error('VariableDeclarator: not inside a Declaration?');
+    }
+
+    if (parentPath.node.declarations.length > 1) {
+        throw Error('VariableDeclarator: Declaration with a require call should\'ve been split up.');
+    }
+
+    const id = node.id;
+    const init = initPath.node;
+
+    // get the source.
+    const source = init.arguments[0] as Literal;
+
+    if (is.identifier(id)) {
+        const a = parentPath.replaceWith(b.importDeclaration([
+            b.importNamespaceSpecifier(id)
+        ], source));
     }
 }

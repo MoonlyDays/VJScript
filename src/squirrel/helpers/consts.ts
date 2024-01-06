@@ -13,4 +13,4 @@ export const IDENTIFIER_MODIFIER_GLOBAL = '__global_';
  */
 export const IDENTIFIER_MODIFIER_POLYFILLED = '__js_';
 
-export const IDENTIFIER_DEFAULT_EXPORT = IDENTIFIER_MODIFIER_POLYFILLED + 'default_export';
+export const IDENTIFIER_DEFAULT_EXPORT = '__js_default';

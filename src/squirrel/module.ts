@@ -12,31 +12,58 @@ import {prepare} from './handler';
 import {Translator} from './translator';
 
 export const MeriyahParseOptions: Options = {
-    next: true
+    next: true,
+    lexical: true
 };
 
-export class Module {
-    name: string;
-    path: string;
-    formattedPath: path.ParsedPath;
-    scriptCode: string;
+interface ModuleExport {
+    ScopeIdentifier: string;
+    ExportIdentifier: string;
+}
 
+export class Module {
+    /** The name of the module will be used as the identifier for module resolution. */
+    name: string;
+    /** Absolute path, relative to the root OS directory. */
+    absolutePath: string;
+    /** Parsed absolute path. */
+    parsedPath: path.ParsedPath;
+    /** Path to the module, relative to the package root dir. */
+    relativePath: string;
+
+    defaultExportIdentifier?: Identifier;
+    exports: ModuleExport[] = [];
+
+    scriptCode: string;
     program: Program;
     translator: Translator;
-    defaultExportIdentifier?: Identifier;
 
     constructor(translator: Translator, scriptPath: string) {
         this.translator = translator;
-        this.path = scriptPath;
-        this.formattedPath = path.parse(scriptPath);
-        this.name = `import_${this.formattedPath.name}_${translator.modules.size}`;
         this.translator.modules.set(scriptPath, this);
 
-        let jsCode = fs.readFileSync(scriptPath).toString('utf-8');
-        jsCode = jsCode.replace(/^#!.*$/, '');
-        this.scriptCode = jsCode;
+        this.absolutePath = scriptPath;
+        this.relativePath = this.absolutePath.replace(this.translator.packageDir + '\\', '');
+        this.parsedPath = path.parse(scriptPath);
+        this.name = this.generateName();
 
+        this.scriptCode = fs.readFileSync(scriptPath).toString('utf-8');
+        this.scriptCode = this.scriptCode.replace(/^#!.*$/, '');
         this.program = parseModule(this.scriptCode, MeriyahParseOptions) as Program;
         prepare(this.program, this);
+    }
+
+    private generateName() {
+        const ident = this.relativePath.replace(/[^A-Za-z0-9]/g, '_');
+        return `${ident}_${this.translator.modules.size - 1}`;
+    }
+
+    public resolveExport(exported: string) {
+        return this.exports.find(x => x.ExportIdentifier == exported)?.ScopeIdentifier;
+    }
+
+    public registerExport(local: string, exported: string) {
+        console.log(`[${this.name}]: exported ${local} as ${exported}`);
+        this.exports.push({ScopeIdentifier: local, ExportIdentifier: exported});
     }
 }

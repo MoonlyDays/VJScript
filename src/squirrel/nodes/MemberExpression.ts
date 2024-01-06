@@ -4,7 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {MemberExpression} from 'estree';
-import {NodePath} from 'estree-toolkit';
+import {builders, is, NodePath} from 'estree-toolkit';
 
 import {processAttributes} from '../attributes';
 import {generate} from '../handler';
@@ -13,7 +13,15 @@ import {NodeHandler, TraverseState} from './NodeHandler';
 
 export default class extends NodeHandler<MemberExpression> {
     handlePrepare(path: NodePath<MemberExpression>, state: TraverseState) {
-        processAttributes(path);
+
+        const node = path.node;
+        const prop = node.property;
+        if (is.identifier(prop) && prop.name == 'default') {
+            node.property = builders.literal('default');
+            node.computed = true;
+        }
+
+        processAttributes(path, state.module);
         renameNode(path, state.module);
     }
 

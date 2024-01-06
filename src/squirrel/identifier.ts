@@ -158,8 +158,9 @@ export class IdentifierPattern {
         // console.log(matchArr);
         // console.log(patternIdx, pathPattern.items.length);
 
-        if (patternIdx >= this.items.length)
+        if (pathIdx >= pathPattern.items.length && patternIdx >= this.items.length) {
             return matchArr;
+        }
 
         return false;
     }

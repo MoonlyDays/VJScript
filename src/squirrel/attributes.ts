@@ -5,13 +5,17 @@
 
 import {CallExpression, TemplateElement} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
+import pp from 'path';
 
 import Attributes from '../data/attributes';
+import {resolveImportedModule} from './helpers/module';
 import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './identifier';
+import {Module} from './module';
 
 export type AttributeType =
     'ConcatParameters' |
-    'EntityThinkCallback';
+    'EntityThinkCallback' |
+    'CJSRequireFunction';
 
 const AttributeSet = new ConfigSearchPatternSet<AttributeRule>();
 
@@ -24,7 +28,7 @@ export interface NodeAttributes {
     Parameters?: { [key: number]: NodeAttributes }
 }
 
-export function processAttributes(path: NodePath) {
+export function processAttributes(path: NodePath, module: Module) {
     const rule = AttributeSet.find(path);
     if (!rule)
         return;
@@ -33,14 +37,14 @@ export function processAttributes(path: NodePath) {
     if (nodePattern.hasBinding(path))
         return;
 
-    applyAttributes(path, rule.attributes);
+    applyAttributes(path, rule.attributes, module);
 }
 
-function applyAttributes(path: NodePath, attrs: NodeAttributes) {
+function applyAttributes(path: NodePath, attrs: NodeAttributes, module: Module) {
 
     runAppliers(path, attrs, {
-        ConcatParameters: p => {
 
+        ConcatParameters: p => {
             const callExpr = p.parentPath;
             if (!is.callExpression(callExpr))
                 return;
@@ -71,6 +75,27 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
             )]);
         },
 
+        CJSRequireFunction: p => {
+            const callExpr = p.parentPath;
+            if (!is.callExpression(callExpr))
+                return;
+
+            const node = callExpr.node;
+            const argument = node.arguments[0];
+
+            if (!is.literal(argument)) {
+                throw Error('CommonJSRequireFunction: argument needs to be a literal.');
+            }
+
+            const importedModule = resolveImportedModule(argument.value.toString(), module);
+            if (!importedModule)
+                return;
+
+            const parsePath = pp.parse(importedModule.relativePath);
+            argument.value = pp.format({...parsePath, ext: '.nut', base: ''})
+                .replace(/\\/g, '/');
+        }
+
         /*
         EntityThinkCallback: path => {
             const fnNode = path.cloneNode() as Expression;
@@ -94,7 +119,7 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes) {
     if ('Parameters' in attrs) {
         const parent = path.parentPath;
         if (is.callExpression(parent)) {
-            applyAttributesToParams(parent, attrs['Parameters']);
+            applyAttributesToParams(parent, attrs['Parameters'], module);
         }
     }
 }
@@ -112,14 +137,14 @@ function runAppliers(path: NodePath, attrs: NodeAttributes, appliers: {
     }
 }
 
-function applyAttributesToParams(path: NodePath<CallExpression>, params: NodeAttributes['Parameters']) {
+function applyAttributesToParams(path: NodePath<CallExpression>, params: NodeAttributes['Parameters'], module: Module) {
 
     for (const paramIdx in params) {
         const attrs = params[paramIdx];
         const param = path.get('arguments')[paramIdx];
         if (!param) continue;
 
-        applyAttributes(param, attrs);
+        applyAttributes(param, attrs, module);
     }
 }
 

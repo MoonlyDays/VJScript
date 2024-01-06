@@ -19,6 +19,7 @@ import ClassDeclaration from './nodes/ClassDeclaration';
 import ConditionalExpression from './nodes/ConditionalExpression';
 import ExportDefaultDeclaration from './nodes/ExportDefaultDeclaration';
 import ExportNamedDeclaration from './nodes/ExportNamedDeclaration';
+import ExportSpecifier from './nodes/ExportSpecifier';
 import ExpressionStatement from './nodes/ExpressionStatement';
 import ForInStatement from './nodes/ForInStatement';
 import ForOfStatement from './nodes/ForOfStatement';
@@ -72,6 +73,7 @@ const NodeHandlerMap = {
     ConditionalExpression: ConditionalExpression,
     ExportNamedDeclaration: ExportNamedDeclaration,
     ExportDefaultDeclaration: ExportDefaultDeclaration,
+    ExportSpecifier: ExportSpecifier,
     FunctionDeclaration: FunctionDeclaration,
     FunctionExpression: FunctionExpression,
     UpdateExpression: UpdateExpression,
@@ -133,12 +135,18 @@ const prepareVisitors = Object.keys(NodeHandlerMap)
     .reduce((a, v) => ({
         ...a,
         [v]: ((p: NodePath<Node>, s: TraverseState) => {
+
+            // Make sure we don't traverse nodes which are in the branch of the removed node.
+            if (p.find(x => x.removed)) {
+                return;
+            }
+
             handler(p.node).handlePrepare(p, s);
         })
     }), {});
 
 export function prepare(node: Node, module?: Module) {
-
+    // console.trace(`prepare on ${module.name}`);
     traverse(node, {
         $: {scope: true},
         ...prepareVisitors,
@@ -146,5 +154,4 @@ export function prepare(node: Node, module?: Module) {
         module: module,
         translator: module?.translator
     });
-
 }

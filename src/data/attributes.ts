@@ -13,5 +13,8 @@ export default {
         Parameters: {
             1: ['EntityThinkCallback']
         }
-    }
+    },
+    '__js_require': [
+        'CJSRequireFunction'
+    ]
 };

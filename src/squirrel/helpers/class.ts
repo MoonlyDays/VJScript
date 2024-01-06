@@ -6,6 +6,8 @@
 import {ClassBody, MethodDefinition, PropertyDefinition} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
+import classDeclaration from '../nodes/ClassDeclaration';
+
 export function getClassPropertyDefinition(path: NodePath<ClassBody>, key: string) {
     return path.get('body')
         .find(x => is.propertyDefinition(x) &&
@@ -43,6 +45,22 @@ export function ensurePropertyDefinitionInClass(path: NodePath<ClassBody>, prope
 export function ensureConstructorInClass(path: NodePath<ClassBody>) {
     const ctor = getClassConstructor(path);
     if (ctor) {
+        return;
+    }
+
+    // Check if this class declaration has a super.
+    const classDecl = path.parentPath;
+    if (!is.class(classDecl)) {
+        throw Error('ensureConstructorInClass: Class Body not inside a Class?');
+    }
+
+    // No super declared, we can just create an empty method.
+    if (!classDecl.node.superClass) {
+        path.unshiftContainer('body', [b.methodDefinition(
+            'constructor',
+            b.identifier('constructor'),
+            b.functionExpression(null, [], b.blockStatement([]))
+        )]);
         return;
     }
 

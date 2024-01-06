@@ -7,7 +7,7 @@ import {ImportDeclaration} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit/dist/builders';
 
-import {resolveImportedModule} from '../helpers/module';
+import {isDeclarativeModule, resolveImportedModule} from '../helpers/module';
 import {NodeHandler, TraverseState} from './NodeHandler';
 
 export default class extends NodeHandler<ImportDeclaration> {
@@ -20,24 +20,25 @@ export default class extends NodeHandler<ImportDeclaration> {
         }
 
         const node = path.node;
-        const scopeIdent = path.scope.generateUidIdentifier();
+        let scopeIdent = path.scope.generateUidIdentifier();
         const polyfill = state.translator.polyfillFromFile(module, path, 'module.js');
 
         const importPath = node.source.value.toString();
+        const declarativeModule = isDeclarativeModule(importPath);
+
         const importedModule = resolveImportedModule(importPath, module);
-        if (!importedModule) {
-
-            if (importPath.startsWith('./') || importPath.startsWith('../')) {
-                path.remove();
-                return;
-            }
-
+        if (!importedModule && !declarativeModule) {
             throw Error(`ImportDeclaration: Could not resolve module "${importPath}"`);
         }
 
         for (const specifier of node.specifiers) {
 
             if (is.importSpecifier(specifier)) {
+
+                if (declarativeModule) {
+                    path.remove();
+                    return;
+                }
 
                 path.insertAfter([
                     b.variableDeclaration('const', [
@@ -58,8 +59,8 @@ export default class extends NodeHandler<ImportDeclaration> {
                     ])
                 ]);
 
-            } else {
-                throw Error(`ImportDeclaration: Unhandled import specifier ${specifier.type}`);
+            } else if (is.importNamespaceSpecifier(specifier)) {
+                scopeIdent = specifier.local;
             }
         }
 
