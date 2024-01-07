@@ -11,6 +11,7 @@ import {deepestMemberExpression} from '../helpers/general';
 import {generateBinaryOperatorExpression} from '../helpers/generator';
 import {replaceArrayPattern, replaceObjectPattern} from '../helpers/patterns';
 import {NodeHandler} from './NodeHandler';
+import {IDENTIFIER_DEFAULT_EXPORT} from '../helpers/consts';
 
 export default class extends NodeHandler<AssignmentExpression> {
 
@@ -45,6 +46,8 @@ export default class extends NodeHandler<AssignmentExpression> {
             // Hack to change the operator to Squirrel slot creation operator "<-" so that typescript
             // doesn't scream at us about an invalid operator.
             (node.operator as AssignmentOperator | '<-') = '<-';
+
+            handleDefaultAssignment(path);
         }
 
         handleClassPropertyAssignment(path);
@@ -52,6 +55,21 @@ export default class extends NodeHandler<AssignmentExpression> {
 
     handleGenerate(node: AssignmentExpression): Generator<string, void, unknown> {
         return generateBinaryOperatorExpression(node);
+    }
+}
+
+/**
+ *
+ */
+function handleDefaultAssignment(path: NodePath<AssignmentExpression>) {
+
+    const leftPath = path.get('left');
+    if (is.identifier(leftPath) && leftPath.node.name == IDENTIFIER_DEFAULT_EXPORT) {
+
+        leftPath.replaceWith(b.memberExpression(
+            b.thisExpression(),
+            b.identifier(IDENTIFIER_DEFAULT_EXPORT)
+        ));
     }
 }
 
@@ -81,7 +99,7 @@ function shouldUseSlotOperator(path: NodePath<AssignmentExpression>) {
     const leftPath = path.get('left');
     if (is.identifier(leftPath)) {
         if (leftPath.scope.hasBinding(leftPath.node.name)) {
-            console.log(leftPath.scope.getBinding(leftPath.node.name).path.node);
+            // console.log(leftPath.scope.getBinding(leftPath.node.name).path.node);
             return false;
         }
     }

@@ -20,17 +20,16 @@ export default class extends NodeHandler<ExportNamedDeclaration> {
         const node = path.node;
         const declaration = node.declaration;
 
+
         if (declaration) {
             if (is.variableDeclaration(declaration)) {
 
                 path.insertAfter(declaration.declarations.map(x => {
 
                     crawlRegisterExports(module, x.id);
-                    return b.assignmentExpression(
-                        '=',
-                        x.id,
-                        x.init || b.literal(null)
-                    );
+                    return b.expressionStatement(b.assignmentExpression(
+                        '=', x.id, x.init || b.literal(null)
+                    ));
                 }));
 
                 // We have to crawl the scope, because we removed the assignment
@@ -43,15 +42,14 @@ export default class extends NodeHandler<ExportNamedDeclaration> {
             }
         }
 
+        // If we got any specifiers we want to run, replace us with them.
+        // They will be deleted as soon as they are traversed anyway, so why bother.
         if (node.specifiers.length > 0) {
-            // If we got any specifiers we want to run, replace us with them.
-            // They will be deleted as soon as they are traversed anyway, so why bother.
             path.replaceWithMultiple(node.specifiers);
         } else {
             path.remove();
+            path.scope.crawl();
         }
-
-        path.scope.crawl();
     }
 
     * handleGenerate(): Generator<string, void, unknown> {

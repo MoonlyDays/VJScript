@@ -16,6 +16,7 @@ export default class extends NodeHandler<MemberExpression> {
 
         const node = path.node;
         const prop = node.property;
+
         if (is.identifier(prop) && prop.name == 'default') {
             node.property = builders.literal('default');
             node.computed = true;

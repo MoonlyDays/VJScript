@@ -9,6 +9,7 @@ import {builders as b} from 'estree-toolkit/dist/builders';
 
 import {isDeclarativeModule, resolveImportedModule} from '../helpers/module';
 import {NodeHandler, TraverseState} from './NodeHandler';
+import {IDENTIFIER_DEFAULT_EXPORT} from '../helpers/consts';
 
 export default class extends NodeHandler<ImportDeclaration> {
 
@@ -20,55 +21,70 @@ export default class extends NodeHandler<ImportDeclaration> {
         }
 
         const node = path.node;
-        let scopeIdent = path.scope.generateUidIdentifier();
-        const polyfill = state.translator.polyfillFromFile(module, path, 'module.js');
-
         const importPath = node.source.value.toString();
-        const declarativeModule = isDeclarativeModule(importPath);
-
         const importedModule = resolveImportedModule(importPath, module);
-        if (!importedModule && !declarativeModule) {
+        if (!importedModule) {
             throw Error(`ImportDeclaration: Could not resolve module "${importPath}"`);
         }
+
+        const polyfill = state.translator.polyfillFromFile(module, path, 'module.js');
+        const importedScopeIdent = path.scope.generateUidIdentifier('_importScope');
+
+        // Declare a temporary variable containing the module scope.
+        const callExpressionNode = b.callExpression(
+            b.identifier(polyfill.get('resolveModule')),
+            [b.literal(importedModule.name)]
+        );
 
         for (const specifier of node.specifiers) {
 
             if (is.importSpecifier(specifier)) {
 
-                if (declarativeModule) {
-                    path.remove();
-                    return;
+                const importedSlot = importedModule.resolveExport(specifier.imported.name);
+                if (!importedSlot) {
+                    throw Error(`ImportDeclaration: Imported module does not provide an export named "${specifier.imported.name}"`);
                 }
 
-                path.insertAfter([
-                    b.variableDeclaration('const', [
-                        b.variableDeclarator(specifier.local, b.memberExpression(scopeIdent, specifier.imported)),
-                    ])
-                ]);
+                path.insertBefore([b.variableDeclaration('const', [
+                    b.variableDeclarator(
+                        specifier.local,
+                        b.memberExpression(
+                            importedScopeIdent,
+                            b.identifier(importedSlot)
+                        )
+                    ),
+                ])]);
 
-            } else if (is.importDefaultSpecifier(specifier)) {
+                continue;
+            }
 
-                const defaultImport = importedModule.defaultExportIdentifier;
-                if (!defaultImport) {
-                    throw Error('ImportDeclaration: Default specifier without a default export.');
+            if (is.importDefaultSpecifier(specifier)) {
+
+                const importedSlot = importedModule.resolveExport(IDENTIFIER_DEFAULT_EXPORT);
+                if (!importedSlot) {
+                    throw Error('ImportDeclaration: Imported module does not provide a default export.');
                 }
 
-                path.insertAfter([
-                    b.variableDeclaration('const', [
-                        b.variableDeclarator(specifier.local, b.memberExpression(scopeIdent, defaultImport)),
-                    ])
-                ]);
+                path.insertBefore([b.variableDeclaration('const', [
+                    b.variableDeclarator(
+                        specifier.local,
+                        b.memberExpression(importedScopeIdent, b.identifier(importedSlot))
+                    ),
+                ])]);
 
-            } else if (is.importNamespaceSpecifier(specifier)) {
-                scopeIdent = specifier.local;
+
+                continue;
+            }
+
+            if (is.importNamespaceSpecifier(specifier)) {
+
+                path.insertBefore([b.variableDeclaration('const', [
+                    b.variableDeclarator(specifier.local, callExpressionNode),
+                ])]);
             }
         }
 
-        path.replaceWith(b.variableDeclaration('const', [
-            b.variableDeclarator(scopeIdent, b.callExpression(
-                b.identifier(polyfill.get('resolveModule')),
-                [b.literal(importedModule.name)]
-            ))
-        ]));
+        path.remove();
+        path.scope.crawl();
     }
 }

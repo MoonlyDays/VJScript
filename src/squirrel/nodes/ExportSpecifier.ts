@@ -20,7 +20,6 @@ export default class extends NodeHandler<ExportSpecifier> {
         const node = path.node;
         const local = node.local;
         const exported = node.exported;
-
         module.registerExport(local.name, exported.name);
 
         path.remove();
