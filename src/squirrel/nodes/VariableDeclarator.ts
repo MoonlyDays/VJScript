@@ -35,8 +35,6 @@ export default class extends NodeHandler<VariableDeclarator> {
             );
             return;
         }
-
-        handleRequireCallExpression(path);
     }
 
     * handleGenerate(node: VariableDeclarator): Generator<string, void, unknown> {
@@ -45,34 +43,5 @@ export default class extends NodeHandler<VariableDeclarator> {
             yield ' = ';
             yield generate(node.init);
         }
-    }
-}
-
-function handleRequireCallExpression(path: NodePath<VariableDeclarator>) {
-
-    const initPath = deepestIdentifier(path.get('init'));
-    if (!isRequireCallExpression(initPath))
-        return;
-
-    const node = path.node;
-    const parentPath = path.parentPath;
-    if (!is.variableDeclaration(parentPath)) {
-        throw Error('VariableDeclarator: not inside a Declaration?');
-    }
-
-    if (parentPath.node.declarations.length > 1) {
-        throw Error('VariableDeclarator: Declaration with a require call should\'ve been split up.');
-    }
-
-    const id = node.id;
-    const init = initPath.node;
-
-    // get the source.
-    const source = init.arguments[0] as Literal;
-
-    if (is.identifier(id)) {
-        const a = parentPath.replaceWith(b.importDeclaration([
-            b.importNamespaceSpecifier(id)
-        ], source));
     }
 }

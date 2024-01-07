@@ -13,8 +13,6 @@ export default class extends NodeHandler<ExportAllDeclaration> {
                     b.importNamespaceSpecifier(node.exported)
                 ], node.source)
             ]);
-
-            path.replaceWith()
         }
 
         path.remove();

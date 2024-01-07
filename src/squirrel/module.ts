@@ -7,6 +7,7 @@ import {Identifier, Program} from 'estree';
 import fs from 'fs';
 import {Options, parseModule} from 'meriyah';
 import path from 'path';
+import * as babel from '@babel/core';
 
 import {prepare} from './handler';
 import {Translator} from './translator';
@@ -49,6 +50,27 @@ export class Module {
 
         this.scriptCode = fs.readFileSync(scriptPath).toString('utf-8');
         this.scriptCode = this.scriptCode.replace(/^#!.*$/, '');
+
+        this.babelTransform();
+        this.prepareProgram();
+    }
+
+    private babelTransform() {
+
+        const result = babel.transformSync(this.scriptCode, {
+            plugins: [
+                ['@babel/plugin-transform-modules-commonjs', {
+                    importInterop: 'none',
+                    strict: true,
+                    strictMode: false
+                }]
+            ]
+        });
+
+        this.scriptCode = result.code;
+    }
+
+    private prepareProgram() {
         this.program = parseModule(this.scriptCode, MeriyahParseOptions) as Program;
         prepare(this.program, this);
     }

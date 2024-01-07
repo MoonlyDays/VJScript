@@ -45,6 +45,7 @@
         "vjsc": "./dist/vjsc.js"
     },
     "devDependencies": {
+        "@types/babel__core": "^7.20.5",
         "@types/estree": "^1.0.5",
         "@typescript-eslint/eslint-plugin": "^6.15.0",
         "@typescript-eslint/parser": "^6.15.0",
@@ -54,6 +55,8 @@
         "typescript": "^5.3.3"
     },
     "dependencies": {
+        "@babel/core": "^7.23.7",
+        "@babel/plugin-transform-modules-commonjs": "^7.23.3",
         "estree-toolkit": "^1.7.3",
         "meriyah": "^4.3.9"
     }

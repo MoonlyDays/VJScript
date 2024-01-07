@@ -39,6 +39,8 @@ export class Translator {
         const modulePolyfill = this.polyfillFor('module.js');
         if (!modulePolyfill) {
             program.body.push(...this.entryModule.program.body);
+            // console.log(JSON.stringify(program, undefined, 2));
+
             return program;
         }
 
@@ -59,6 +61,7 @@ export class Translator {
             b.identifier(modulePolyfill.get('resolveModule')),
             [b.literal(this.entryModule.name)]
         )));
+
         return program;
     }
 
