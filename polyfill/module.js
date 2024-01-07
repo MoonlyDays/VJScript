@@ -10,10 +10,9 @@ function declareModule(name, body) {
 }
 
 function resolveModule(name) {
-    const module = modules[name];
-    if (!module.scope) {
-        module.scope = {};
-        module.body.call(module.call);
-    }
-    return module.scope;
+
+    let s, m = modules[name];
+    if (!m) throw Error(`resolveModule: Unable to resolve "${name}"`);
+    m.scope ??= s = {};
+    return s && m.body.call(s) || m.scope;
 }

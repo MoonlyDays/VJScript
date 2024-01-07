@@ -90,7 +90,7 @@ export function normalizePolyfillStatement(node: Node, modulePath: NodePath, pol
     if (is.variableDeclaration(node)) {
         const declarators = node.declarations;
         if (declarators.length > 1)
-            throw Error('More than one variable declarator is not allowed in Polyfill.');
+            throw Error('normalizePolyfillStatement: More than one variable declarator is not allowed in Polyfill.');
 
         const first = declarators[0];
         if (is.identifier(first.id)) {
@@ -99,5 +99,5 @@ export function normalizePolyfillStatement(node: Node, modulePath: NodePath, pol
         return node;
     }
 
-    throw Error(`Unsupported Extra Declaration type: ${node.type}`);
+    throw Error(`normalizePolyfillStatement: Unsupported Extra Declaration type: ${node.type}`);
 }

@@ -36,6 +36,14 @@ export function* generateBinaryOperatorExpression(node: { operator: string, left
 let scopeDepth = 0;
 
 export function* generateWithScope(generator: () => Generator<string, void, unknown>) {
+
+    // Check the generator is empty, without actually
+    // iterating over it.
+    if (generator().next().done) {
+        yield '{}';
+        return;
+    }
+
     scopeDepth++;
     yield '{\n';
     yield* generator();
