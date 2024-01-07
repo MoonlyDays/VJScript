@@ -19,7 +19,6 @@ import ClassDeclaration from './nodes/ClassDeclaration';
 import ConditionalExpression from './nodes/ConditionalExpression';
 import ExportDefaultDeclaration from './nodes/ExportDefaultDeclaration';
 import ExportNamedDeclaration from './nodes/ExportNamedDeclaration';
-import ExportSpecifier from './nodes/ExportSpecifier';
 import ExpressionStatement from './nodes/ExpressionStatement';
 import ForInStatement from './nodes/ForInStatement';
 import ForOfStatement from './nodes/ForOfStatement';
@@ -52,6 +51,7 @@ import UnaryExpression from './nodes/UnaryExpression';
 import UpdateExpression from './nodes/UpdateExpression';
 import VariableDeclaration from './nodes/VariableDeclaration';
 import VariableDeclarator from './nodes/VariableDeclarator';
+import ExportAllDeclaration from './nodes/ExportAllDeclaration';
 
 const NodeHandlerMap = {
     ArrowFunctionExpression: ArrowFunctionExpression,
@@ -73,7 +73,7 @@ const NodeHandlerMap = {
     ConditionalExpression: ConditionalExpression,
     ExportNamedDeclaration: ExportNamedDeclaration,
     ExportDefaultDeclaration: ExportDefaultDeclaration,
-    ExportSpecifier: ExportSpecifier,
+    ExportAllDeclaration: ExportAllDeclaration,
     FunctionDeclaration: FunctionDeclaration,
     FunctionExpression: FunctionExpression,
     UpdateExpression: UpdateExpression,

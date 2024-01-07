@@ -3,7 +3,7 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {ExportNamedDeclaration, Pattern} from 'estree';
+import {ExportNamedDeclaration, Identifier, Pattern} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {Module} from '../module';
@@ -20,6 +20,14 @@ export default class extends NodeHandler<ExportNamedDeclaration> {
         const node = path.node;
         const declaration = node.declaration;
 
+        let sourceImportIdent: Identifier;
+        if (node.source) {
+            sourceImportIdent = path.scope.generateUidIdentifier('_import');
+
+            path.insertBefore([b.importDeclaration([
+                b.importNamespaceSpecifier(sourceImportIdent)
+            ], node.source)]);
+        }
 
         if (declaration) {
             if (is.variableDeclaration(declaration)) {
@@ -42,14 +50,26 @@ export default class extends NodeHandler<ExportNamedDeclaration> {
             }
         }
 
-        // If we got any specifiers we want to run, replace us with them.
-        // They will be deleted as soon as they are traversed anyway, so why bother.
-        if (node.specifiers.length > 0) {
-            path.replaceWithMultiple(node.specifiers);
-        } else {
-            path.remove();
-            path.scope.crawl();
+        for (const specifier of node.specifiers) {
+
+            if (node.source && sourceImportIdent) {
+                const exportIdent = path.scope.generateUidIdentifier('_export');
+                path.insertAfter([b.expressionStatement(b.assignmentExpression(
+                    '=',
+                    exportIdent,
+                    b.memberExpression(sourceImportIdent, specifier.local)
+                ))]);
+
+                specifier.local = exportIdent;
+            }
+
+            const local = specifier.local;
+            const exported = specifier.exported;
+            module.registerExport(local.name, exported.name);
         }
+
+        path.remove();
+        path.scope.crawl();
     }
 
     * handleGenerate(): Generator<string, void, unknown> {
