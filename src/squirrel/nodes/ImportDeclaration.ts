@@ -31,6 +31,7 @@ export default class extends NodeHandler<ImportDeclaration> {
         const importedScopeIdent = path.scope.generateUidIdentifier('_importScope');
 
         // Declare a temporary variable containing the module scope.
+        let declareIdent = importedScopeIdent;
         const callExpressionNode = b.callExpression(
             b.identifier(polyfill.get('resolveModule')),
             [b.literal(importedModule.name)]
@@ -45,7 +46,7 @@ export default class extends NodeHandler<ImportDeclaration> {
                     throw Error(`ImportDeclaration: Imported module does not provide an export named "${specifier.imported.name}"`);
                 }
 
-                path.insertBefore([b.variableDeclaration('const', [
+                path.insertAfter([b.variableDeclaration('const', [
                     b.variableDeclarator(
                         specifier.local,
                         b.memberExpression(
@@ -65,7 +66,7 @@ export default class extends NodeHandler<ImportDeclaration> {
                     throw Error('ImportDeclaration: Imported module does not provide a default export.');
                 }
 
-                path.insertBefore([b.variableDeclaration('const', [
+                path.insertAfter([b.variableDeclaration('const', [
                     b.variableDeclarator(
                         specifier.local,
                         b.memberExpression(importedScopeIdent, b.identifier(importedSlot))
@@ -77,12 +78,13 @@ export default class extends NodeHandler<ImportDeclaration> {
             }
 
             if (is.importNamespaceSpecifier(specifier)) {
-
-                path.insertBefore([b.variableDeclaration('const', [
-                    b.variableDeclarator(specifier.local, callExpressionNode),
-                ])]);
+                declareIdent = specifier.local;
             }
         }
+
+        path.insertAfter([b.variableDeclaration('const', [
+            b.variableDeclarator(declareIdent, callExpressionNode),
+        ])]);
 
         path.remove();
         path.scope.crawl();

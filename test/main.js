@@ -1,3 +1,3 @@
-import * as sum from './sum';
+import {default as ca} from './sum';
 
-console.log(sum.default(sum.a, 2));
+console.log(ca(1, 2));
