@@ -3,15 +3,15 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {AssignmentExpression, AssignmentOperator, ClassBody} from 'estree';
+import {AssignmentExpression, AssignmentOperator, ClassBody, Pattern} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {ensurePropertyDefinitionInClass} from '../helpers/class';
+import {IDENTIFIER_DEFAULT_EXPORT} from '../helpers/consts';
 import {deepestMemberExpression} from '../helpers/general';
 import {generateBinaryOperatorExpression} from '../helpers/generator';
 import {replaceArrayPattern, replaceObjectPattern} from '../helpers/patterns';
 import {NodeHandler} from './NodeHandler';
-import {IDENTIFIER_DEFAULT_EXPORT} from '../helpers/consts';
 
 export default class extends NodeHandler<AssignmentExpression> {
 
@@ -73,6 +73,10 @@ function handleDefaultAssignment(path: NodePath<AssignmentExpression>) {
     }
 }
 
+/**
+ * If we assign to some property of a class, make sure that class if actually declared.
+ * @param path
+ */
 function handleClassPropertyAssignment(path: NodePath<AssignmentExpression>) {
 
     // Special case for assigning value to a class field.
@@ -96,7 +100,7 @@ function handleClassPropertyAssignment(path: NodePath<AssignmentExpression>) {
 function shouldUseSlotOperator(path: NodePath<AssignmentExpression>) {
 
     // If we assign to a previously declared identifier, we don't need to use the slot operator.
-    const leftPath = path.get('left');
+    const leftPath = path.get('left') as NodePath<Pattern>;
     if (is.identifier(leftPath)) {
         if (leftPath.scope.hasBinding(leftPath.node.name)) {
             // console.log(leftPath.scope.getBinding(leftPath.node.name).path.node);
@@ -109,12 +113,10 @@ function shouldUseSlotOperator(path: NodePath<AssignmentExpression>) {
 
         // We can't use slot operator for changing class fields through "this" keyword.
         // Find the deepest member expression.
-        const deepestMemberExprPath = deepestMemberExpression(leftPath);
+        if (is.memberExpression(leftPath)) {
 
-        if (is.memberExpression(deepestMemberExprPath)) {
-
-            const object = deepestMemberExprPath.get('object');
-            const prop = deepestMemberExprPath.get('property');
+            const object = leftPath.get('object');
+            const prop = leftPath.get('property');
 
             // If an object is "this" keyword, and property is some sort of identifier,
             // and we're inside a class body, we can't use slot operator.

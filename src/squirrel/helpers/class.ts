@@ -23,8 +23,9 @@ export function getClassConstructor(path: NodePath<ClassBody>) {
         ) as NodePath<MethodDefinition, ClassBody>;
 }
 
-export function propertyDefinitionHasValue(path: PropertyDefinition) {
-    const node = path;
+export function propertyDefinitionHasValue(node: PropertyDefinition) {
+
+    // console.log(node);
     if (!node.value)
         return false;
 

@@ -3,11 +3,11 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
+import * as babel from '@babel/core';
 import {Identifier, Program} from 'estree';
 import fs from 'fs';
 import {Options, parseModule} from 'meriyah';
 import path from 'path';
-import * as babel from '@babel/core';
 
 import {prepare} from './handler';
 import {Translator} from './translator';
@@ -15,6 +15,17 @@ import {Translator} from './translator';
 export const MeriyahParseOptions: Options = {
     next: true,
     lexical: true
+};
+
+export const BabelTransformOptions: babel.TransformOptions = {
+    plugins: [
+        ['@babel/plugin-transform-modules-commonjs', {
+            importInterop: 'none',
+            strict: true,
+            strictMode: false
+        }],
+        // ['transform-undefined-to-void']
+    ]
 };
 
 interface ModuleExport {
@@ -57,15 +68,7 @@ export class Module {
 
     private babelTransform() {
 
-        const result = babel.transformSync(this.scriptCode, {
-            plugins: [
-                ['@babel/plugin-transform-modules-commonjs', {
-                    importInterop: 'none',
-                    strict: true,
-                    strictMode: false
-                }]
-            ]
-        });
+        const result = babel.transformSync(this.scriptCode, BabelTransformOptions);
 
         this.scriptCode = result.code;
     }
