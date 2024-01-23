@@ -74,7 +74,6 @@ const createDeclaration = (path: NodePath, rule: RenameRuleDeclaration, module: 
     path.replaceWith(b.identifier(first[1]));
 };
 
-
 function parseAlias(encodedSearch: string, encodedRename: string) {
     const rule = parseSearchPattern<RenameRuleInline>(encodedSearch);
     rule.rename = new IdentifierPattern(encodedRename);

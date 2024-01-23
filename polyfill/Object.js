@@ -13,26 +13,20 @@ class JSPropertyDescriptor {
 class JSObject {
 
     constructor(object) {
-        this.__properties = [];
-        this.__nutTable = object;
+        this.properties = [];
+        this.object = object;
     }
 
-    /**
-     * Meta method for handling getters.
-     */
     _get(k) {
-        return this.__nutTable[k];
+        return this.object[k];
     }
 
-    /**
-     * Meta method for handling setters.
-     */
     _set(k, v) {
-        this.__nutTable[k] = v;
+        this.object[k] = v;
     }
 
     _newslot(k, v) {
-        this._set(k, v);
+        this.object[k] = v;
     }
 
     //-----------------------------------------------------------------------------
