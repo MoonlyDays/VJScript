@@ -1,1 +1,4 @@
-export * from "./sum";
+class Poggers
+{
+    Hehe = 2;
+}

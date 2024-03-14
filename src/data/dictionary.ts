@@ -44,11 +44,11 @@ export const Declare = {
     'Math.SQRT1_2': '0.7071067811865476',
     'Math.SQRT2': '1.4142135623730951',
     'Math.random': '() => Number(rand()) / RAND_MAX',
-    'Math.acosh': 'x => { if(x < 1) throw \'acosh is NaN\'; return Math.log(x + Math.sqrt(x * x - 1)); }',
-    'Math.asinh': 'x => Math.log(x + Math.sqrt(x * x + 1));',
-    'Math.atanh': 'x => { if(Math.abs(x) > 1) throw \'atanh is NaN\'; return 0.5 * Math.log((1 + x) / (1 - x)); }',
-    'Math.cbrt': 'x => x === 0 ? x : (x < 0 ? -Math.pow(-x, 1/3) : Math.pow(x, 1/3))',
-    'Math.clz32': 'x => 31 - Math.floor(Math.log2(x >>> 0) + 1)',
-    'Math.cosh': 'x => (Math.exp(x) + Math.exp(-x)) / 2',
-    'Math.expm1': 'x => Math.exp(x) - 1'
+    'Math.acosh': 'x => { if(x < 1) throw \'acosh is NaN\'; return Math.js.log(x + Math.js.sqrt(x * x - 1)); }',
+    'Math.asinh': 'x => Math.js.log(x + Math.js.sqrt(x * x + 1));',
+    'Math.atanh': 'x => { if(Math.js.abs(x) > 1) throw \'atanh is NaN\'; return 0.5 * Math.js.log((1 + x) / (1 - x)); }',
+    'Math.cbrt': 'x => x === 0 ? x : (x < 0 ? -Math.js.pow(-x, 1/3) : Math.js.pow(x, 1/3))',
+    'Math.clz32': 'x => 31 - Math.js.floor(Math.js.log2(x >>> 0) + 1)',
+    'Math.cosh': 'x => (Math.js.exp(x) + Math.js.exp(-x)) / 2',
+    'Math.expm1': 'x => Math.js.exp(x) - 1'
 };
