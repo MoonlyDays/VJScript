@@ -120,7 +120,7 @@ class __jsInteropFunction extends __jsInteropObject {
         length = infos.parameters.len();
         prototype = __jsInteropObject({
             __proto__ = null,
-        	__ctor__ = this
+            __ctor__ = this
         });
     }
 
@@ -163,28 +163,29 @@ Object.prototype.valueOf = null;
 Object.assign = null;
 Object.create = null;
 Object.defineProperties = null;
-Object.defineProperty = function (obj, prop, desc) {
-    local newDesc = prop in obj.__jsDescriptors
-    ? obj.__jsDescriptors[prop]
-    : {
-      configurable = false,
-      writable = false,
-      enumerable = false,
-      get = null,
-      set = null,
-      value = null
+Object.defineProperty = function (o, p, d) {
+    local a = o.__jsDescriptors, b = o.__jsProps;
+    local c = p in a ? a[p] : {
+        configurable = false,
+        enumerable = false,
+        writable = false,
+        value = null,
+        get = null,
+        set = null
     };
 
-  foreach(key, oldValue in newDesc)
-  {
-    local newValue = desc[key] || oldValue;
-    newDesc[key] = newValue;
-  }
+    // Iterate over the old descriptor
+    foreach(k, d in c)
+    {
+        //
+        local newValue = k in c ? c[k] : d;
+        newDesc[key] = newValue;
+    }
 
-  // Add property name to the iteration list.
-  obj.__jsProps.push(prop);
-  obj.__jsDescriptors[prop] <- newDesc;
-  return obj;
+    // Add property name to the iteration list.
+    obj.__jsProps.push(prop);
+    obj.__jsDescriptors[prop] <- newDesc;
+    return obj;
 };
 Object.entries = null;
 Object.freeze = null;
@@ -243,3 +244,12 @@ __ <- function(val, ...) {
 a <- __(function (a, b) {
     console.log(a, b);
 }, "a");
+
+Object.defineProperty(a, "hehehaha", {
+    enumerable = true,
+    get = function () {
+        return rand();
+    }
+})
+
+console.log(a);
