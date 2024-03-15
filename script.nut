@@ -28,7 +28,7 @@ __jsConsoleLog <-  function(obj, depth, stack) {
     stack.push(obj);
     local i = 0;
 
-    printl("{");
+    print("{\n");
     foreach(k, v in obj) {
         for(i = 0; i < depth + 1; i++) print("\t");
 
@@ -48,18 +48,15 @@ console <- {
             __jsConsoleLog(item, 0, []);
             print(" ");
         }
-        printl("");
+        print("\n");
     }
-}
-
-printl <- function(str) {
-    print(str);
-    print("\n");
 }
 
 class __jsInteropObject {
     __jsProps = null;
     __jsDescriptors = null;
+    __proto__ = null;
+    __ctor__ = null;
 
     constructor(o = null) {
         __jsProps = [], __jsDescriptors = {};
@@ -79,7 +76,7 @@ class __jsInteropObject {
 
     function _get(key) {
         local a = __jsDescriptors, b = ::getstackinfos, c, i = 2;
-        if(key in a) return (c = a[key].get) ? c.pcall(this) : a[key].value;
+        if (key in a) return ("get" in a[key] && (c = a[key].get)) ? c.pcall(this) : a[key].value;
         if (c = __proto__) return c[key];
         while (c = b(i++)) {
             if (!("this" in (c = c.locals))) continue;
@@ -91,7 +88,7 @@ class __jsInteropObject {
     function _set(key, val) {
         local a = __jsDescriptors, b = __jsProps, c, d;
         if(key in a) {
-            if (d = (c = a[key]).set) d.pcall(this, val);
+            if ((c = a[key]) && "set" in c && (d = c.set)) d.pcall(this, val);
             else c.value = val;
             return;
         }
@@ -109,15 +106,17 @@ class __jsInteropObject {
 }
 
 class __jsInteropFunction extends __jsInteropObject {
+    __func__ = null;
+
     constructor(_fn = null) {
         base.constructor();
 
-        name = null;
         __func__ = _fn || function () {};
         __proto__ = null;
 
         local infos = _fn.getinfos();
-        length = infos.parameters.len();
+        name = infos.name;
+        length = ("paramscheck" in infos) ? infos.paramscheck : infos.parameters.len();
         prototype = __jsInteropObject({
             __proto__ = null,
             __ctor__ = this
@@ -127,25 +126,15 @@ class __jsInteropFunction extends __jsInteropObject {
     function _call(...) {
         local thisArg = vargv[0];
         vargv.remove(0);
-        apply(thisArg, vargv);
+        return apply(thisArg, vargv);
     }
 }
 
-function __jsExtend(ctor, baseCtor) {
-    ctor.prototype.__proto__ = baseCtor.prototype;
-}
 
-function __new(fn, ...) {
-    local _new = __jsInteropObject({
-        __proto__ = fn.prototype
-    });
-    fn.apply(_new, vargv);
-    return _new;
-}
 
-//---------------------------------------------------
-// Object
-//---------------------------------------------------
+///////////////////////////////////////////////////////////////////////////
+//////////////|             Object Constructor              |//////////////
+///////////////////////////////////////////////////////////////////////////
 Object <- __jsInteropFunction(function() {});
 Object.name = "Object";
 
@@ -160,37 +149,68 @@ Object.prototype.toString = function () {
 Object.prototype.valueOf = null;
 
 // Object Static
-Object.assign = null;
+Object.assign = function(target, ...) {
+    foreach (source in vargv) {
+        foreach(k, v in source) {
+            target[k] = v;
+        }
+    }
+};
 Object.create = null;
 Object.defineProperties = null;
-Object.defineProperty = function (o, p, d) {
-    local a = o.__jsDescriptors, b = o.__jsProps;
-    local c = p in a ? a[p] : {
-        configurable = false,
+Object.defineProperty = function (obj, prop, desc) {
+
+    local descs = obj.__jsDescriptors, props = obj.__jsProps;
+    local redefine = prop in descs;
+    local accessor = "get" in desc || "set" in desc;
+    local data = "writable" in desc || "value" in desc;
+    local setDesc = prop in descs ? descs[prop] : {
         enumerable = false,
-        writable = false,
-        value = null,
-        get = null,
-        set = null
+        configurable = false
     };
 
-    // Iterate over the old descriptor
-    foreach(k, d in c)
-    {
-        //
-        local newValue = k in c ? c[k] : d;
-        newDesc[key] = newValue;
+    // If we are redefining the descriptor, and we are set
+    // to be not configurable.
+    if(redefine && !setDesc.configurable) {
+        foreach(declKey, declValue in desc) {
+            // if the property we're trying to declare was declared already
+            // check if we are not changing its value.
+            if (!(declKey in prevDesc) || prevDesc[declKey] != declValue)
+                throw "Cannot redefine property: " + prop;
+        }
     }
 
+
+    if (accessor && data)
+        throw "Invalid property descriptor. Cannot both specify accessors and a value or writable attribute";
+
+    if(!accessor && !data) {
+        desc.writable <- false;
+        desc.value <- null;
+    }
+
+    if("enumerable" in desc) setDesc.enumerable <- !!desc.enumerable;
+    if("configurable" in desc) setDesc.configurable <- !!desc.configurable;
+    if("writable" in desc) setDesc.writable <- !!desc.writable;
+    if("value" in desc) setDesc.value <- desc.value;
+    if("get" in desc) setDesc.get <- desc.get;
+    if("set" in desc) setDesc.set <- desc.set;
+
     // Add property name to the iteration list.
-    obj.__jsProps.push(prop);
-    obj.__jsDescriptors[prop] <- newDesc;
+    if (props.find(prop) == null)
+        props.push(prop);
+
+    descs[prop] <- setDesc;
     return obj;
 };
+
 Object.entries = null;
 Object.freeze = null;
 Object.fromEntries = null;
-Object.getOwnPropertyDescriptor = null;
+Object.getOwnPropertyDescriptor = function(obj, prop) {
+    local c = obj.__jsDescriptors;
+    return prop in c ? __(c[prop]) : null;
+};
 Object.getOwnPropertyDescriptors = null;
 Object.getOwnPropertyNames = null;
 Object.getOwnPropertySymbols = null;
@@ -207,9 +227,9 @@ Object.seal = null;
 Object.setPrototypeOf = null;
 Object.values = null;
 
-//---------------------------------------------------
-// Function
-//---------------------------------------------------
+///////////////////////////////////////////////////////////////////////////
+//////////////|             Function Constructor            |//////////////
+///////////////////////////////////////////////////////////////////////////
 Function <- __jsInteropFunction(function() {
     throw "Creating instances of Function with 'new' keyword is not allowed.";
 });
@@ -217,20 +237,44 @@ Function.name = "Function";
 Object.__proto__ = Function;
 Function.__proto__ = Function.prototype;
 Function.prototype.__proto__ = Object.prototype;
+//-----------------------------------------------------------------------//
+// Purpose: Invokes the internal Squirrel closure.
+//-----------------------------------------------------------------------//
 Function.prototype.apply = function(thisArg, args) {
-    local c = length - 1;
-    while(args.len() < c) args.push(null);
-    while(args.len() > c) args.pop();
+
+    local a = __func__.getinfos(), c = a.varargs, b = a.parameters.len() - 2 * c;
     args.insert(0, thisArg);
-    __func__.acall(args);
+    while (args.len() < b) args.push(null);
+    if (c == 0) {
+    	while (args.len() > b) args.pop();
+    }
+    return __func__.acall(args);
 }
+//-----------------------------------------------------------------------//
+// Purpose: Invokes the internal Squirrel closure.
+//-----------------------------------------------------------------------//
 Function.prototype.call = function(thisArg, ...) {
-    apply(thisArg, vargv);
+    return apply(thisArg, vargv);
 };
 Function.prototype.bind = null;
 
+
+///////////////////////////////////////////////////////////////////////////
+//////////////|             HELPER FUNCTIONS                |//////////////
+///////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------//
+// Purpose: Wraps Squirrel instances into Interop objects.
+//-----------------------------------------------------------------------//
 __ <- function(val, ...) {
-    local a = typeof val;
+    local a = typeof val, i = 0;
+
+    // Squirrel Table
+    if (a == "table") {
+        return __jsInteropObject(val);
+    }
+
+    // Squirrel Function
     if (a == "function") {
         a = __jsInteropFunction(val);
         a.__proto__ = Function;
@@ -239,17 +283,97 @@ __ <- function(val, ...) {
         if (vargv.len() > 1) a.prototype.__proto__ = vargv[1].prototype;
         return a;
     }
+
+    return val;
 }
 
-a <- __(function (a, b) {
-    console.log(a, b);
-}, "a");
+//-----------------------------------------------------------------------//
+// Purpose: Handle the 'new' operator.
+//-----------------------------------------------------------------------//
+__new <- function (fn, ...) {
+    local _new = __jsInteropObject({
+        __proto__ = fn.prototype
+    });
+    fn.apply(_new, vargv);
+    return _new;
+}
 
-Object.defineProperty(a, "hehehaha", {
-    enumerable = true,
-    get = function () {
-        return rand();
-    }
+//-----------------------------------------------------------------------//
+// Purpose: Handle the 'in' operator.
+//-----------------------------------------------------------------------//
+__in <- function(prop, obj) {
+    return prop in obj || prop in obj.__jsDescriptors;
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+//////////////|                 MATH OBJECT                 |//////////////
+///////////////////////////////////////////////////////////////////////////
+Math <- __jsInteropObject({
+    E = 2.718281828459045,
+    LN2 = 0.6931471805599453,
+    LN10 = 2.302585092994046,
+    LOG2E = 1.4426950408889634,
+    LOG10E = 0.4342944819032518,
+    PI = 3.141592653589793,
+    SQRT1_2 = 0.7071067811865476,
+    SQRT2 = 1.4142135623730951
+    abs = __(fabs),
+    acos = __(acos),
+    acosh = null,
+    asin = __(asin),
+    asinh = null,
+    atan = __(atan),
+    atan2 = __(atan2),
+    atanh = null,
+    cbrt = null,
+    ceil = __(ceil),
+    clz32 = null,
+    cos = __(cos),
+    cosh = null,
+    exp = __(exp),
+    expm1 = null,
+    floor = __(floor),
+    fround = null,
+    hypot = null,
+    imul = null,
+    log = __(log),
+    log1p = null,
+    log2 = null,
+    log10 = __(log10),
+    max = __(function(...) {
+        local a = -9999999; // TODO: -Infinity
+        foreach (b in vargv) if (b > a) a = b;
+        return a;
+    }, "max"),
+    min = __(function(...) {
+        local a = 9999999; // TODO: Infinity
+        foreach (b in vargv) if (b < a) a = b;
+        return a;
+    }, "min"),
+    pow = __(pow),
+    random = __(function() {
+    	return rand().tofloat() / RAND_MAX;
+    }, "random"),
+    round = null,
+    sign = null,
+    sin = __(sin),
+    sinh = null,
+    sqrt = __(sqrt),
+    tan = __(tan),
+    trunc = null
+});
+
+///////////////////////////////////////////////////////////////////////////
+//////////////|                 MATH OBJECT                 |//////////////
+///////////////////////////////////////////////////////////////////////////
+
+console.log(Math.floor.name);
+
+console <- __jsInteropObject({
+    log = __(function () {
+
+    })
 })
 
-console.log(a);
+return;
