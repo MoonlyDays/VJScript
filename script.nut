@@ -30,10 +30,6 @@ __jsConsoleLog <-  function(obj, depth, stack) {
 
     printl("{");
     foreach(k, v in obj) {
-
-        if (k == "__ctor__")
-        continue;
-
         for(i = 0; i < depth + 1; i++) print("\t");
 
         print(k)
@@ -137,7 +133,7 @@ function __jsExtend(ctor, baseCtor) {
     ctor.prototype.__proto__ = baseCtor.prototype;
 }
 
-function __jsNew(fn, ...) {
+function __new(fn, ...) {
     local _new = __jsInteropObject({
         __proto__ = fn.prototype
     });
@@ -216,10 +212,18 @@ __ <- function(val, ...) {
     }
 }
 
+Vector <- __(function (x = 0, y = 0, z = 0) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+}, "Vector");
+console.log(__new(Vector, 1, 2, 3));
+return;
+
 CBaseEntity <- __(function () {
-    Position = 0;
-    Rotation = 0;
-    Velocity = 0;
+    Position = CVector3.Zero;
+    Rotation = CVector3.Zero;
+    Velocity = CVector3.Zero;
 }, "CBaseEntity")
 
 CTFPlayer <- __(function () {
@@ -227,5 +231,5 @@ CTFPlayer <- __(function () {
     Name = "Poggers";
 }, "CTFPlayer", CBaseEntity);
 
-local player = __jsNew(CTFPlayer);
+local player = __new(CTFPlayer);
 console.log(player.toString());
