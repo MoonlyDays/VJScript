@@ -14,7 +14,7 @@
 
 __jsConsoleLog <-  function(obj, depth, stack) {
     local t = typeof obj;
-    if(t != "instance" && t != "table" && t != "class")
+    if(t != "instance" && t != "table" && t != "class" && t != "array")
     {
         print(obj);
         return;
@@ -125,7 +125,9 @@ class __jsInteropFunction extends __jsInteropObject {
     }
 
     function _call(...) {
-        return __func__.acall(vargv);
+        local thisArg = vargv[0];
+        vargv.remove(0);
+        apply(thisArg, vargv);
     }
 }
 
@@ -161,7 +163,29 @@ Object.prototype.valueOf = null;
 Object.assign = null;
 Object.create = null;
 Object.defineProperties = null;
-Object.defineProperty = null;
+Object.defineProperty = function (obj, prop, desc) {
+    local newDesc = prop in obj.__jsDescriptors
+    ? obj.__jsDescriptors[prop]
+    : {
+      configurable = false,
+      writable = false,
+      enumerable = false,
+      get = null,
+      set = null,
+      value = null
+    };
+
+  foreach(key, oldValue in newDesc)
+  {
+    local newValue = desc[key] || oldValue;
+    newDesc[key] = newValue;
+  }
+
+  // Add property name to the iteration list.
+  obj.__jsProps.push(prop);
+  obj.__jsDescriptors[prop] <- newDesc;
+  return obj;
+};
 Object.entries = null;
 Object.freeze = null;
 Object.fromEntries = null;
@@ -189,9 +213,13 @@ Function <- __jsInteropFunction(function() {
     throw "Creating instances of Function with 'new' keyword is not allowed.";
 });
 Function.name = "Function";
+Object.__proto__ = Function;
 Function.__proto__ = Function.prototype;
 Function.prototype.__proto__ = Object.prototype;
 Function.prototype.apply = function(thisArg, args) {
+    local c = length - 1;
+    while(args.len() < c) args.push(null);
+    while(args.len() > c) args.pop();
     args.insert(0, thisArg);
     __func__.acall(args);
 }
@@ -212,24 +240,6 @@ __ <- function(val, ...) {
     }
 }
 
-Vector <- __(function (x = 0, y = 0, z = 0) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-}, "Vector");
-console.log(__new(Vector, 1, 2, 3));
-return;
-
-CBaseEntity <- __(function () {
-    Position = CVector3.Zero;
-    Rotation = CVector3.Zero;
-    Velocity = CVector3.Zero;
-}, "CBaseEntity")
-
-CTFPlayer <- __(function () {
-    __proto__.__proto__.__ctor__.call(this);
-    Name = "Poggers";
-}, "CTFPlayer", CBaseEntity);
-
-local player = __new(CTFPlayer);
-console.log(player.toString());
+a <- __(function (a, b) {
+    console.log(a, b);
+}, "a");
