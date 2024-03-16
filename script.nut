@@ -145,7 +145,7 @@ class __jsInteropPrimitive extends __jsInteropObject {
 ///////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------//
-// Purpose: Wraps Squirrel instances into Interop objects.
+// Purpose: Wraps Squirrel literals into JavaScript Interop objects.
 //-----------------------------------------------------------------------//
 __ <- function(val, ...) {
     local a = typeof val, i = 0;
@@ -231,8 +231,6 @@ __UNIMPLEMENTED_FUNCTION <- __(function () {
 
 Number <- __(function () {}, "Number");
 String <- __(function () {}, "String");
-
-Infinity <- __(0 / 0.0);
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Object Constructor              |//////////////
@@ -338,6 +336,9 @@ Function.prototype.apply = __(function(thisArg, args) {
 Function.prototype.call = function(thisArg, ...) {
     return apply(thisArg, vargv);
 };
+//-----------------------------------------------------------------------//
+// Purpose: Invokes the internal Squirrel closure.
+//-----------------------------------------------------------------------//
 Function.prototype.bind = null;
 
 
@@ -348,9 +349,13 @@ Number.EPSILON = __(2.220446049250313e-16);
 Number.MAX_SAFE_INTEGER = __(9007199254740991);
 Number.MAX_VALUE = __(1.7976931348623157e+308);
 
+Infinity <- __(1 / 0.0);
+NaN <- __(0 / 0.0);
+
 ///////////////////////////////////////////////////////////////////////////
 //////////////|                 MATH OBJECT                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
+
 Math <- __({
     E = __(2.718281828459045),
     LN2 = __(0.6931471805599453),
@@ -404,8 +409,8 @@ Math <- __({
     }),
     imul = __UNIMPLEMENTED_FUNCTION,
     log = __(log),
-    log1p = null,
-    log2 = null,
+    log1p = __UNIMPLEMENTED_FUNCTION,
+    log2 = __UNIMPLEMENTED_FUNCTION,
     log10 = __(log10),
     max = __(function(...) {
         local a = -inf; // TODO: -Infinity
@@ -421,15 +426,27 @@ Math <- __({
     random = __(function() {
     	return ::rand().tofloat() / ::RAND_MAX;
     }, "random"),
-    round = null,
-    sign = null,
+    round = __(function (x) {
+        local a = x - floor(x);
+        return a < 0.5 ? floor(x) : ceil(x);
+    }, "round"),
+    sign = __(function (x) {
+        if (x == 0) return 0;
+        return x > 0 ? 1 : -1;
+    }, "sign"),
     sin = __(sin),
-    sinh = null,
+    sinh = __(function (x) {
+        return (exp(x) - exp(-x)) / 2.0;
+    }, "sinh"),
     sqrt = __(sqrt),
     tan = __(tan),
-    trunc = null
+    trunc = __(function (x) {
+        return x >= 0 ? floor(x) : ceil(x);
+    }, "trunc")
 });
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|                 MATH OBJECT                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
+
+console.log(Math.PI.toString());
