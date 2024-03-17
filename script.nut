@@ -365,7 +365,23 @@ Number.MAX_VALUE = __(1.7976931348623157e+308);
 Number.MAX_SAFE_INTEGER = __(-9007199254740991);
 Number.MIN_VALUE = __(5e-324);
 Number.NaN = NaN;
+Number.POSITIVE_INFINITY = Infinity;
+Number.NEGATIVE_INFINITY = Infinity; // -Infinity;
 
+Number.isFinite = __(function (x) {}, "isFinite")
+Number.isInteger = __(function (x) {}, "isInteger")
+Number.isNaN = __(function (x) {}, "isNaN")
+Number.isSafeInteger = __(function (x) {}, "isSafeInteger")
+Number.parseFloat = __(function (x) {}, "parseFloat")
+Number.parseInt = __(function (x) {}, "parseInt")
+Number.prototype.toExponential = __(function (x) {}, "toExponential");
+Number.prototype.toFixed = __(function (x) {}, "toFixed");
+Number.prototype.toLocaleString = __(function (x) {}, "toLocaleString");
+Number.prototype.toPrecision = __(function (x) {}, "toPrecision");
+Number.prototype.toString = __(function(x) {
+	return "ABOBA";
+}, "toString");
+Number.prototype.valueOf = __(function(x) {}, "valueOf");
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|                 MATH OBJECT                 |//////////////
