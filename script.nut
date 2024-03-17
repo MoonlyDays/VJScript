@@ -107,6 +107,7 @@ class __jsInteropObject {
 
 class __jsInteropFunction extends __jsInteropObject {
     __func__ = null;
+    __bindArgs__ = null;
 
     constructor(_fn = null) {
         base.constructor();
@@ -126,7 +127,7 @@ class __jsInteropFunction extends __jsInteropObject {
     function _call(...) {
         local thisArg = vargv[0];
         vargv.remove(0);
-        return __call(__func__, thisArg, vargv);
+        return __call(this, thisArg, vargv);
     }
 }
 
@@ -177,12 +178,19 @@ __ <- function(val, ...) {
 //-----------------------------------------------------------------------//
 // Purpose: Handle calling the function the JavaScript way.
 //-----------------------------------------------------------------------//
-__call <- function (fn, thisArg, args) {
-    local a = fn.getinfos();
+__call <- function (func, thisArg, args) {
+    local fn = func.__func__, a = fn.getinfos();
     local b = a.native ? a.paramscheck : a.parameters.len() - (c = a.varargs) * 2;
     args.insert(0, thisArg);
     while (args.len() < b) args.push(null);
-    if (c == 0)  while (args.len() > b) args.pop();
+
+    if (c == 0)
+    	while (args.len() > b) args.pop();
+
+    if (func.__bindArgs__ != null)
+    	for (c = 1; c <= func.__bindArgs__.len(); c++)
+    	    if (c < args.len() && args[c] == null) args[c] = func.__bindArgs__[c - 1];
+
     return fn.acall(args);
 }
 
@@ -328,19 +336,22 @@ Object.values = null;
 // Purpose: Invokes the internal Squirrel closure.
 //-----------------------------------------------------------------------//
 Function.prototype.apply = __(function(thisArg, args) {
-    __call(__func__, thisArg, args);
-});
+    __call(this, thisArg, args);
+}, "apply");
 //-----------------------------------------------------------------------//
 // Purpose: Invokes the internal Squirrel closure.
 //-----------------------------------------------------------------------//
-Function.prototype.call = function(thisArg, ...) {
+Function.prototype.call = __(function(thisArg, ...) {
     return apply(thisArg, vargv);
-};
+}, "call");
 //-----------------------------------------------------------------------//
 // Purpose: Invokes the internal Squirrel closure.
 //-----------------------------------------------------------------------//
-Function.prototype.bind = null;
-
+Function.prototype.bind = __(function(thisArg, ...) {
+    local a = __func__.bindenv(thisArg), a = __(a, "bound " + name);
+    a.__bindArgs__ = vargv;
+    return a;
+}, "bind");
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Number Constructor              |//////////////
@@ -431,7 +442,7 @@ Math <- __({
         return a < 0.5 ? floor(x) : ceil(x);
     }, "round"),
     sign = __(function (x) {
-        if (x == 0) return 0;
+        if (!x) return 0;
         return x > 0 ? 1 : -1;
     }, "sign"),
     sin = __(sin),
@@ -448,5 +459,3 @@ Math <- __({
 ///////////////////////////////////////////////////////////////////////////
 //////////////|                 MATH OBJECT                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
-
-console.log(Math.PI.toString());
