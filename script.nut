@@ -55,8 +55,8 @@ console <- {
 class __jsInteropObject {
     __jsProps = null;
     __jsDescriptors = null;
-    // __proto__ = null;
-    // __ctor__ = null;
+    __proto__ = null;
+    __ctor__ = null;
 
     constructor(o = null) {
         __jsProps = [], __jsDescriptors = {};
@@ -138,6 +138,10 @@ class __jsInteropPrimitive extends __jsInteropObject {
         base.constructor();
         __primitive__ = value;
     }
+
+    function tostring() {
+        return toString();
+    }
 }
 
 
@@ -149,27 +153,30 @@ class __jsInteropPrimitive extends __jsInteropObject {
 // Purpose: Wraps Squirrel literals into JavaScript Interop objects.
 //-----------------------------------------------------------------------//
 __ <- function(val, ...) {
-    local a = typeof val, i = 0;
-    // Squirrel Table
-    if (a == "table") {
-        return __jsInteropObject(val);
-    }
+    local a = typeof val;
 
-    // Squirrel Number
-    if(a == "float" || a == "integer") {
-        a = __jsInteropPrimitive(val);
-        a.__proto__ = Number.prototype;
-        return a;
-    }
+    switch (a) {
+        case "table":
+            return __jsInteropObject(val);
 
-    // Squirrel Function
-    if (a == "function") {
-        a = __jsInteropFunction(val);
-        a.__proto__ = Function;
-        a.prototype.__proto__ = Object.prototype;
-        if (vargv.len() > 0) a.name = vargv[0];
-        if (vargv.len() > 1) a.prototype.__proto__ = vargv[1].prototype;
-        return a;
+        case "float":
+        case "integer":
+            a = __jsInteropPrimitive(val);
+            a.__proto__ = Number.prototype;
+            return a;
+
+        case "string":
+            a = __jsInteropPrimitive(val);
+            a.__proto__ = String.prototype;
+            return a;
+
+        case "function":
+            a = __jsInteropFunction(val);
+            a.__proto__ = Function;
+            a.prototype.__proto__ = Object.prototype;
+            if (vargv.len() > 0) a.name = vargv[0];
+            if (vargv.len() > 1) a.prototype.__proto__ = vargv[1].prototype;
+            return a;
     }
 
     return val;
@@ -223,8 +230,6 @@ __typeof <- function (obj) {
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             CORE JS CONSTRUCTORS            |//////////////
 ///////////////////////////////////////////////////////////////////////////
-
-
 Object <- __jsInteropFunction();
 Object.name = "Object";
 Function <- __jsInteropFunction();
@@ -237,14 +242,12 @@ __UNIMPLEMENTED_FUNCTION <- __(function () {
     throw "This feature is unimplemented. If you really need it for your project, feel free to help us implement it at 'https://github.com/MoonlyDays/VJScript'";
 })
 
-Number <- __(function () {}, "Number");
 String <- __(function () {}, "String");
+
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Object Constructor              |//////////////
 ///////////////////////////////////////////////////////////////////////////
-
-
 Object.prototype.hasOwnProperty = null;
 Object.prototype.isPrototypeOf = null;
 Object.prototype.propertyIsEnumerable = null;
@@ -328,45 +331,35 @@ Object.seal = null;
 Object.setPrototypeOf = null;
 Object.values = null;
 
+
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Function Constructor            |//////////////
 ///////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------//
-// Purpose: Invokes the internal Squirrel closure.
-//-----------------------------------------------------------------------//
 Function.prototype.apply = __(function(thisArg, args) {
     __call(this, thisArg, args);
 }, "apply");
-//-----------------------------------------------------------------------//
-// Purpose: Invokes the internal Squirrel closure.
-//-----------------------------------------------------------------------//
 Function.prototype.call = __(function(thisArg, ...) {
     return apply(thisArg, vargv);
 }, "call");
-//-----------------------------------------------------------------------//
-// Purpose: Invokes the internal Squirrel closure.
-//-----------------------------------------------------------------------//
 Function.prototype.bind = __(function(thisArg, ...) {
     local a = __func__.bindenv(thisArg), a = __(a, "bound " + name);
     a.__bindArgs__ = vargv;
     return a;
 }, "bind");
 
+
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Number Constructor              |//////////////
 ///////////////////////////////////////////////////////////////////////////
-Infinity <- __(1 / 0.0);
-NaN <- __(0 / 0.0);
-
+Number <- __(function () {}, "Number");
 Number.EPSILON = __(2.220446049250313e-16);
 Number.MAX_SAFE_INTEGER = __(9007199254740991);
 Number.MAX_VALUE = __(1.7976931348623157e+308);
 Number.MAX_SAFE_INTEGER = __(-9007199254740991);
 Number.MIN_VALUE = __(5e-324);
-Number.NaN = NaN;
-Number.POSITIVE_INFINITY = Infinity;
-Number.NEGATIVE_INFINITY = Infinity; // -Infinity;
+Number.NaN = __(0.0 / 0);
+Number.POSITIVE_INFINITY = __(1.0 / 0);
+Number.NEGATIVE_INFINITY = __(-1.0 / 0);
 
 Number.isFinite = __(function (x) {}, "isFinite")
 Number.isInteger = __(function (x) {}, "isInteger")
@@ -379,14 +372,23 @@ Number.prototype.toFixed = __(function (x) {}, "toFixed");
 Number.prototype.toLocaleString = __(function (x) {}, "toLocaleString");
 Number.prototype.toPrecision = __(function (x) {}, "toPrecision");
 Number.prototype.toString = __(function(x) {
-	return "ABOBA";
+	return __primitive__;
 }, "toString");
 Number.prototype.valueOf = __(function(x) {}, "valueOf");
+
+
+///////////////////////////////////////////////////////////////////////////
+//////////////|             String Constructor              |//////////////
+///////////////////////////////////////////////////////////////////////////
+String <- __(function() {}, "String");
+String.prototype.toString = __(function(x) {
+	return __primitive__;
+}, "toString");
+
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|                 MATH OBJECT                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
-
 Math <- __({
     E = __(2.718281828459045),
     LN2 = __(0.6931471805599453),
@@ -479,3 +481,5 @@ Math <- __({
 ///////////////////////////////////////////////////////////////////////////
 //////////////|                 MATH OBJECT                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
+
+console.log(__("HELLO EVERYBODY MY NAME IS MARKIPLIER"))
