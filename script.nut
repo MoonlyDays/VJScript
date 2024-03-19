@@ -142,6 +142,34 @@ class __jsInteropPrimitive extends __jsInteropObject {
     function tostring() {
         return toString();
     }
+
+    function _add(other) {
+        return __(__primitive__ + other.__primitive__);
+    }
+
+    function _sub(other) {
+        return __(__primitive__ - other.__primitive__);
+    }
+
+    function _mul(other) {
+        return __(__primitive__ * other.__primitive__);
+    }
+
+    function _div(other) {
+        return __(__primitive__ / other.__primitive__);
+    }
+
+    function _module(other) {
+        return __(__primitive__ % other.__primitive__);
+    }
+
+    function _unm() {
+        return __(-__primitive__);
+    }
+
+    function _cmp(other) {
+        return __primitive__ - other.__primitive__;
+    }
 }
 
 
@@ -400,21 +428,13 @@ Math <- __({
     SQRT2 = __(1.4142135623730951)
     abs = __(fabs),
     acos = __(acos),
-    acosh = __(function (x) {
-        return log(x + sqrt(x * x - 1));
-    }, "acosh"),
+    acosh = __(@(x) log(x + sqrt(x * x - 1)), "acosh"),
     asin = __(asin),
-    asinh = __(function (x) {
-        return log(x + sqrt(x * x + 1));
-    }, "asinh"),
+    asinh = __(@(x) log(x + sqrt(x * x + 1)), "asinh"),
     atan = __(atan),
     atan2 = __(atan2),
-    atanh = __(function (x) {
-        return 0.5 * log((1 + x) / (1 - x));
-    }, "atanh"),
-    cbrt = __(function (x) {
-        return pow(x, 1.0 / 3);
-    }, "cbrt"),
+    atanh = __(@(x) 0.5 * log((1 + x) / (1 - x)), "atanh"),
+    cbrt = __(@(x) pow(x, 1.0 / 3), "cbrt"),
     ceil = __(ceil),
     clz32 = __(function (x)
     {   if (x == 0) return 32;
@@ -426,13 +446,9 @@ Math <- __({
         return b;
     }, "clz32"),
     cos = __(cos),
-    cosh = __(function (x) {
-        return (exp(x) + exp(-x)) / 2.0;
-    }),
+    cosh = __(@(x) (exp(x) + exp(-x)) / 2.0, "cosh"),
     exp = __(exp),
-    expm1 = __(function (x) {
-        return exp(x) - 1.0;
-    }, "expm1"),
+    expm1 = __(@(x) exp(x) - 1.0, "expm1"),
     floor = __(floor),
     fround = __UNIMPLEMENTED_FUNCTION,
     hypot = __(function (...) {
@@ -456,9 +472,7 @@ Math <- __({
         return a;
     }, "min"),
     pow = __(pow),
-    random = __(function() {
-    	return ::rand().tofloat() / ::RAND_MAX;
-    }, "random"),
+    random = __(@() ::rand().tofloat() / ::RAND_MAX, "random"),
     round = __(function (x) {
         local a = x - floor(x);
         return a < 0.5 ? floor(x) : ceil(x);
@@ -468,18 +482,14 @@ Math <- __({
         return x > 0 ? 1 : -1;
     }, "sign"),
     sin = __(sin),
-    sinh = __(function (x) {
-        return (exp(x) - exp(-x)) / 2.0;
-    }, "sinh"),
+    sinh = __(@(x) (exp(x) - exp(-x)) / 2.0, "sinh"),
     sqrt = __(sqrt),
     tan = __(tan),
-    trunc = __(function (x) {
-        return x >= 0 ? floor(x) : ceil(x);
-    }, "trunc")
+    trunc = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|                 MATH OBJECT                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
 
-console.log(__("HELLO EVERYBODY MY NAME IS MARKIPLIER"))
+console.log(__(1) <=> __(1));
