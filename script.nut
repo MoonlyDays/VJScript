@@ -484,8 +484,8 @@ Math <- __({
     sin = __(sin),
     sinh = __(@(x) (exp(x) - exp(-x)) / 2.0, "sinh"),
     sqrt = __(sqrt),
-    tan = __(tan),
-    trunc = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
+    tan     = __(tan),
+    trunc   = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
 
 ///////////////////////////////////////////////////////////////////////////
