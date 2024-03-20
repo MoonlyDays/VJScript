@@ -119,7 +119,10 @@ function handler<T extends Node>(node: T): NodeHandler<T> {
     return handler;
 }
 
-
+/**
+ * Generate Squirrel code for the provided Node.
+ * @param node
+ */
 export function generate(node: Node) {
 
     if (!node) {

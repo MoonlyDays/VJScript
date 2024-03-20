@@ -24,7 +24,7 @@ export function resolveImportedModule(importPath: string, currentModule: Module)
     const parsedPath = path.parse(importPath);
     importPath = path.format({...parsedPath, base: '', ext: currentModule.parsedPath.ext});
 
-    return currentModule.translator.addModule(importPath);
+    return currentModule.translator.includeModule(importPath);
 }
 
 export function resolvePackageModule(packageName: string, currentModule: Module) {
@@ -47,13 +47,18 @@ export function resolvePackageModule(packageName: string, currentModule: Module)
         throw Error(`resolvePackageModule: Could not resolve entry script path for package "${packageName} (${entryScript})"`);
     }
 
-    return currentModule.translator.addModule(entryScriptPath);
+    return currentModule.translator.includeModule(entryScriptPath);
 }
 
 export function isDeclarativeModule(importPath: string) {
     return importPath == PackageName;
 }
 
+/**
+ * Determine the root directory for the
+ * package of the provided script file path.
+ * @param modulePath
+ */
 export function determinePackageRoot(modulePath: string) {
     modulePath = path.resolve(process.cwd(), modulePath);
     modulePath = path.parse(modulePath).dir;

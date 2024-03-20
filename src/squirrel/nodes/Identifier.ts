@@ -8,7 +8,6 @@ import {is, NodePath} from 'estree-toolkit';
 
 import {processAttributes} from '../attributes';
 import {IDENTIFIER_MODIFIER_GLOBAL} from '../helpers/consts';
-import {renameNode} from '../rename';
 import {NodeHandler, TraverseState} from './NodeHandler';
 
 export default class extends NodeHandler<Identifier> {
@@ -27,7 +26,6 @@ export default class extends NodeHandler<Identifier> {
             return;
 
         processAttributes(path, state.module);
-        renameNode(path, state.module);
     }
 
     * handleGenerate(node: Identifier): Generator<string, void, unknown> {

@@ -6,8 +6,6 @@
 import {ClassBody, MethodDefinition, PropertyDefinition} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import classDeclaration from '../nodes/ClassDeclaration';
-
 export function getClassPropertyDefinition(path: NodePath<ClassBody>, key: string) {
     return path.get('body')
         .find(x => is.propertyDefinition(x) &&

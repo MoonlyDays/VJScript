@@ -8,7 +8,6 @@ import {builders, is, NodePath} from 'estree-toolkit';
 
 import {processAttributes} from '../attributes';
 import {generate} from '../handler';
-import {renameNode} from '../rename';
 import {NodeHandler, TraverseState} from './NodeHandler';
 
 export default class extends NodeHandler<MemberExpression> {
@@ -23,7 +22,6 @@ export default class extends NodeHandler<MemberExpression> {
         }
 
         processAttributes(path, state.module);
-        renameNode(path, state.module);
     }
 
     * handleGenerate(node: MemberExpression): Generator<string, void, unknown> {

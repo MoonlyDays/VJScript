@@ -20,7 +20,7 @@ export default class extends NodeHandler<MethodDefinition> {
             yield 'static ';
         }
 
-        if (node.kind == 'method') {
+        if (node.kind === 'method') {
             yield 'function ';
             yield generate(node.key);
         } else {

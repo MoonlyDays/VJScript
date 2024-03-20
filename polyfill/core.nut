@@ -300,6 +300,7 @@ __eq <- function(l, r) {
 __seq <- function (l, r) {
     if(typeof l.__prim__ != typeof r.__prim__)
         return false;
+
     return l.__prim__ == r.__prim__;
 }
 
@@ -310,11 +311,11 @@ __declareModule <- function(name, _body) {
 
 __resolveModule <- function (name) {
     local s, m = __JS_MODULES[name];
-    if(!("export" in m)) {
-        m.export <- {}, s = {export = m.export};
+    if(!("scope" in m)) {
+        m.scope <- s = {};
         m.body.call(s);
     }
-    return m.scope.exported;
+    return m.scope;
 }
 
 

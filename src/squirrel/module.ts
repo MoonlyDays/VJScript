@@ -79,7 +79,8 @@ export class Module {
     }
 
     private generateName() {
-        const ident = this.relativePath.replace(/[^A-Za-z0-9]/g, '_');
+        let ident = this.relativePath.replace(/\\/g, "/");
+        ident = ident.replace(/[^A-Za-z0-9\/]/g, '_');
         return `${ident}_${this.translator.modules.size - 1}`;
     }
 
