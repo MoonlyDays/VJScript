@@ -49,7 +49,6 @@ export class Translator {
      * being resolved in the end.
      */
     public generateBundleAST() {
-
         const program = b.program([], 'module');
 
         for (const pair of this.modules) {

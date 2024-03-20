@@ -4,17 +4,12 @@
 //--------------------------------------------------------------------------------------------------
 
 export default {
-    'printl': {
-        Attributes: [
-            'ConcatParameters'
-        ]
-    },
     'AddThinkToEnt': {
         Parameters: {
             1: ['EntityThinkCallback']
         }
     },
-    '__js_require': [
-        'CJSRequireFunction'
+    'require': [
+        'RequireFunction'
     ]
 };

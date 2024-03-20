@@ -13,9 +13,7 @@ import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPat
 import {Module} from './module';
 
 export type AttributeType =
-    'ConcatParameters' |
-    'EntityThinkCallback' |
-    'CJSRequireFunction';
+    'RequireFunction';
 
 const AttributeSet = new ConfigSearchPatternSet<AttributeRule>();
 
@@ -44,6 +42,7 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes, module: Module) 
 
     runAppliers(path, attrs, {
 
+        /*
         ConcatParameters: p => {
             const callExpr = p.parentPath;
             if (!is.callExpression(callExpr))
@@ -73,27 +72,31 @@ function applyAttributes(path: NodePath, attrs: NodeAttributes, module: Module) 
                 quasis,
                 expr
             )]);
-        },
+        },*/
 
-        CJSRequireFunction: p => {
+        RequireFunction: p => {
             const callExpr = p.parentPath;
             if (!is.callExpression(callExpr))
                 return;
 
             const node = callExpr.node;
             const argument = node.arguments[0];
+            const callee = node.callee;
 
-            if (!is.literal(argument)) {
-                throw Error('CommonJSRequireFunction: argument needs to be a literal.');
-            }
+            if (!is.literal(argument))
+                throw Error('RequireFunction: argument needs to be a literal.');
+
+            if (!is.identifier(callee))
+                throw Error('RequireFunction: callee needs to be a identifier.');
+
 
             const importedModule = resolveImportedModule(argument.value.toString(), module);
             if (!importedModule)
                 return;
 
-            const parsePath = pp.parse(importedModule.relativePath);
-            argument.value = pp.format({...parsePath, ext: '.nut', base: ''})
-                .replace(/\\/g, '/');
+            // jopa
+            argument.value = importedModule.name;
+            callee.name = "__resolveModule";
         }
 
         /*

@@ -68,9 +68,8 @@ export function determinePackageRoot(modulePath: string) {
         const curDir = dirs.join('\\');
         const packageDir = curDir + '\\package.json';
 
-        if (fs.existsSync(packageDir)) {
+        if (fs.existsSync(packageDir))
             return curDir;
-        }
 
         dirs.pop();
     } while (dirs.length > 0);

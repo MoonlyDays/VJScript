@@ -23,8 +23,7 @@ export const BabelTransformOptions: babel.TransformOptions = {
             importInterop: 'none',
             strict: true,
             strictMode: false
-        }],
-        // ['transform-undefined-to-void']
+        }]
     ]
 };
 
