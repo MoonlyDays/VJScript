@@ -75,13 +75,33 @@ class __jsInteropObject {
     }
 
     function _get(key) {
-        local a = __jsDescriptors, b = ::getstackinfos, c, i = 2;
-        if (key in a) return ("get" in a[key] && (c = a[key].get)) ? c.pcall(this) : a[key].value;
-        if (c = __proto__) return c[key];
-        while (c = b(i++)) {
-            if (!("this" in (c = c.locals))) continue;
-            if ((key in (c = c["this"]))) return c[key];
+
+        local obj = this;
+        while(obj) {
+            local descs = obj.__jsDescriptors;
+            if(key in descs) {
+                local desc = descs[key];
+                if("get" in desc && desc.get) {
+                    return desc.get.pcall(this);
+                }
+
+                return desc.value;
+            }
+
+            obj = obj.__proto__;
         }
+
+        local infos = null, i = 2;
+        while (infos = ::getstackinfos(i++)) {
+            local locals = infos.locals;
+            if(!("this" in locals))
+                continue;
+
+            locals = locals["this"]
+            if(key in locals)
+                return locals[key];
+        }
+
         return null;
     }
 
@@ -102,6 +122,10 @@ class __jsInteropObject {
             get = null,
             set = null
         }
+    }
+
+    function tostring() {
+        return toString();
     }
 }
 
@@ -132,43 +156,40 @@ class __jsInteropFunction extends __jsInteropObject {
 }
 
 class __jsInteropPrimitive extends __jsInteropObject {
-    __primitive__ = null;
+    // __prim__ = null;
 
     constructor(value) {
         base.constructor();
-        __primitive__ = value;
-    }
-
-    function tostring() {
-        return toString();
+        __prim__ = value;
     }
 
     function _add(other) {
-        return __(__primitive__ + other.__primitive__);
+        return __(__prim__ + other.__prim__);
     }
 
     function _sub(other) {
-        return __(__primitive__ - other.__primitive__);
+        return __(__prim__ - other.__prim__);
     }
 
     function _mul(other) {
-        return __(__primitive__ * other.__primitive__);
+        return __(__prim__ * other.__prim__);
     }
 
     function _div(other) {
-        return __(__primitive__ / other.__primitive__);
+        return __(__prim__ / other.__prim__);
     }
 
     function _module(other) {
-        return __(__primitive__ % other.__primitive__);
+        return __(__prim__ % other.__prim__);
     }
 
     function _unm() {
-        return __(-__primitive__);
+        return __(-__prim__);
     }
 
     function _cmp(other) {
-        return __primitive__ - other.__primitive__;
+        if(__prim__ == other.__prim__) return 0;
+        return __prim__ < other.__prim__ ? -1 : 1;
     }
 }
 
@@ -191,6 +212,11 @@ __ <- function(val, ...) {
         case "integer":
             a = __jsInteropPrimitive(val);
             a.__proto__ = Number.prototype;
+            return a;
+
+        case "bool":
+            a = __jsInteropPrimitive(val);
+            a.__proto__ = Boolean.prototype;
             return a;
 
         case "string":
@@ -223,10 +249,13 @@ __call <- function (func, thisArg, args) {
     	while (args.len() > b) args.pop();
 
     if (func.__bindArgs__ != null)
+    {
     	for (c = 1; c <= func.__bindArgs__.len(); c++)
     	    if (c < args.len() && args[c] == null) args[c] = func.__bindArgs__[c - 1];
+    }
 
-    return fn.acall(args);
+    // for(c = 1; c < args.len(); c++) args[c] = __(args[c]);
+    return __(fn.acall(args));
 }
 
 //-----------------------------------------------------------------------//
@@ -277,18 +306,16 @@ __UNIMPLEMENTED_FUNCTION <- __(function () {
     throw "This feature is unimplemented. If you really need it for your project, feel free to help us implement it at 'https://github.com/MoonlyDays/VJScript'";
 })
 
-String <- __(function () {}, "String");
-
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Object Constructor              |//////////////
 ///////////////////////////////////////////////////////////////////////////
 Object.prototype.hasOwnProperty = null;
-Object.prototype.isPrototypeOf = null;
+Object.prototype.isPrototypeOf  = null;
 Object.prototype.propertyIsEnumerable = null;
 Object.prototype.toLocaleString = null;
 Object.prototype.toString = __(function () {
-    return "[object Object]";
+    return __("[object Object]");
 }, "toString");
 Object.prototype.valueOf = null;
 
@@ -384,66 +411,85 @@ Function.prototype.bind = __(function(thisArg, ...) {
 
 
 ///////////////////////////////////////////////////////////////////////////
-//////////////|             Number Constructor              |//////////////
-///////////////////////////////////////////////////////////////////////////
-Number <- __(function () {}, "Number");
-Number.EPSILON = __(2.220446049250313e-16);
-Number.MAX_SAFE_INTEGER = __(9007199254740991);
-Number.MAX_VALUE = __(1.7976931348623157e+308);
-Number.MAX_SAFE_INTEGER = __(-9007199254740991);
-Number.MIN_VALUE = __(5e-324);
-Number.NaN = __(0.0 / 0);
-Number.POSITIVE_INFINITY = __(1.0 / 0);
-Number.NEGATIVE_INFINITY = __(-1.0 / 0);
-
-Number.isFinite = __(function (x) {}, "isFinite")
-Number.isInteger = __(function (x) {}, "isInteger")
-Number.isNaN = __(function (x) {}, "isNaN")
-Number.isSafeInteger = __(function (x) {}, "isSafeInteger")
-Number.parseFloat = __(function (x) {}, "parseFloat")
-Number.parseInt = __(function (x) {}, "parseInt")
-Number.prototype.toExponential = __(function (x) {}, "toExponential");
-Number.prototype.toFixed = __(function (x) {}, "toFixed");
-Number.prototype.toLocaleString = __(function (x) {}, "toLocaleString");
-Number.prototype.toPrecision = __(function (x) {}, "toPrecision");
-Number.prototype.toString = __(function(x) {
-	return __primitive__;
-}, "toString");
-Number.prototype.valueOf = __(function(x) {}, "valueOf");
-
-
-///////////////////////////////////////////////////////////////////////////
 //////////////|             String Constructor              |//////////////
 ///////////////////////////////////////////////////////////////////////////
 String <- __(function() {}, "String");
-String.prototype.toString = __(function(x) {
-	return __primitive__;
-}, "toString");
+
+String.prototype.__prim__   = "";
+String.prototype.toString   = __(@()this, "toString");
+String.prototype.valueOf    = __(@()this, "valueOf");
+Object.defineProperty(String.prototype, "length", {
+    get = @() __(__prim__.len())
+});
+String.prototype.at         = __(@(idx) __(__prim__[idx].tochar()), "at");
+String.prototype.charCodeAt = __(@(idx) __(__prim__[idx]), "charCodeAt");
+String.prototype.concat     = __(function (...) {
+    local str = this;
+    foreach (s in vargv) str += __(s);
+    return str;
+}, "concat")
+
+///////////////////////////////////////////////////////////////////////////
+//////////////|             Number Constructor              |//////////////
+///////////////////////////////////////////////////////////////////////////
+Number <- __(function () {}, "Number");
+Number.EPSILON              = __(2.220446049250313e-16);
+Number.MAX_SAFE_INTEGER     = __(9007199254740991);
+Number.MAX_VALUE            = __(1.7976931348623157e+308);
+Number.MAX_SAFE_INTEGER     = __(-9007199254740991);
+Number.MIN_VALUE            = __(5e-324);
+Number.NaN                  = __(0.0 / 0);
+Number.POSITIVE_INFINITY    = __(1.0 / 0);
+Number.NEGATIVE_INFINITY    = __(-1.0 / 0);
+
+Number.isFinite         = __(function (x) {}, "isFinite")
+Number.isInteger        = __(function (x) {}, "isInteger")
+Number.isNaN            = __(function (x) {}, "isNaN")
+Number.isSafeInteger    = __(function (x) {}, "isSafeInteger")
+Number.parseFloat       = __(function (x) {}, "parseFloat")
+Number.parseInt         = __(function (x) {}, "parseInt")
+
+Number.prototype.__prim__       = 0;
+Number.prototype.toExponential  = __(function (x) {}, "toExponential");
+Number.prototype.toFixed        = __(function (x) {}, "toFixed");
+Number.prototype.toLocaleString = __(function (x) {}, "toLocaleString");
+Number.prototype.toPrecision    = __(function (x) {}, "toPrecision");
+Number.prototype.toString       = __(@(x) __(__prim__.tostring()), "toString");
+Number.prototype.valueOf        = __(@() this, "valueOf");
 
 
 ///////////////////////////////////////////////////////////////////////////
-//////////////|                 MATH OBJECT                 |//////////////
+//////////////|             Number Constructor              |//////////////
+///////////////////////////////////////////////////////////////////////////
+Boolean <- __(function () {}, "Boolean");
+
+Boolean.prototype.__prim__  = false;
+Boolean.prototype.toString  = __(@() __(__prim__.tostring()), "toString");
+Boolean.prototype.valueOf   = __(@() this, "valueOf");
+
+///////////////////////////////////////////////////////////////////////////
+//////////////|                 Math Object                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
 Math <- __({
-    E = __(2.718281828459045),
-    LN2 = __(0.6931471805599453),
-    LN10 = __(2.302585092994046),
-    LOG2E = __(1.4426950408889634),
-    LOG10E = __(0.4342944819032518),
-    PI = __(3.141592653589793),
+    E       = __(2.718281828459045),
+    LN2     = __(0.6931471805599453),
+    LN10    = __(2.302585092994046),
+    LOG2E   = __(1.4426950408889634),
+    LOG10E  = __(0.4342944819032518),
+    PI      = __(3.141592653589793),
     SQRT1_2 = __(0.7071067811865476),
-    SQRT2 = __(1.4142135623730951)
-    abs = __(fabs),
-    acos = __(acos),
-    acosh = __(@(x) log(x + sqrt(x * x - 1)), "acosh"),
-    asin = __(asin),
-    asinh = __(@(x) log(x + sqrt(x * x + 1)), "asinh"),
-    atan = __(atan),
-    atan2 = __(atan2),
-    atanh = __(@(x) 0.5 * log((1 + x) / (1 - x)), "atanh"),
-    cbrt = __(@(x) pow(x, 1.0 / 3), "cbrt"),
-    ceil = __(ceil),
-    clz32 = __(function (x)
+    SQRT2   = __(1.4142135623730951)
+    abs     = __(fabs),
+    acos    = __(acos),
+    acosh   = __(@(x) log(x + sqrt(x * x - 1)), "acosh"),
+    asin    = __(asin),
+    asinh   = __(@(x) log(x + sqrt(x * x + 1)), "asinh"),
+    atan    = __(atan),
+    atan2   = __(atan2),
+    atanh   = __(@(x) 0.5 * log((1 + x) / (1 - x)), "atanh"),
+    cbrt    = __(@(x) pow(x, 1.0 / 3), "cbrt"),
+    ceil    = __(ceil),
+    clz32   = __(function (x)
     {   if (x == 0) return 32;
         local a = 0x80000000, b = 0;
         while ((x & a) == 0) {
@@ -452,35 +498,35 @@ Math <- __({
         }
         return b;
     }, "clz32"),
-    cos = __(cos),
-    cosh = __(@(x) (exp(x) + exp(-x)) / 2.0, "cosh"),
-    exp = __(exp),
-    expm1 = __(@(x) exp(x) - 1.0, "expm1"),
-    floor = __(floor),
-    fround = __UNIMPLEMENTED_FUNCTION,
-    hypot = __(function (...) {
+    cos     = __(cos),
+    cosh    = __(@(x) (exp(x) + exp(-x)) / 2.0, "cosh"),
+    exp     = __(exp),
+    expm1   = __(@(x) exp(x) - 1.0, "expm1"),
+    floor   = __(floor),
+    fround  = __UNIMPLEMENTED_FUNCTION,
+    hypot   = __(function (...) {
         local sum = 0.0;
         foreach (arg in vargv) sum += arg * arg;
         return sqrt(sum);
     }),
-    imul = __UNIMPLEMENTED_FUNCTION,
-    log = __(log),
-    log1p = __UNIMPLEMENTED_FUNCTION,
-    log2 = __UNIMPLEMENTED_FUNCTION,
-    log10 = __(log10),
-    max = __(function(...) {
+    imul    = __UNIMPLEMENTED_FUNCTION,
+    log     = __(log),
+    log1p   = __UNIMPLEMENTED_FUNCTION,
+    log2    = __UNIMPLEMENTED_FUNCTION,
+    log10   = __(log10),
+    max     = __(function(...) {
         local a = -inf; // TODO: -Infinity
         foreach (b in vargv) if (b > a) a = b;
         return a;
     }, "max"),
-    min = __(function(...) {
+    min     = __(function(...) {
         local a = inf; // TODO: Infinity
         foreach (b in vargv) if (b < a) a = b;
         return a;
     }, "min"),
-    pow = __(pow),
-    random = __(@() ::rand().tofloat() / ::RAND_MAX, "random"),
-    round = __(function (x) {
+    pow     = __(pow),
+    random  = __(@() ::rand().tofloat() / ::RAND_MAX, "random"),
+    round   = __(function (x) {
         local a = x - floor(x);
         return a < 0.5 ? floor(x) : ceil(x);
     }, "round"),
@@ -488,14 +534,16 @@ Math <- __({
         if (!x) return 0;
         return x > 0 ? 1 : -1;
     }, "sign"),
-    sin = __(sin),
-    sinh = __(@(x) (exp(x) - exp(-x)) / 2.0, "sinh"),
-    sqrt = __(sqrt),
+    sin     = __(sin),
+    sinh    = __(@(x) (exp(x) - exp(-x)) / 2.0, "sinh"),
+    sqrt    = __(sqrt),
     tan     = __(tan),
     trunc   = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
 
+
 ///////////////////////////////////////////////////////////////////////////
 //////////////|                 MATH OBJECT                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
-console.log(__(true) <=> __(true));
+
+console.log(__("HELLO").concat(__(", "), __("World")).at(11));
