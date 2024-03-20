@@ -106,15 +106,22 @@ class __jsInteropObject {
     }
 
     function _set(key, val) {
-        local a = __jsDescriptors, b = __jsProps, c, d;
-        if(key in a) {
-            if ((c = a[key]) && "set" in c && (d = c.set)) d.pcall(this, val);
-            else c.value = val;
-            return;
+
+        local obj = this;
+        while(obj) {
+            local descs = obj.__jsDescriptors;
+            if(key in descs) {
+                local desc = descs[key];
+                if("set" in desc && desc.set) {
+                    return desc.set.pcall(this, val);
+                }
+            }
+
+            obj = obj.__proto__;
         }
 
-        b.push(key);
-        a[key] <- {
+        __jsProps.push(key);
+        __jsDescriptors[key] <- {
             configurable = true,
             enumerable = true,
             writable = true,
@@ -546,4 +553,21 @@ Math <- __({
 //////////////|                 MATH OBJECT                 |//////////////
 ///////////////////////////////////////////////////////////////////////////
 
-console.log(__("HELLO").concat(__(", "), __("World")).at(11));
+Vector <- __(function (x = 0, y = 0, z = 0) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+}, "Vector");
+
+CBaseEntity <- __(function (ent) {
+    __ent__ = ent;
+}, "CBaseEntity");
+
+CBaseEntity.prototype.__ent__ = null;
+Object.defineProperty(CBaseEntity.prototype, "Origin", {
+    get = @() __ent__.GetOrigin(),
+    set = function (value) { __ent__.SetOrigin(value); }
+})
+
+local ent = __new(CBaseEntity);
+ent.Origin = __new(Vector, 1, 1, 1);
