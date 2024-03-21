@@ -6,7 +6,7 @@
 import {ForInStatement, ForOfStatement} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-export const LoopHelpers = {
+export const Loops = {
     normalizeStatement(forPath: NodePath<ForInStatement | ForOfStatement>) {
 
         const path = forPath.get('left');
@@ -33,4 +33,4 @@ export const LoopHelpers = {
             throw Error(`Unhandled left-side node of an for loop expression: ${node.type}`);
         }
     }
-}
+};

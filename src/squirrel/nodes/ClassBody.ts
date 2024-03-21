@@ -6,8 +6,8 @@
 import {ClassBody} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
-import {ClassHelpers} from '../helpers/ClassHelpers';
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {ensureConstructorExists} from '../helpers/class';
+import {generateBodyCode, generateCodeWithScope} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ClassBody> {
@@ -15,10 +15,10 @@ export default class extends NodeHandler<ClassBody> {
     handlePrepare(path: NodePath<ClassBody>) {
 
         // We generally assume that each class definition must have a constructor.
-        ClassHelpers.ensureConstructorExists(path);
+        ensureConstructorExists(path);
     }
 
     handleCodeGen(node: ClassBody): Generator<string, void, unknown> {
-        return GeneratorHelpers.withScope(() => GeneratorHelpers.body(node));
+        return generateCodeWithScope(() => generateBodyCode(node));
     }
 }

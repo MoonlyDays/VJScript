@@ -5,16 +5,16 @@
 
 import {ArrowFunctionExpression} from 'estree';
 
-import {codeGen} from '../handler';
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {generateCode} from '../handler';
+import {generateArgumentsCode} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ArrowFunctionExpression> {
 
     * handleCodeGen(node: ArrowFunctionExpression): Generator<string, void, unknown> {
         yield '@(';
-        yield* GeneratorHelpers.arguments(node.params);
+        yield* generateArgumentsCode(node.params);
         yield ') ';
-        yield codeGen(node.body);
+        yield generateCode(node.body);
     }
 }

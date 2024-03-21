@@ -6,8 +6,8 @@
 import {VariableDeclarator} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {codeGen} from '../handler';
-import {PatternHelpers} from '../helpers/PatternHelpers';
+import {generateCode} from '../handler';
+import {destructureArrayPattern, destructureObjectPattern} from '../helpers/pattern';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<VariableDeclarator> {
@@ -17,7 +17,7 @@ export default class extends NodeHandler<VariableDeclarator> {
 
         const id = node.id;
         if (is.arrayPattern(id)) {
-            PatternHelpers.destructureArray(
+            destructureArrayPattern(
                 id, node.init, path,
                 (k, v) => b.variableDeclarator(k, v),
                 path.parentPath
@@ -26,7 +26,7 @@ export default class extends NodeHandler<VariableDeclarator> {
         }
 
         if (is.objectPattern(id)) {
-            PatternHelpers.destructureObject(
+            destructureObjectPattern(
                 id, node.init, path,
                 (k, v) => b.variableDeclarator(k, v),
                 path.parentPath
@@ -36,10 +36,10 @@ export default class extends NodeHandler<VariableDeclarator> {
     }
 
     * handleCodeGen(node: VariableDeclarator): Generator<string, void, unknown> {
-        yield codeGen(node.id);
+        yield generateCode(node.id);
         if (node.init) {
             yield ' = ';
-            yield codeGen(node.init);
+            yield generateCode(node.init);
         }
     }
 }

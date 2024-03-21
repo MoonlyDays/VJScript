@@ -5,7 +5,7 @@
 
 import {ClassDeclaration} from 'estree';
 
-import {codeGen} from '../handler';
+import {generateCode} from '../handler';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ClassDeclaration> {
@@ -13,15 +13,15 @@ export default class extends NodeHandler<ClassDeclaration> {
     * handleCodeGen(node: ClassDeclaration): Generator<string, void, unknown> {
 
         yield 'class ';
-        yield codeGen(node.id);
+        yield generateCode(node.id);
 
         if (node.superClass) {
             yield ' extends ';
-            yield codeGen(node.superClass);
+            yield generateCode(node.superClass);
         }
 
         yield ' ';
-        yield codeGen(node.body);
+        yield generateCode(node.body);
     }
 
 }

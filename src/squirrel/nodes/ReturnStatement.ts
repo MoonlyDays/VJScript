@@ -5,7 +5,7 @@
 
 import {ReturnStatement} from 'estree';
 
-import {codeGen} from '../handler';
+import {generateCode} from '../handler';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ReturnStatement> {
@@ -14,7 +14,7 @@ export default class extends NodeHandler<ReturnStatement> {
 
         if (node.argument) {
             yield ' ';
-            yield codeGen(node.argument);
+            yield generateCode(node.argument);
         }
     }
 }

@@ -4,21 +4,21 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Literal} from 'estree';
-import {builders as b, is, NodePath} from 'estree-toolkit';
+import {builders as b, NodePath} from 'estree-toolkit';
 
-import {IdentifyHelpers} from '../helpers/IdentifyHelpers';
-import {NodeHandler, TraverseState} from './NodeHandler';
+import {isWrappedInsideInteropHelper} from '../helpers/identify';
+import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<Literal> {
 
     handlePrepare(path: NodePath<Literal>) {
 
         // We're not wrapping null values in helper.
-        if(this.isNullLiteral(path.node))
+        if (this.isNullLiteral(path.node))
             return;
 
         // This literal is already wrapped in helper.
-        if (IdentifyHelpers.wrappedInsideInteropHelper(path))
+        if (isWrappedInsideInteropHelper(path))
             return;
 
         path.replaceWith(b.callExpression(

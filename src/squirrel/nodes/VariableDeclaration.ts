@@ -6,8 +6,8 @@
 import {VariableDeclaration} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
-import {LookupHelpers} from '../helpers/LookupHelpers';
+import {generateArgumentsCode} from '../helpers/generator';
+import {findParentInsideContainer} from '../helpers/search';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<VariableDeclaration> {
@@ -19,7 +19,7 @@ export default class extends NodeHandler<VariableDeclaration> {
 
             for (let i = 1; i < node.declarations.length; i++) {
                 const declarator = node.declarations[i];
-                const parentPath = LookupHelpers.parentInsideContainer(path);
+                const parentPath = findParentInsideContainer(path);
                 parentPath.insertAfter([b.variableDeclaration(node.kind, [declarator])]);
             }
 
@@ -45,7 +45,7 @@ export default class extends NodeHandler<VariableDeclaration> {
     * handleCodeGen(node: VariableDeclaration): Generator<string, void, unknown> {
         yield node.kind == 'const' ? 'const' : 'local';
         yield ' ';
-        yield* GeneratorHelpers.arguments(node.declarations);
+        yield* generateArgumentsCode(node.declarations);
     }
 
     /**

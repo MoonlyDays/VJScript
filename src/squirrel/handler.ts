@@ -25,7 +25,6 @@ import FunctionDeclaration from './nodes/FunctionDeclaration';
 import FunctionExpression from './nodes/FunctionExpression';
 import Identifier from './nodes/Identifier';
 import IfStatement from './nodes/IfStatement';
-import ImportDefaultSpecifier from './nodes/ImportDefaultSpecifier';
 import Literal from './nodes/Literal';
 import LogicalExpression from './nodes/LogicalExpression';
 import MemberExpression from './nodes/MemberExpression';
@@ -73,7 +72,6 @@ const NodeHandlerMap = {
     ThrowStatement: ThrowStatement,
     Identifier: Identifier,
     IfStatement: IfStatement,
-    ImportDefaultSpecifier: ImportDefaultSpecifier,
     Literal: Literal,
     LogicalExpression: LogicalExpression,
     MemberExpression: MemberExpression,
@@ -119,7 +117,7 @@ function handler<T extends Node>(node: T): NodeHandler<T> {
  * Generate Squirrel code for the provided Node.
  * @param node
  */
-export function codeGen(node: Node) {
+export function generateCode(node: Node) {
     if (!node) {
         return '';
     }

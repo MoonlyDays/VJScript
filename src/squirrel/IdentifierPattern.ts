@@ -4,7 +4,8 @@
 //--------------------------------------------------------------------------------------------------
 
 import {builders, is, NodePath} from 'estree-toolkit';
-import {LookupHelpers} from "./helpers/LookupHelpers";
+
+import {shallowestIdentifier} from './helpers/search';
 
 type IdentifierPatternItem = string | null | (NodePath extends NodePath<infer T> ? T : never);
 type IdentifierPatternItems = IdentifierPatternItem[];
@@ -182,7 +183,7 @@ export class IdentifierPattern {
         if (absolute) {
             // Narrow down the shallowest member expression object.
             // We start building the identifier from top to bottom.
-            path = LookupHelpers.shallowestIdentifier(path);
+            path = shallowestIdentifier(path);
         }
 
         return this.build(path);

@@ -4,10 +4,10 @@
 //--------------------------------------------------------------------------------------------------
 
 import {BinaryExpression} from 'estree';
-import {builders as b,NodePath} from 'estree-toolkit';
+import {builders as b, NodePath} from 'estree-toolkit';
 
 import {IDENTIFIER_HELPER_EQUAL_LOOSE, IDENTIFIER_HELPER_EQUAL_STRICT} from '../consts';
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {generateBinaryOperatorExpressionCode} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<BinaryExpression> {
@@ -33,7 +33,7 @@ export default class extends NodeHandler<BinaryExpression> {
 
     * handleCodeGen(node: BinaryExpression): Generator<string, void, unknown> {
         yield '(';
-        yield* GeneratorHelpers.binaryOperatorExpression(node);
+        yield* generateBinaryOperatorExpressionCode(node);
         yield ')';
     }
 }

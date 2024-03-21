@@ -4,18 +4,13 @@
 //--------------------------------------------------------------------------------------------------
 
 import {BlockStatement} from 'estree';
-import {NodePath} from 'estree-toolkit';
 
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
-import {NodeHandler, TraverseState} from './NodeHandler';
+import {generateBodyCode, generateCodeWithScope} from '../helpers/generator';
+import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<BlockStatement> {
 
-    handlePrepare(path: NodePath<BlockStatement>, state: TraverseState) {
-        const node = path.node;
-    }
-
     handleCodeGen(node: BlockStatement): Generator<string, void, unknown> {
-        return GeneratorHelpers.withScope(() => GeneratorHelpers.body(node));
+        return generateCodeWithScope(() => generateBodyCode(node));
     }
 }

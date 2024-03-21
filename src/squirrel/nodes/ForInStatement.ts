@@ -6,14 +6,14 @@
 import {ForInStatement} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {LoopHelpers} from '../helpers/LoopHelpers';
+import {Loops} from '../helpers/loops';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ForInStatement> {
 
     handlePrepare(path: NodePath<ForInStatement>) {
         const node = path.node;
-        LoopHelpers.normalizeStatement(path);
+        Loops.normalizeStatement(path);
 
         if (is.variableDeclaration(node.left)) {
             throw Error('ForInStatement: "left" must not be VariableDeclaration! Something went wrong!');

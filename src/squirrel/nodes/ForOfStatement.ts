@@ -6,16 +6,16 @@
 import {ForOfStatement} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
-import {codeGen} from '../handler';
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
-import {LoopHelpers} from '../helpers/LoopHelpers';
+import {generateCode} from '../handler';
+import {generateArgumentsCode} from '../helpers/generator';
+import {Loops} from '../helpers/loops';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ForOfStatement> {
     handlePrepare(path: NodePath<ForOfStatement>) {
 
         const node = path.node;
-        LoopHelpers.normalizeStatement(path);
+        Loops.normalizeStatement(path);
 
         if (is.arrayPattern(node.left)) {
             if (node.left.elements.length > 2) {
@@ -28,14 +28,14 @@ export default class extends NodeHandler<ForOfStatement> {
         yield 'foreach (';
 
         if (is.arrayPattern(node.left)) {
-            yield* GeneratorHelpers.arguments(node.left.elements);
+            yield* generateArgumentsCode(node.left.elements);
         } else {
-            yield codeGen(node.left);
+            yield generateCode(node.left);
         }
 
         yield ' in ';
-        yield codeGen(node.right);
+        yield generateCode(node.right);
         yield ') ';
-        yield codeGen(node.body);
+        yield generateCode(node.body);
     }
 }

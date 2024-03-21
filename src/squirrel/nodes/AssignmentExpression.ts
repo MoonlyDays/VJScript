@@ -6,10 +6,10 @@
 import {AssignmentExpression, AssignmentOperator, ClassBody, Pattern} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {ClassHelpers} from '../helpers/ClassHelpers';
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
-import {LookupHelpers} from '../helpers/LookupHelpers';
-import {PatternHelpers} from '../helpers/PatternHelpers';
+import {ensurePropertyIsDefined} from '../helpers/class';
+import {generateBinaryOperatorExpressionCode} from '../helpers/generator';
+import {destructureArrayPattern, destructureObjectPattern} from '../helpers/pattern';
+import {deepestMemberExpression} from '../helpers/search';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<AssignmentExpression> {
@@ -18,7 +18,7 @@ export default class extends NodeHandler<AssignmentExpression> {
 
         const node = path.node;
         if (is.arrayPattern(node.left)) {
-            PatternHelpers.destructureArray(
+            destructureArrayPattern(
                 node.left, node.right, path,
                 (k, v) =>
                     b.assignmentExpression(node.operator, k, v)
@@ -27,7 +27,7 @@ export default class extends NodeHandler<AssignmentExpression> {
         }
 
         if (is.objectPattern(node.left)) {
-            PatternHelpers.destructureObject(
+            destructureObjectPattern(
                 node.left, node.right, path,
                 (k, v) =>
                     b.assignmentExpression(node.operator, k, v));
@@ -58,7 +58,7 @@ export default class extends NodeHandler<AssignmentExpression> {
     }
 
     handleCodeGen(node: AssignmentExpression): Generator<string, void, unknown> {
-        return GeneratorHelpers.binaryOperatorExpression(node);
+        return generateBinaryOperatorExpressionCode(node);
     }
 
 
@@ -74,7 +74,7 @@ export default class extends NodeHandler<AssignmentExpression> {
             return;
 
         const leftPath = path.get('left');
-        const deepestMemberExpr = LookupHelpers.deepestMemberExpression(leftPath);
+        const deepestMemberExpr = deepestMemberExpression(leftPath);
         if (!is.memberExpression(deepestMemberExpr))
             return;
 
@@ -82,7 +82,7 @@ export default class extends NodeHandler<AssignmentExpression> {
         const propPath = deepestMemberExpr.get('property');
 
         if (is.thisExpression(objectPath) && is.identifier(propPath)) {
-            ClassHelpers.ensurePropertyDefinition(classBodyPath, propPath.node.name);
+            ensurePropertyIsDefined(classBodyPath, propPath.node.name);
         }
     }
 

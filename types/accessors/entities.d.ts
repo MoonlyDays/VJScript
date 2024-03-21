@@ -15,7 +15,7 @@ export const Entities: CEntities;
  * An interface to find and iterate over the script handles for the entities in
  * play. To iterate over a set of entities, pass null to the previous parameter
  * in the appropriate method to start an iteration. A reference to a previously-found
- * entity can be used instead to continue a search.
+ * entity can be used instead to continue a search.ts.
  */
 export declare interface CEntities {
     /**
@@ -32,7 +32,7 @@ export declare interface CEntities {
     DispatchSpawn(entity: CBaseEntity): void;
 
     /**
-     * Find entities by the string of their classname keyvalue. Pass 'null' value to start an iteration, or reference to a previously found entity to continue a search.
+     * Find entities by the string of their classname keyvalue. Pass 'null' value to start an iteration, or reference to a previously found entity to continue a search.ts.
      * @note The classname keyvalue of an entity can be manipulated and does not necessarily reflect its code class. There might be entities that have a different classname than the one they are created with. For example, you can spawn a "prop_dynamic" then change its classname to "my_prop", and it will retain the functionality of its code class while also not showing up when searching for "prop_dynamic".
      * @param entity
      * @param classname
@@ -48,7 +48,7 @@ export declare interface CEntities {
     FindByClassnameNearest<T extends CBaseEntity = CBaseEntity>(classname: EntityClassName, center: Vector, radius: number): T | null;
 
     /**
-     * Find entities by classname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * Find entities by classname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.ts.
      * @param previous
      * @param classname
      * @param center
@@ -57,14 +57,14 @@ export declare interface CEntities {
     FindByClassnameWithin<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, classname: EntityClassName, center: Vector, radius: number): T | null;
 
     /**
-     * Find entities by the string of their model keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * Find entities by the string of their model keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.ts.
      * @param previous
      * @param modelname
      */
     FindByModel<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, modelname: string): T | null;
 
     /**
-     * Find entities by the string of their targetname keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.
+     * Find entities by the string of their targetname keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.ts.
      * @param previous
      * @param targetname
      */
@@ -79,7 +79,7 @@ export declare interface CEntities {
     FindByNameNearest<T extends CBaseEntity = CBaseEntity>(targetname: string, center: Vector, radius: number): T | null;
 
     /**
-     * Find entities by targetname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * Find entities by targetname within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.ts
      * @param previous
      * @param targetname
      * @param center
@@ -88,14 +88,14 @@ export declare interface CEntities {
     FindByNameWithin<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, targetname: string, center: Vector, radius: number): T | null;
 
     /**
-     * Find entities by the string of their target keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * Find entities by the string of their target keyvalue. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.ts
      * @param previous
      * @param target
      */
     FindByTarget<T extends CBaseEntity = CBaseEntity>(previous: CBaseEntity | null, target: string): T | null;
 
     /**
-     * Find entities within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search
+     * Find entities within a radius. Pass 'null' to start an iteration, or reference to a previously found entity to continue a search.ts
      * @param previous
      * @param center
      * @param radius

@@ -6,7 +6,7 @@
 import {AssignmentPattern, Function as FunctionNode} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {generateBinaryOperatorExpressionCode} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<AssignmentPattern> {
@@ -34,7 +34,7 @@ export default class extends NodeHandler<AssignmentPattern> {
     }
 
     handleCodeGen(node: AssignmentPattern): Generator<string, void, unknown> {
-        return GeneratorHelpers.binaryOperatorExpression({
+        return generateBinaryOperatorExpressionCode({
             operator: '=',
             left: node.left,
             right: node.right

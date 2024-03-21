@@ -6,26 +6,26 @@
 import {Program, Statement} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
-import {LookupHelpers} from '../helpers/LookupHelpers';
-import {NodeHandler, TraverseState} from './NodeHandler';
+import {generateBodyCode} from '../helpers/generator';
+import {deepestIdentifier} from '../helpers/search';
+import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<Program> {
 
-    handlePrepare(path: NodePath<Program>, state: TraverseState) {
-        const body = path.get('body');
-        let length = body.length;
+    handlePrepare(path: NodePath<Program>) {
+        const statements = path.get('body');
+        let length = statements.length;
 
         for (let i = 0; i < length; i++) {
-            const stmt = body[i] as NodePath<Statement>;
-            if (!is.expressionStatement(stmt))
+            const statement = statements[i] as NodePath<Statement>;
+            if (!is.expressionStatement(statement))
                 continue;
 
-            const expr = stmt.get('expression');
+            const expr = statement.get('expression');
             if (!is.assignmentExpression(expr))
                 continue;
 
-            const deepest = LookupHelpers.deepestIdentifier(expr.get('left')) as NodePath;
+            const deepest = deepestIdentifier(expr.get('left')) as NodePath;
             if (!is.identifier(deepest))
                 continue;
 
@@ -33,15 +33,16 @@ export default class extends NodeHandler<Program> {
             if (deepestNode.name != 'exports')
                 continue;
 
-            stmt.remove();
+            statements.splice(i, 1);
+            path.pushContainer('body', [statement.cloneNode()]);
+            statement.remove();
             length--;
             i--;
-            path.pushContainer('body', [stmt.cloneNode()]);
         }
 
     }
 
     handleCodeGen(node: Program): Generator<string, void, unknown> {
-        return GeneratorHelpers.body(node);
+        return generateBodyCode(node);
     }
 }

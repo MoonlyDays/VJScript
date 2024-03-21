@@ -7,8 +7,8 @@ import {BlockStatement, ClassBody, PropertyDefinition} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit';
 
-import {codeGen} from '../handler';
-import {ClassHelpers} from '../helpers/ClassHelpers';
+import {generateCode} from '../handler';
+import {getConstructorDefinition, hasPropertyDefinitionValue} from '../helpers/class';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<PropertyDefinition> {
@@ -22,14 +22,14 @@ export default class extends NodeHandler<PropertyDefinition> {
         }
 
         // If this property definition has some sort of value, it must be declared in the constructor.
-        if (ClassHelpers.propertyDefinitionHasValue(node)) {
+        if (hasPropertyDefinitionValue(node)) {
 
             const classBody = path.findParent<ClassBody>(is.classBody);
             if (!classBody) {
                 throw Error('PropertyDefinition: Is not contained inside a Class Body?');
             }
 
-            const ctor = ClassHelpers.getConstructorDefinition(classBody);
+            const ctor = getConstructorDefinition(classBody);
             if (!ctor) {
                 throw Error('PropertyDefinition: Containing Class Body without a Constructor?');
             }
@@ -53,11 +53,11 @@ export default class extends NodeHandler<PropertyDefinition> {
             yield 'static ';
         }
 
-        yield codeGen(node.key);
+        yield generateCode(node.key);
 
         if (node.value) {
             yield ' = ';
-            yield codeGen(node.value);
+            yield generateCode(node.value);
         }
     }
 }

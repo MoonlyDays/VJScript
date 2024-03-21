@@ -3,14 +3,13 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {CallExpression, Node} from 'estree';
+import {CallExpression} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
 import AttributesConfig from '../data/attributes';
+import {IDENTIFIER_HELPER_MODULE_RESOLVE} from './consts';
 import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './IdentifierPattern';
 import {Module} from './Module';
-import {ModuleHelpers} from "./helpers/ModuleHelpers";
-import {IDENTIFIER_HELPER_MODULE_RESOLVE} from "./consts";
 
 export type AttributeType =
     'RequireFunction';
@@ -31,8 +30,9 @@ type AttributesAppliers = {
 };
 
 const AttributesHandlers: AttributesAppliers = {
-    RequireFunction: (p, module) => {
-        const callExpr = p.parentPath;
+
+    RequireFunction: (path, module) => {
+        const callExpr = path.parentPath;
         if (!is.callExpression(callExpr))
             return;
 
@@ -46,14 +46,16 @@ const AttributesHandlers: AttributesAppliers = {
         if (!is.identifier(callee))
             throw Error('RequireFunction: callee needs to be a identifier.');
 
-        const importedModule = ModuleHelpers.resolveImportedPath(argument.value.toString(), module);
+        const importedModule = Module.resolveImportedPath(argument.value.toString(), module);
         if (!importedModule)
             return;
 
         argument.value = importedModule.name;
         callee.name = IDENTIFIER_HELPER_MODULE_RESOLVE;
+        callExpr.skipChildren();
     }
-}
+};
+
 
 /**
  * Object for accessing the Attributes system. Attributes are used
@@ -112,7 +114,7 @@ export const Attributes = {
             this.handlePath(param, attrs, module);
         }
     }
-}
+};
 
 function parseAttributeArray(array: AttributeType[]): object {
     const obj = {};

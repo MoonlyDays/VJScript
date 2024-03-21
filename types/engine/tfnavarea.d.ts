@@ -156,7 +156,7 @@ export interface CTFNavArea {
     GetIncomingConnections(dir: number, table: NutTable): void;
 
     /**
-     * Returns the area just prior to this one in the search path.
+     * Returns the area just prior to this one in the search.ts path.
      */
     GetParent(): CTFNavArea;
 

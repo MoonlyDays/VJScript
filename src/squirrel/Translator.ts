@@ -4,16 +4,13 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Statement} from 'estree';
-import {builders as b, is} from 'estree-toolkit';
+import {builders as b} from 'estree-toolkit';
 import fs from 'fs';
 import path from 'path';
 
-import {codeGen} from './handler';
+import {IDENTIFIER_HELPER_MODULE_DECLARE, IDENTIFIER_HELPER_MODULE_RESOLVE} from './consts';
+import {generateCode} from './handler';
 import {Module} from './Module';
-import {ModuleHelpers} from "./helpers/ModuleHelpers";
-import {IDENTIFIER_HELPER_MODULE_DECLARE, IDENTIFIER_HELPER_MODULE_RESOLVE} from "./consts";
-import {IdentifyHelpers} from "./helpers/IdentifyHelpers";
-import {LookupHelpers} from "./helpers/LookupHelpers";
 
 /**
  * Class that handles translating script file
@@ -34,7 +31,7 @@ export class Translator {
     public entryModule: Module;
 
     constructor(entryScript: string) {
-        this.packageDir = ModuleHelpers.determinePackageRoot(entryScript);
+        this.packageDir = Module.determinePackageRoot(entryScript);
         this.entryModule = this.includeModule(entryScript);
     }
 
@@ -76,7 +73,7 @@ export class Translator {
     }
 
     public translate() {
-        return codeGen(this.generateBundleAST());
+        return generateCode(this.generateBundleAST());
     }
 
     /**

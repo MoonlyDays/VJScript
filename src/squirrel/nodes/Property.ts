@@ -6,7 +6,7 @@
 import {Property} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
-import {codeGen} from '../handler';
+import {generateCode} from '../handler';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<Property> {
@@ -20,8 +20,8 @@ export default class extends NodeHandler<Property> {
     }
 
     * handleCodeGen(node: Property): Generator<string, void, unknown> {
-        yield codeGen(node.key);
+        yield generateCode(node.key);
         yield ' = ';
-        yield codeGen(node.value);
+        yield generateCode(node.value);
     }
 }

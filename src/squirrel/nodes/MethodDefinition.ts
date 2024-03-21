@@ -5,8 +5,8 @@
 
 import {MethodDefinition} from 'estree';
 
-import {codeGen} from '../handler';
-import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {generateCode} from '../handler';
+import {generateArgumentsCode, generateBodyCode, generateCodeWithScope} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<MethodDefinition> {
@@ -22,15 +22,15 @@ export default class extends NodeHandler<MethodDefinition> {
 
         if (node.kind === 'method') {
             yield 'function ';
-            yield codeGen(node.key);
+            yield generateCode(node.key);
         } else {
             yield 'constructor';
         }
 
         yield '(';
-        yield* GeneratorHelpers.arguments(node.value.params);
+        yield* generateArgumentsCode(node.value.params);
         yield ') ';
 
-        yield* GeneratorHelpers.withScope(() => GeneratorHelpers.body(node.value.body));
+        yield* generateCodeWithScope(() => generateBodyCode(node.value.body));
     }
 }

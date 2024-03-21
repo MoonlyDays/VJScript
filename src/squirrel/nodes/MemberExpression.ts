@@ -7,7 +7,7 @@ import {MemberExpression} from 'estree';
 import {builders, is, NodePath} from 'estree-toolkit';
 
 import {Attributes} from '../Attributes';
-import {codeGen} from '../handler';
+import {generateCode} from '../handler';
 import {NodeHandler, TraverseState} from './NodeHandler';
 
 export default class extends NodeHandler<MemberExpression> {
@@ -26,16 +26,16 @@ export default class extends NodeHandler<MemberExpression> {
 
     * handleCodeGen(node: MemberExpression): Generator<string, void, unknown> {
 
-        yield codeGen(node.object);
+        yield generateCode(node.object);
 
         if (node.computed) {
             yield '[';
-            yield codeGen(node.property);
+            yield generateCode(node.property);
             yield ']';
             return;
         }
 
         yield '.';
-        yield codeGen(node.property);
+        yield generateCode(node.property);
     }
 }

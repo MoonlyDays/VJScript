@@ -5,12 +5,12 @@
 
 import {ExpressionStatement} from 'estree';
 
-import {codeGen} from '../handler';
+import {generateCode} from '../handler';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ExpressionStatement> {
 
     * handleCodeGen(node: ExpressionStatement): Generator<string, void, unknown> {
-        yield codeGen(node.expression);
+        yield generateCode(node.expression);
     }
 }
