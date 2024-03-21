@@ -11,7 +11,7 @@ import path from 'path';
 import {codeGen} from './handler';
 import {Module} from './Module';
 import {ModuleHelpers} from "./helpers/ModuleHelpers";
-import {IDENTIFIER_MODULE_DECLARE, IDENTIFIER_MODULE_RESOLVE} from "./consts";
+import {IDENTIFIER_HELPER_MODULE_DECLARE, IDENTIFIER_HELPER_MODULE_RESOLVE} from "./consts";
 
 /**
  * Class that handles translating script file
@@ -57,7 +57,7 @@ export class Translator {
             const body = module.program.body as Statement[];
 
             program.body.push(b.expressionStatement(b.callExpression(
-                b.identifier(IDENTIFIER_MODULE_DECLARE),
+                b.identifier(IDENTIFIER_HELPER_MODULE_DECLARE),
                 [
                     b.literal(module.name),
                     b.functionExpression(null, [], b.blockStatement(body))
@@ -66,7 +66,7 @@ export class Translator {
         }
 
         program.body.push(b.expressionStatement(b.callExpression(
-            b.identifier(IDENTIFIER_MODULE_RESOLVE),
+            b.identifier(IDENTIFIER_HELPER_MODULE_RESOLVE),
             [b.literal(this.entryModule.name)]
         )));
 

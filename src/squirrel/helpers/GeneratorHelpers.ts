@@ -2,6 +2,9 @@ import {Function as FunctionNode, Node} from "estree";
 import {codeGen} from "../handler";
 import {is} from "estree-toolkit";
 
+/**
+ * Helper functions used to generate code.
+ */
 export const GeneratorHelpers = {
 
     /**

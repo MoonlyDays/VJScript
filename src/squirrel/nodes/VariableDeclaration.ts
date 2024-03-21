@@ -6,11 +6,9 @@
 import {VariableDeclaration} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {codeGen} from '../handler';
-import {findPathInsideArray} from '../helpers/general';
-import {isGlobalIdentifier, isRequireCallExpression} from '../helpers/identify';
 import {NodeHandler} from './NodeHandler';
 import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
+import {LookupHelpers} from "../helpers/LookupHelpers";
 
 export default class extends NodeHandler<VariableDeclaration> {
 
@@ -21,7 +19,7 @@ export default class extends NodeHandler<VariableDeclaration> {
 
             for (let i = 1; i < node.declarations.length; i++) {
                 const declarator = node.declarations[i];
-                const parentPath = findPathInsideArray(path);
+                const parentPath = LookupHelpers.parentInsideContainer(path);
                 parentPath.insertAfter([b.variableDeclaration(node.kind, [declarator])]);
             }
 
@@ -68,15 +66,11 @@ export default class extends NodeHandler<VariableDeclaration> {
 
         const declarations = path.get('declarations');
         for (const declaration of declarations) {
-            const id = declaration.get('id');
+            // const id = declaration.get('id');
             const init = declaration.get('init');
 
-            // Global variables must always be declared
-            if (isGlobalIdentifier(id))
-                return true;
-
-            if (isRequireCallExpression(init))
-                return true;
+            // if (isRequireCallExpression(init))
+            //     return true;
         }
 
         return false;

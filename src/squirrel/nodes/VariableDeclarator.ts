@@ -8,7 +8,7 @@ import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {codeGen} from '../handler';
 import {NodeHandler} from './NodeHandler';
-import {PatternHelpers} from "../helpers/patterns";
+import {PatternHelpers} from "../helpers/PatternHelpers";
 
 export default class extends NodeHandler<VariableDeclarator> {
 

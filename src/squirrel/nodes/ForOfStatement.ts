@@ -7,15 +7,15 @@ import {ForOfStatement} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
 import {codeGen} from '../handler';
-import {normalizeLoopStatement} from '../helpers/loop';
 import {NodeHandler} from './NodeHandler';
 import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
+import {LoopHelpers} from "../helpers/LoopHelpers";
 
 export default class extends NodeHandler<ForOfStatement> {
     handlePrepare(path: NodePath<ForOfStatement>) {
 
         const node = path.node;
-        normalizeLoopStatement(path);
+        LoopHelpers.normalizeStatement(path);
 
         if (is.arrayPattern(node.left)) {
             if (node.left.elements.length > 2) {

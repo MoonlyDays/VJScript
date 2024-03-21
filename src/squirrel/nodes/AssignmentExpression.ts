@@ -6,11 +6,11 @@
 import {AssignmentExpression, AssignmentOperator, ClassBody, Pattern} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {getDeepestMemberExpression} from '../helpers/general';
 import {NodeHandler} from './NodeHandler';
 import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 import {ClassHelpers} from "../helpers/ClassHelpers";
-import {PatternHelpers} from "../helpers/patterns";
+import {PatternHelpers} from "../helpers/PatternHelpers";
+import {LookupHelpers} from "../helpers/LookupHelpers";
 
 export default class extends NodeHandler<AssignmentExpression> {
 
@@ -74,7 +74,7 @@ export default class extends NodeHandler<AssignmentExpression> {
             return;
 
         const leftPath = path.get('left');
-        const deepestMemberExpr = getDeepestMemberExpression(leftPath);
+        const deepestMemberExpr = LookupHelpers.deepestMemberExpression(leftPath);
         if (!is.memberExpression(deepestMemberExpr))
             return;
 

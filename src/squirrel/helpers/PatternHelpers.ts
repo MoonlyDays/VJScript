@@ -6,8 +6,7 @@
 import {ArrayPattern, Expression, MemberExpression, Node, ObjectPattern, Pattern} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit';
-
-import {findPathInsideArray} from './general';
+import {LookupHelpers} from "./LookupHelpers";
 
 export const PatternHelpers = {
     destructureArray<T extends Node>(
@@ -63,7 +62,7 @@ export const PatternHelpers = {
         generateFn: (id: P) => Generator<T, void>,
         insertPath: NodePath,
     ) {
-        const parentPath = findPathInsideArray(insertPath);
+        const parentPath = LookupHelpers.parentInsideContainer(insertPath);
         if (!parentPath) {
             throw Error('destructure: Parent node inside a container was not found.');
         }

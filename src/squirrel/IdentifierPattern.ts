@@ -4,6 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {builders, is, NodePath} from 'estree-toolkit';
+import {LookupHelpers} from "./helpers/LookupHelpers";
 
 type IdentifierPatternItem = string | null | (NodePath extends NodePath<infer T> ? T : never);
 type IdentifierPatternItems = IdentifierPatternItem[];
@@ -181,7 +182,7 @@ export class IdentifierPattern {
         if (absolute) {
             // Narrow down the shallowest member expression object.
             // We start building the identifier from top to bottom.
-            path = shallowestIdentifier(path);
+            path = LookupHelpers.shallowestIdentifier(path);
         }
 
         return this.build(path);
@@ -237,20 +238,6 @@ function normalizeItem(item: IdentifierPatternItem) {
     }
 
     return item;
-}
-
-export function shallowestIdentifier(path: NodePath) {
-    if (is.memberExpression(path.parentPath))
-        return shallowestIdentifier(path.parentPath);
-
-    return path;
-}
-
-export function deepestIdentifier(path: NodePath) {
-    if (is.memberExpression(path))
-        return deepestIdentifier(path.get('object'));
-
-    return path;
 }
 
 export interface SearchPattern {

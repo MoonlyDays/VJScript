@@ -8,7 +8,7 @@ import {NodePath, builders as b} from 'estree-toolkit';
 
 import {NodeHandler} from './NodeHandler';
 import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
-import {IDENTIFIER_EQUAL_LOOSE, IDENTIFIER_EQUAL_STRICT} from "../consts";
+import {IDENTIFIER_HELPER_EQUAL_LOOSE, IDENTIFIER_HELPER_EQUAL_STRICT} from "../consts";
 
 export default class extends NodeHandler<BinaryExpression> {
 
@@ -16,7 +16,7 @@ export default class extends NodeHandler<BinaryExpression> {
         const node = path.node;
         if (node.operator == '===') {
             path.replaceWith(b.callExpression(
-                b.identifier(IDENTIFIER_EQUAL_STRICT),
+                b.identifier(IDENTIFIER_HELPER_EQUAL_STRICT),
                 [node.left, node.right]
             ));
             return;
@@ -24,7 +24,7 @@ export default class extends NodeHandler<BinaryExpression> {
 
         if (node.operator == "==") {
             path.replaceWith(b.callExpression(
-                b.identifier(IDENTIFIER_EQUAL_LOOSE),
+                b.identifier(IDENTIFIER_HELPER_EQUAL_LOOSE),
                 [node.left, node.right]
             ));
             return;

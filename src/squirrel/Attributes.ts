@@ -7,9 +7,10 @@ import {CallExpression, Node} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
 import AttributesConfig from '../data/attributes';
-import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './identifier';
+import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './IdentifierPattern';
 import {Module} from './Module';
 import {ModuleHelpers} from "./helpers/ModuleHelpers";
+import {IDENTIFIER_HELPER_MODULE_RESOLVE} from "./consts";
 
 export type AttributeType =
     'RequireFunction';
@@ -49,9 +50,8 @@ const AttributesHandlers: AttributesAppliers = {
         if (!importedModule)
             return;
 
-        // jopa
         argument.value = importedModule.name;
-        callee.name = "__resolveModule";
+        callee.name = IDENTIFIER_HELPER_MODULE_RESOLVE;
     }
 }
 
