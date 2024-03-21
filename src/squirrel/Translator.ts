@@ -4,7 +4,7 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Statement} from 'estree';
-import {builders as b} from 'estree-toolkit';
+import {builders as b, is} from 'estree-toolkit';
 import fs from 'fs';
 import path from 'path';
 
@@ -12,6 +12,8 @@ import {codeGen} from './handler';
 import {Module} from './Module';
 import {ModuleHelpers} from "./helpers/ModuleHelpers";
 import {IDENTIFIER_HELPER_MODULE_DECLARE, IDENTIFIER_HELPER_MODULE_RESOLVE} from "./consts";
+import {IdentifyHelpers} from "./helpers/IdentifyHelpers";
+import {LookupHelpers} from "./helpers/LookupHelpers";
 
 /**
  * Class that handles translating script file

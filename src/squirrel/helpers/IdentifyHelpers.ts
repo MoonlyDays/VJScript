@@ -3,10 +3,11 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {CallExpression} from 'estree';
+import {CallExpression, Node} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
 import {IDENTIFIER_HELPER_INTEROP_WRAPPER} from '../consts';
+import {LookupHelpers} from "./LookupHelpers";
 
 export const IdentifyHelpers = {
 
@@ -25,30 +26,5 @@ export const IdentifyHelpers = {
             return false;
 
         return callee.name == IDENTIFIER_HELPER_INTEROP_WRAPPER;
-    },
-
-    requireCallExpression(path: NodePath): path is NodePath<CallExpression> {
-
-        const node = path.node;
-        if (!is.callExpression(node))
-            return false;
-
-        const callee = node.callee;
-        if (!is.identifier(callee))
-            return false;
-
-        if (callee.name != 'require')
-            return false;
-
-        const args = node.arguments;
-        if (args.length !== 1)
-            return false;
-
-        const arg = args[0];
-        if (!is.literal(arg))
-            return false;
-
-        return !path.scope.hasBinding('require');
     }
-
 }
