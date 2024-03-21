@@ -6,7 +6,7 @@
 import {MemberExpression} from 'estree';
 import {builders, is, NodePath} from 'estree-toolkit';
 
-import {Attributes} from '../Attributes';
+import {Attributes} from '../attributes';
 import {generateCode} from '../handler';
 import {NodeHandler, TraverseState} from './NodeHandler';
 

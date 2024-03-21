@@ -10,7 +10,7 @@ import {Options, parseModule} from 'meriyah';
 import path from 'path';
 
 import {prepareSyntaxTree} from './handler';
-import {Translator} from './Translator';
+import {Translator} from './translator';
 
 export const MeriyahParseOptions: Options = {
     next: true,

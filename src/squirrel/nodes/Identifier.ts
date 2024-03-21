@@ -6,7 +6,7 @@
 import {Identifier} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
-import {Attributes} from '../Attributes';
+import {Attributes} from '../attributes';
 import {NodeHandler, TraverseState} from './NodeHandler';
 
 export default class extends NodeHandler<Identifier> {

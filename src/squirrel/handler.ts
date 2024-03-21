@@ -6,7 +6,7 @@
 import {Node} from 'estree';
 import {NodePath, traverse} from 'estree-toolkit';
 
-import {Module} from './Module';
+import {Module} from './module';
 import ArrayExpression from './nodes/ArrayExpression';
 import ArrowFunctionExpression from './nodes/ArrowFunctionExpression';
 import AssignmentExpression from './nodes/AssignmentExpression';

@@ -7,8 +7,8 @@
 import {Node} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
-import {Module} from '../Module';
-import {Translator} from '../Translator';
+import {Module} from '../module';
+import {Translator} from '../translator';
 
 export type TraverseState = {
     module: Module;

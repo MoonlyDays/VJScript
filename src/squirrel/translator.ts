@@ -1,8 +1,3 @@
-//--------------------------------------------------------------------------------------------------
-// Copyright (C) Moonly Days                                                                       -
-// https://github.com/MoonlyDays                                                                   -
-//--------------------------------------------------------------------------------------------------
-
 import {Statement} from 'estree';
 import {builders as b} from 'estree-toolkit';
 import fs from 'fs';
@@ -10,7 +5,7 @@ import path from 'path';
 
 import {IDENTIFIER_HELPER_MODULE_DECLARE, IDENTIFIER_HELPER_MODULE_RESOLVE} from './consts';
 import {generateCode} from './handler';
-import {Module} from './Module';
+import {Module} from './module';
 
 /**
  * Class that handles translating script file

@@ -8,8 +8,8 @@ import {is, NodePath} from 'estree-toolkit';
 
 import AttributesConfig from '../data/attributes';
 import {IDENTIFIER_HELPER_MODULE_RESOLVE} from './consts';
-import {ConfigSearchPatternSet, IdentifierPattern, parseSearchPattern, SearchPattern} from './IdentifierPattern';
-import {Module} from './Module';
+import {ConfigSearchPatternSet, Identifier, parseSearchPattern, SearchPattern} from './identifier';
+import {Module} from './module';
 
 export type AttributeType =
     'RequireFunction';
@@ -73,7 +73,7 @@ export const Attributes = {
         if (!rule)
             return;
 
-        const nodePattern = IdentifierPattern.fromPath(path);
+        const nodePattern = Identifier.fromPath(path);
         if (nodePattern.hasBinding(path))
             return;
 
