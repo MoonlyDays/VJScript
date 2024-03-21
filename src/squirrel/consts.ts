@@ -6,11 +6,16 @@
 /**
  * Identifiers with this prefix are treated as "global" and will be declared in root scope.
  * This is a powerful modifier, so it should be avoided.
+ * @deprecated
  */
 export const IDENTIFIER_MODIFIER_GLOBAL = '__global_';
 /**
- * This prefix indicates that a given identifier was polyfilled by the compiler.
+ * @deprecated
  */
-export const IDENTIFIER_MODIFIER_POLYFILLED = '__js_';
-
 export const IDENTIFIER_DEFAULT_EXPORT = 'default';
+
+export const IDENTIFIER_INTEROP_WRAPPER = "__";
+export const IDENTIFIER_MODULE_RESOLVE = "__resolveModule";
+export const IDENTIFIER_MODULE_DECLARE = "__declareModule";
+export const IDENTIFIER_EQUAL_LOOSE = "__eq";
+export const IDENTIFIER_EQUAL_STRICT = "__seq";

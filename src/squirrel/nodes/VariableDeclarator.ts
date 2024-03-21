@@ -6,11 +6,9 @@
 import {Identifier, Literal, VariableDeclarator} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {generate} from '../handler';
-import {isRequireCallExpression} from '../helpers/identify';
-import {replaceArrayPattern,replaceObjectPattern} from '../helpers/patterns';
-import {deepestIdentifier} from '../identifier';
+import {codeGen} from '../handler';
 import {NodeHandler} from './NodeHandler';
+import {PatternHelpers} from "../helpers/patterns";
 
 export default class extends NodeHandler<VariableDeclarator> {
 
@@ -19,7 +17,7 @@ export default class extends NodeHandler<VariableDeclarator> {
 
         const id = node.id;
         if (is.arrayPattern(id)) {
-            replaceArrayPattern(
+            PatternHelpers.destructureArray(
                 id, node.init, path,
                 (k, v) => b.variableDeclarator(k, v),
                 path.parentPath
@@ -28,7 +26,7 @@ export default class extends NodeHandler<VariableDeclarator> {
         }
 
         if (is.objectPattern(id)) {
-            replaceObjectPattern(
+            PatternHelpers.destructureObject(
                 id, node.init, path,
                 (k, v) => b.variableDeclarator(k, v),
                 path.parentPath
@@ -37,11 +35,11 @@ export default class extends NodeHandler<VariableDeclarator> {
         }
     }
 
-    * handleGenerate(node: VariableDeclarator): Generator<string, void, unknown> {
-        yield generate(node.id);
+    * handleCodeGen(node: VariableDeclarator): Generator<string, void, unknown> {
+        yield codeGen(node.id);
         if (node.init) {
             yield ' = ';
-            yield generate(node.init);
+            yield codeGen(node.init);
         }
     }
 }

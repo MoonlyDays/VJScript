@@ -6,12 +6,11 @@
 import {AssignmentExpression, AssignmentOperator, ClassBody, Pattern} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
-import {ensurePropertyDefinitionInClass} from '../helpers/class';
-import {IDENTIFIER_DEFAULT_EXPORT} from '../helpers/consts';
-import {deepestMemberExpression} from '../helpers/general';
-import {generateBinaryOperatorExpression} from '../helpers/generator';
-import {replaceArrayPattern, replaceObjectPattern} from '../helpers/patterns';
+import {getDeepestMemberExpression} from '../helpers/general';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
+import {ClassHelpers} from "../helpers/ClassHelpers";
+import {PatternHelpers} from "../helpers/patterns";
 
 export default class extends NodeHandler<AssignmentExpression> {
 
@@ -19,12 +18,19 @@ export default class extends NodeHandler<AssignmentExpression> {
 
         const node = path.node;
         if (is.arrayPattern(node.left)) {
-            replaceArrayPattern(node.left, node.right, path, (k, v) => b.assignmentExpression(node.operator, k, v));
+            PatternHelpers.destructureArray(
+                node.left, node.right, path,
+                (k, v) =>
+                    b.assignmentExpression(node.operator, k, v)
+            );
             return;
         }
 
         if (is.objectPattern(node.left)) {
-            replaceObjectPattern(node.left, node.right, path, (k, v) => b.assignmentExpression(node.operator, k, v));
+            PatternHelpers.destructureObject(
+                node.left, node.right, path,
+                (k, v) =>
+                    b.assignmentExpression(node.operator, k, v));
             return;
         }
 
@@ -42,90 +48,77 @@ export default class extends NodeHandler<AssignmentExpression> {
             throw Error('AssignmentExpression: left side of the nullish coalescing assignment operator is not an expression?');
         }
 
-        if (shouldUseSlotOperator(path)) {
+        if (this.shouldUseSlotOperator(path)) {
             // Hack to change the operator to Squirrel slot creation operator "<-" so that typescript
             // doesn't scream at us about an invalid operator.
             (node.operator as AssignmentOperator | '<-') = '<-';
-
-            handleDefaultAssignment(path);
         }
 
-        handleClassPropertyAssignment(path);
+        this.handleClassPropertyAssignment(path);
     }
 
-    handleGenerate(node: AssignmentExpression): Generator<string, void, unknown> {
-        return generateBinaryOperatorExpression(node);
+    handleCodeGen(node: AssignmentExpression): Generator<string, void, unknown> {
+        return GeneratorHelpers.binaryOperatorExpression(node);
     }
-}
 
-/**
- *
- */
-function handleDefaultAssignment(path: NodePath<AssignmentExpression>) {
 
-    const leftPath = path.get('left');
-    if (is.identifier(leftPath) && leftPath.node.name == IDENTIFIER_DEFAULT_EXPORT) {
+    /**
+     * If we assign to some property of a class, make sure that class if actually declared.
+     * @param path
+     */
+    handleClassPropertyAssignment(path: NodePath<AssignmentExpression>) {
 
-        leftPath.replaceWith(b.memberExpression(
-            b.thisExpression(),
-            b.identifier(IDENTIFIER_DEFAULT_EXPORT)
-        ));
-    }
-}
+        // Special case for assigning value to a class field.
+        const classBodyPath = path.findParent<ClassBody>(is.classBody);
+        if (!classBodyPath)
+            return;
 
-/**
- * If we assign to some property of a class, make sure that class if actually declared.
- * @param path
- */
-function handleClassPropertyAssignment(path: NodePath<AssignmentExpression>) {
+        const leftPath = path.get('left');
+        const deepestMemberExpr = getDeepestMemberExpression(leftPath);
+        if (!is.memberExpression(deepestMemberExpr))
+            return;
 
-    // Special case for assigning value to a class field.
-    const classBodyPath = path.findParent<ClassBody>(is.classBody);
-    if (!classBodyPath)
-        return;
+        const objectPath = deepestMemberExpr.get('object');
+        const propPath = deepestMemberExpr.get('property');
 
-    const leftPath = path.get('left');
-    const deepestMemberExpr = deepestMemberExpression(leftPath);
-    if (!is.memberExpression(deepestMemberExpr))
-        return;
-
-    const objectPath = deepestMemberExpr.get('object');
-    const propPath = deepestMemberExpr.get('property');
-
-    if (is.thisExpression(objectPath) && is.identifier(propPath)) {
-        ensurePropertyDefinitionInClass(classBodyPath, propPath.node.name);
-    }
-}
-
-function shouldUseSlotOperator(path: NodePath<AssignmentExpression>) {
-
-    // If we assign to a previously declared identifier, we don't need to use the slot operator.
-    const leftPath = path.get('left') as NodePath<Pattern>;
-    if (is.identifier(leftPath)) {
-        if (leftPath.scope.hasBinding(leftPath.node.name)) {
-            // console.log(leftPath.scope.getBinding(leftPath.node.name).path.node);
-            return false;
+        if (is.thisExpression(objectPath) && is.identifier(propPath)) {
+            ClassHelpers.ensurePropertyDefinition(classBodyPath, propPath.node.name);
         }
     }
 
-    const classBody = path.findParent<ClassBody>(is.classBody);
-    if (classBody) {
+    /**
+     * Determine if we should use a slot operator for the given assignment expression.
+     * @param path
+     */
+    shouldUseSlotOperator(path: NodePath<AssignmentExpression>) {
 
-        // We can't use slot operator for changing class fields through "this" keyword.
-        // Find the deepest member expression.
-        if (is.memberExpression(leftPath)) {
-
-            const object = leftPath.get('object');
-            const prop = leftPath.get('property');
-
-            // If an object is "this" keyword, and property is some sort of identifier,
-            // and we're inside a class body, we can't use slot operator.
-            if (is.thisExpression(object) && is.identifier(prop)) {
+        // If we assign to a previously declared identifier, we don't need to use the slot operator.
+        const leftPath = path.get('left') as NodePath<Pattern>;
+        if (is.identifier(leftPath)) {
+            if (leftPath.scope.hasBinding(leftPath.node.name)) {
                 return false;
             }
         }
+
+        // If an object is "this" keyword, and property is some sort of identifier,
+        // and we're inside a class body, we can't use slot operator.
+        const classBody = path.findParent<ClassBody>(is.classBody);
+        if (classBody) {
+
+            // Find the deepest member expression.
+            if (is.memberExpression(leftPath)) {
+
+                const object = leftPath.get('object');
+                const prop = leftPath.get('property');
+
+                if (is.thisExpression(object) && is.identifier(prop)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
-    return true;
-}
 
+}

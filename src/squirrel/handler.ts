@@ -6,7 +6,7 @@
 import {Node} from 'estree';
 import {NodePath, traverse} from 'estree-toolkit';
 
-import {Module} from './module';
+import {Module} from './Module';
 import ArrayExpression from './nodes/ArrayExpression';
 import ArrowFunctionExpression from './nodes/ArrowFunctionExpression';
 import AssignmentExpression from './nodes/AssignmentExpression';
@@ -17,8 +17,6 @@ import CallExpression from './nodes/CallExpression';
 import ClassBody from './nodes/ClassBody';
 import ClassDeclaration from './nodes/ClassDeclaration';
 import ConditionalExpression from './nodes/ConditionalExpression';
-import ExportDefaultDeclaration from './nodes/ExportDefaultDeclaration';
-import ExportNamedDeclaration from './nodes/ExportNamedDeclaration';
 import ExpressionStatement from './nodes/ExpressionStatement';
 import ForInStatement from './nodes/ForInStatement';
 import ForOfStatement from './nodes/ForOfStatement';
@@ -27,7 +25,6 @@ import FunctionDeclaration from './nodes/FunctionDeclaration';
 import FunctionExpression from './nodes/FunctionExpression';
 import Identifier from './nodes/Identifier';
 import IfStatement from './nodes/IfStatement';
-import ImportDeclaration from './nodes/ImportDeclaration';
 import ImportDefaultSpecifier from './nodes/ImportDefaultSpecifier';
 import Literal from './nodes/Literal';
 import LogicalExpression from './nodes/LogicalExpression';
@@ -51,7 +48,6 @@ import UnaryExpression from './nodes/UnaryExpression';
 import UpdateExpression from './nodes/UpdateExpression';
 import VariableDeclaration from './nodes/VariableDeclaration';
 import VariableDeclarator from './nodes/VariableDeclarator';
-import ExportAllDeclaration from './nodes/ExportAllDeclaration';
 
 const NodeHandlerMap = {
     ArrowFunctionExpression: ArrowFunctionExpression,
@@ -71,9 +67,6 @@ const NodeHandlerMap = {
     ForOfStatement: ForOfStatement,
     ReturnStatement: ReturnStatement,
     ConditionalExpression: ConditionalExpression,
-    // ExportNamedDeclaration: ExportNamedDeclaration,
-    // ExportDefaultDeclaration: ExportDefaultDeclaration,
-    // ExportAllDeclaration: ExportAllDeclaration,
     FunctionDeclaration: FunctionDeclaration,
     FunctionExpression: FunctionExpression,
     UpdateExpression: UpdateExpression,
@@ -81,7 +74,6 @@ const NodeHandlerMap = {
     Identifier: Identifier,
     IfStatement: IfStatement,
     ImportDefaultSpecifier: ImportDefaultSpecifier,
-    ImportDeclaration: ImportDeclaration,
     Literal: Literal,
     LogicalExpression: LogicalExpression,
     MemberExpression: MemberExpression,
@@ -100,11 +92,15 @@ const NodeHandlerMap = {
     VariableDeclarator: VariableDeclarator
 };
 
-const nodeHandleInstances = new Map<string, NodeHandler<never>>();
+const g_kNodeHandlerInstances = new Map<string, NodeHandler<never>>();
 
+/**
+ * Retrieve a handle for a provided node by its type.
+ * @param node
+ */
 function handler<T extends Node>(node: T): NodeHandler<T> {
     const type = node.type;
-    let handler = nodeHandleInstances.get(type);
+    let handler = g_kNodeHandlerInstances.get(type);
     if (handler) {
         return handler;
     }
@@ -115,7 +111,7 @@ function handler<T extends Node>(node: T): NodeHandler<T> {
     }
 
     handler = new handlerType();
-    nodeHandleInstances.set(type, handler);
+    g_kNodeHandlerInstances.set(type, handler);
     return handler;
 }
 
@@ -123,13 +119,12 @@ function handler<T extends Node>(node: T): NodeHandler<T> {
  * Generate Squirrel code for the provided Node.
  * @param node
  */
-export function generate(node: Node) {
-
+export function codeGen(node: Node) {
     if (!node) {
         return '';
     }
 
-    let fragments = [...handler(node).handleGenerate(node)];
+    let fragments = [...handler(node).handleCodeGen(node)];
     fragments = fragments.filter(x => !!x);
     return fragments.join('');
 }
@@ -148,7 +143,12 @@ const prepareVisitors = Object.keys(NodeHandlerMap)
         })
     }), {});
 
-export function prepare(node: Node, module?: Module) {
+/**
+ * Prepare AST for being translated to Squirrel language.
+ * @param node
+ * @param module
+ */
+export function prepareSyntaxTree(node: Node, module?: Module) {
     // console.trace(`prepare on ${module.name}`);
     traverse(node, {
         $: {scope: true},

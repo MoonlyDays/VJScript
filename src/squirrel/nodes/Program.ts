@@ -5,11 +5,11 @@
 
 import {Program} from 'estree';
 
-import {generateBody} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<Program> {
-    handleGenerate(node: Program): Generator<string, void, unknown> {
-        return generateBody(node);
+    handleCodeGen(node: Program): Generator<string, void, unknown> {
+        return GeneratorHelpers.body(node);
     }
 }

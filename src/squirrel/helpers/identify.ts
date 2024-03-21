@@ -6,7 +6,7 @@
 import {CallExpression, Identifier} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
-import {IDENTIFIER_MODIFIER_GLOBAL} from './consts';
+import {IDENTIFIER_INTEROP_WRAPPER, IDENTIFIER_MODIFIER_GLOBAL} from '../consts';
 
 export function isRequireCallExpression(path: NodePath): path is NodePath<CallExpression> {
 
@@ -37,4 +37,24 @@ export function isGlobalIdentifier(path: NodePath): path is NodePath<Identifier>
         return false;
 
     return path.node.name.includes(IDENTIFIER_MODIFIER_GLOBAL);
+}
+
+
+/**
+ * Is
+ * @param path
+ */
+export function isWrappedInsideInteropHelper(path: NodePath) {
+    const parent = path.parent;
+    if (!is.callExpression(parent))
+        return false;
+
+    const callee = parent.callee;
+    if (!is.identifier(callee))
+        return false;
+
+    if (callee.name != IDENTIFIER_INTEROP_WRAPPER)
+        return false;
+
+    return true;
 }

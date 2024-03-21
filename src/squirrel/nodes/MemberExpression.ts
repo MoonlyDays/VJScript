@@ -6,9 +6,9 @@
 import {MemberExpression} from 'estree';
 import {builders, is, NodePath} from 'estree-toolkit';
 
-import {processAttributes} from '../attributes';
-import {generate} from '../handler';
+import {codeGen} from '../handler';
 import {NodeHandler, TraverseState} from './NodeHandler';
+import {Attributes} from "../Attributes";
 
 export default class extends NodeHandler<MemberExpression> {
     handlePrepare(path: NodePath<MemberExpression>, state: TraverseState) {
@@ -21,21 +21,21 @@ export default class extends NodeHandler<MemberExpression> {
             node.computed = true;
         }
 
-        processAttributes(path, state.module);
+        Attributes.process(path, state.module);
     }
 
-    * handleGenerate(node: MemberExpression): Generator<string, void, unknown> {
+    * handleCodeGen(node: MemberExpression): Generator<string, void, unknown> {
 
-        yield generate(node.object);
+        yield codeGen(node.object);
 
         if (node.computed) {
             yield '[';
-            yield generate(node.property);
+            yield codeGen(node.property);
             yield ']';
             return;
         }
 
         yield '.';
-        yield generate(node.property);
+        yield codeGen(node.property);
     }
 }

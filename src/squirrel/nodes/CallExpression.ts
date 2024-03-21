@@ -5,17 +5,17 @@
 
 import {CallExpression} from 'estree';
 
-import {generate} from '../handler';
-import {generateArguments} from '../helpers/generator';
+import {codeGen} from '../handler';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<CallExpression> {
 
-    * handleGenerate(node: CallExpression): Generator<string, void, unknown> {
+    * handleCodeGen(node: CallExpression): Generator<string, void, unknown> {
 
-        yield generate(node.callee);
+        yield codeGen(node.callee);
         yield '(';
-        yield* generateArguments(node.arguments);
+        yield* GeneratorHelpers.arguments(node.arguments);
         yield ')';
     }
 }

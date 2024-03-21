@@ -5,15 +5,15 @@
 
 import {ArrayExpression} from 'estree';
 
-import {generateArguments} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<ArrayExpression> {
 
-    * handleGenerate(node: ArrayExpression): Generator<string, void, unknown> {
+    * handleCodeGen(node: ArrayExpression): Generator<string, void, unknown> {
 
         yield '[';
-        yield* generateArguments(node.elements);
+        yield* GeneratorHelpers.arguments(node.elements);
         yield ']';
     }
 }

@@ -263,7 +263,6 @@ export function parseSearchPattern<T extends SearchPattern>(pattern: string): T 
 
 export class ConfigSearchPatternSet<T extends SearchPattern = SearchPattern> extends Set<T> {
     public find(path: NodePath) {
-
         for (const search of this) {
             const pattern = search.pattern;
             if (pattern.match(path) !== false)

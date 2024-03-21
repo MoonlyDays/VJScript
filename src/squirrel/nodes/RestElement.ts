@@ -23,7 +23,7 @@ export default class extends NodeHandler<RestElement> {
         }
     }
 
-    * handleGenerate(): Generator<string, void, unknown> {
+    * handleCodeGen(): Generator<string, void, unknown> {
         yield '...';
     }
 }

@@ -9,8 +9,8 @@ import fs from 'fs';
 import {Options, parseModule} from 'meriyah';
 import path from 'path';
 
-import {prepare} from './handler';
-import {Translator} from './translator';
+import {prepareSyntaxTree} from './handler';
+import {Translator} from './Translator';
 
 export const MeriyahParseOptions: Options = {
     next: true,
@@ -66,29 +66,18 @@ export class Module {
     }
 
     private babelTransform() {
-
         const result = babel.transformSync(this.scriptCode, BabelTransformOptions);
-
         this.scriptCode = result.code;
     }
 
     private prepareProgram() {
         this.program = parseModule(this.scriptCode, MeriyahParseOptions) as Program;
-        prepare(this.program, this);
+        prepareSyntaxTree(this.program, this);
     }
 
     private generateName() {
         let ident = this.relativePath.replace(/\\/g, "/");
         ident = ident.replace(/[^A-Za-z0-9\/]/g, '_');
         return `${ident}_${this.translator.modules.size - 1}`;
-    }
-
-    public resolveExport(exported: string) {
-        return this.exports.find(x => x.ExportIdentifier == exported)?.ScopeIdentifier;
-    }
-
-    public registerExport(local: string, exported: string) {
-        console.log(`[${this.name}]: exported ${local} as ${exported}`);
-        this.exports.push({ScopeIdentifier: local, ExportIdentifier: exported});
     }
 }
