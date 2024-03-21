@@ -5,7 +5,7 @@ import {Translator} from './squirrel/translator';
 
 export const HEADER_MESSAGE =
     'This code was automatically generated using VJScript.\n' +
-    'VJScript is an automatic code translation tool from JavaScript to Squirrel\n' +
+    'VJScript is an automatic code compiler from JavaScript to Squirrel\n' +
     'https://github.com/MoonlyDays/VJScript';
 
 export const DEFAULT_WATCH_INTERVAL_MS = 500;
@@ -34,7 +34,6 @@ export type OptionsMap = {
 }
 
 export type OptionsShortMap = { [key: string]: keyof OptionsMap };
-
 
 /**
  * Validate user's options.

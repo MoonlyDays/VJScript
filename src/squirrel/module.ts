@@ -9,6 +9,7 @@ import fs from 'fs';
 import {Options, parseModule} from 'meriyah';
 import path from 'path';
 
+import {MODULE_DEFAULT_ENTRY_SCRIPT} from './consts';
 import {prepareSyntaxTree} from './handler';
 import {Translator} from './translator';
 
@@ -72,12 +73,20 @@ export class Module {
 
     private prepareProgram() {
         this.program = parseModule(this.scriptCode, MeriyahParseOptions) as Program;
-        prepareSyntaxTree(this.program, this);
+
+        try {
+            prepareSyntaxTree(this.program, this);
+        } catch (e) {
+            console.log('-------------------------------------------------------------------');
+            console.log(this.scriptCode);
+            console.log(e);
+            process.exit();
+        }
     }
 
     private generateName() {
         let ident = this.relativePath.replace(/\\/g, '/');
-        ident = ident.replace(/[^A-Za-z0-9\/]/g, '_');
+        ident = ident.replace(/[^A-Za-z0-9/]/g, '_');
         return `${ident}_${this.translator.modules.size - 1}`;
     }
 
@@ -123,14 +132,37 @@ export class Module {
         const packageRaw = fs.readFileSync(packageJson, {encoding: 'utf-8'});
         const packageInfo = JSON.parse(packageRaw);
 
-        const entryScript = packageInfo.main || './index.js';
-        const entryScriptPath = path.resolve(packageDir, entryScript);
+        const entryScript = packageInfo.main;
+        const entryScriptPath = this.resolvePackageMainScriptPath(packageDir, entryScript);
 
-        if (!fs.existsSync(entryScriptPath)) {
+        if (!entryScriptPath) {
             throw Error(`resolvePackageModule: Could not resolve entry script path for package "${packageName} (${entryScript})"`);
         }
 
         return currentModule.translator.includeModule(entryScriptPath);
+    }
+
+    static resolvePackageMainScriptPath(packageDir: string, packageMain: string) {
+
+        // If package main is empty, by default we're looking for index.js
+        if (!packageMain) packageMain = MODULE_DEFAULT_ENTRY_SCRIPT;
+        packageMain = path.resolve(packageDir, packageMain);
+
+        const variants = [
+            packageMain,
+            path.resolve(packageMain, MODULE_DEFAULT_ENTRY_SCRIPT)
+        ];
+
+        for (let variant of variants) {
+            if (!variant.endsWith('.js'))
+                variant += '.js';
+
+            if (fs.existsSync(variant))
+                return variant;
+        }
+
+        return '';
+
     }
 
     /**

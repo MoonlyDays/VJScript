@@ -1,11 +1,6 @@
 #!/usr/bin/env node
-
-//--------------------------------------------------------------------------------------------------
-// Copyright (C) Moonly Days                                                                       -
-// https://github.com/MoonlyDays                                                                   -
-//--------------------------------------------------------------------------------------------------
-
 import * as fs from 'fs';
+
 import {
     DEFAULT_WATCH_INTERVAL_MS,
     OptionsMap,
@@ -13,7 +8,7 @@ import {
     processOption,
     processShortOption,
     validateOptions
-} from "./consts";
+} from './consts';
 
 const g_kOptions: OptionsMap = {
     watchInterval: DEFAULT_WATCH_INTERVAL_MS
@@ -25,7 +20,7 @@ const g_kShortOptions: OptionsShortMap = {
     d: 'dir',
     t: 'tree',
     i: 'watchInterval'
-}
+};
 
 const paths = [];
 const argv = process.argv;

@@ -11,3 +11,4 @@ export const IDENTIFIER_HELPER_EQUAL_STRICT = '__seq';
 export const IDENTIFIER_HELPER_NEW = '__new';
 export const IDENTIFIER_HELPER_IN = '__in';
 export const IDENTIFIER_HELPER_TYPEOF = '__typeof';
+export const MODULE_DEFAULT_ENTRY_SCRIPT = 'index.js';

@@ -1,6 +1,5 @@
 import {ArrayPattern, Expression, MemberExpression, Node, ObjectPattern, Pattern} from 'estree';
-import {is, NodePath} from 'estree-toolkit';
-import {builders as b} from 'estree-toolkit';
+import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {findParentInsideContainer} from './search';
 
@@ -11,19 +10,24 @@ export function destructureArrayPattern<T extends Node>(
     createNodeFn: (elementIdent: Pattern, elementValue: MemberExpression) => T,
     insertPath: NodePath = scopePath
 ) {
-    destructure(
-        id, init, scopePath,
-        function* (id: ArrayPattern) {
-            // For each element in the array pattern, we create an assignment expression,
-            // which each takes the ith element of the right expression.
-            for (let i = 0; i < id.elements.length; i++) {
-                const elementIdent = id.elements[i];
-                const elementValue = b.memberExpression(
-                    init, b.literal(i), true
-                );
-                yield createNodeFn(elementIdent, elementValue);
-            }
-        }, insertPath);
+    try {
+        destructure(
+            id, init, scopePath,
+            function* (id: ArrayPattern, init: Expression) {
+                // For each element in the array pattern, we create an assignment expression,
+                // which each takes the ith element of the right expression.
+                for (let i = 0; i < id.elements.length; i++) {
+                    const elementIdent = id.elements[i];
+                    const elementValue = b.memberExpression(
+                        init, b.literal(i), true
+                    );
+                    yield createNodeFn(elementIdent, elementValue);
+                }
+            }, insertPath);
+    } catch (e) {
+        console.log(JSON.stringify(id));
+        throw e;
+    }
 }
 
 export function destructureObjectPattern<T extends Node>(
@@ -35,7 +39,7 @@ export function destructureObjectPattern<T extends Node>(
 ) {
     destructure(
         id, init, scopePath,
-        function* (id: ObjectPattern) {
+        function* (id: ObjectPattern, init: Expression) {
             for (let i = 0; i < id.properties.length; i++) {
                 const property = id.properties[i];
                 if (is.restElement(property)) {
@@ -54,7 +58,7 @@ function destructure<T extends Node, P extends Pattern>(
     id: P,
     init: Expression,
     scopePath: NodePath<T>,
-    generateFn: (id: P) => Generator<T, void>,
+    generateFn: (id: P, init: Expression) => Generator<T, void>,
     insertPath: NodePath,
 ) {
     const parentPath = findParentInsideContainer(insertPath);
@@ -75,6 +79,9 @@ function destructure<T extends Node, P extends Pattern>(
         init = tmp;
     }
 
-    const replace = [...generateFn(id)];
-    scopePath.replaceWithMultiple(replace);
+    for (const rep of generateFn(id, init))
+        scopePath.insertBefore([rep]);
+
+    scopePath.remove();
+    // scopePath.replaceWithMultiple(replace);
 }

@@ -15,7 +15,8 @@ export default class extends NodeHandler<Property> {
 
         const node = path.node;
         if (['get', 'set'].includes(node.kind)) {
-            throw Error('Property: Getters and Setters are not supported yet!');
+            // throw Error('Property: Getters and Setters are not supported yet!');
+            path.remove();
         }
     }
 
