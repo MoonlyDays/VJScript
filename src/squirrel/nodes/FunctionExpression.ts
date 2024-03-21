@@ -6,8 +6,8 @@
 import {FunctionExpression} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
-import {generateFunction} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<FunctionExpression> {
 
@@ -17,7 +17,7 @@ export default class extends NodeHandler<FunctionExpression> {
         node.id = null;
     }
 
-    handleGenerate(node: FunctionExpression): Generator<string, void, unknown> {
-        return generateFunction(node);
+    handleCodeGen(node: FunctionExpression): Generator<string, void, unknown> {
+        return GeneratorHelpers.function(node);
     }
 }

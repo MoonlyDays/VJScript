@@ -7,8 +7,8 @@
 import {Node} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
-import {Module} from '../module';
-import {Translator} from '../translator';
+import {Module} from '../Module';
+import {Translator} from '../Translator';
 
 export type TraverseState = {
     module: Module;
@@ -32,7 +32,7 @@ export abstract class NodeHandler<T extends Node> {
      * from the JavaScript syntax node.
      * @param node
      */
-    public handleGenerate(node: T): Generator<string, void, unknown> {
+    public handleCodeGen(node: T): Generator<string, void, unknown> {
         throw Error(`Node ${node.type} does not implement a Squirrel generator.`);
     }
 }

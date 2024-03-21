@@ -4,22 +4,36 @@
 //--------------------------------------------------------------------------------------------------
 
 import {BinaryExpression} from 'estree';
-import {NodePath} from 'estree-toolkit';
+import {NodePath, builders as b} from 'estree-toolkit';
 
-import {generateBinaryOperatorExpression} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
+import {IDENTIFIER_EQUAL_LOOSE, IDENTIFIER_EQUAL_STRICT} from "../consts";
 
 export default class extends NodeHandler<BinaryExpression> {
 
     handlePrepare(path: NodePath<BinaryExpression>) {
         const node = path.node;
-        if (node.operator == '===')
-            node.operator = '==';
+        if (node.operator == '===') {
+            path.replaceWith(b.callExpression(
+                b.identifier(IDENTIFIER_EQUAL_STRICT),
+                [node.left, node.right]
+            ));
+            return;
+        }
+
+        if (node.operator == "==") {
+            path.replaceWith(b.callExpression(
+                b.identifier(IDENTIFIER_EQUAL_LOOSE),
+                [node.left, node.right]
+            ));
+            return;
+        }
     }
 
-    * handleGenerate(node: BinaryExpression): Generator<string, void, unknown> {
+    * handleCodeGen(node: BinaryExpression): Generator<string, void, unknown> {
         yield '(';
-        yield* generateBinaryOperatorExpression(node);
+        yield* GeneratorHelpers.binaryOperatorExpression(node);
         yield ')';
     }
 }

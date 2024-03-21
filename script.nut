@@ -310,11 +310,11 @@ __declareModule <- function(name, _body) {
 
 __resolveModule <- function (name) {
     local s, m = __JS_MODULES[name];
-    if(!("export" in m)) {
-        m.export <- {}, s = {export = m.export};
+    if(!("exports" in m)) {
+        m.exports <- {}, s = {exports = m.exports};
         m.body.call(s);
     }
-    return m.scope.exported;
+    return m.scope.exports;
 }
 
 
@@ -569,3 +569,27 @@ Math <- __({
     tan     = __(tan),
     trunc   = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
+
+__declareModule("test/main_js_0", function () {
+    local _other = __resolveModule("test/other_js_1");
+    class Test {
+        a = null
+        b = null
+        constructor() {
+            this.b = 2;
+            this.a = 2;
+        }
+        function prikol() {
+            return _other.foo(this.a, this.b);
+        }
+    };
+    console.log(__eq("11", 11));
+    console.log(__seq("11", 11));
+});
+__declareModule("test/other_js_1", function () {
+    exports.foo <- foo;
+    function foo (a, b) {
+        return (a - b);
+    };
+});
+__resolveModule("test/main_js_0");

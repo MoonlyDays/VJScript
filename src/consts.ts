@@ -1,6 +1,6 @@
 import path from "path";
-import {Translator} from "./squirrel/translator";
 import fs from "fs";
+import {Translator} from "./squirrel/Translator";
 
 export const HEADER_MESSAGE =
     'This code was automatically generated using VJScript.\n' +

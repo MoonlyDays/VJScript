@@ -5,21 +5,21 @@
 
 import {IfStatement} from 'estree';
 
-import {generate} from '../handler';
+import {codeGen} from '../handler';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<IfStatement> {
 
-    * handleGenerate(node: IfStatement): Generator<string, void, unknown> {
+    * handleCodeGen(node: IfStatement): Generator<string, void, unknown> {
 
         yield 'if (';
-        yield generate(node.test);
+        yield codeGen(node.test);
         yield ') ';
-        yield generate(node.consequent);
+        yield codeGen(node.consequent);
 
         if (node.alternate) {
             yield ' else ';
-            yield generate(node.alternate);
+            yield codeGen(node.alternate);
         }
     }
 }

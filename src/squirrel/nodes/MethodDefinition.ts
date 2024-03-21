@@ -5,13 +5,13 @@
 
 import {MethodDefinition} from 'estree';
 
-import {generate} from '../handler';
-import {generateArguments, generateBody, generateWithScope} from '../helpers/generator';
+import {codeGen} from '../handler';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<MethodDefinition> {
 
-    * handleGenerate(node: MethodDefinition): Generator<string, void, unknown> {
+    * handleCodeGen(node: MethodDefinition): Generator<string, void, unknown> {
         if (['get', 'set'].includes(node.kind)) {
             throw Error('MethodDefinition: Class getter and setter are not supported yet.');
         }
@@ -22,15 +22,15 @@ export default class extends NodeHandler<MethodDefinition> {
 
         if (node.kind === 'method') {
             yield 'function ';
-            yield generate(node.key);
+            yield codeGen(node.key);
         } else {
             yield 'constructor';
         }
 
         yield '(';
-        yield* generateArguments(node.value.params);
+        yield* GeneratorHelpers.arguments(node.value.params);
         yield ') ';
 
-        yield* generateWithScope(() => generateBody(node.value.body));
+        yield* GeneratorHelpers.withScope(() => GeneratorHelpers.body(node.value.body));
     }
 }

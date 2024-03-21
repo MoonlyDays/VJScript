@@ -8,9 +8,10 @@ import {builders as b} from 'estree-toolkit';
 import fs from 'fs';
 import path from 'path';
 
-import {generate} from './handler';
-import {determinePackageRoot} from './helpers/module';
-import {Module} from './module';
+import {codeGen} from './handler';
+import {Module} from './Module';
+import {ModuleHelpers} from "./helpers/ModuleHelpers";
+import {IDENTIFIER_MODULE_DECLARE, IDENTIFIER_MODULE_RESOLVE} from "./consts";
 
 /**
  * Class that handles translating script file
@@ -31,7 +32,7 @@ export class Translator {
     public entryModule: Module;
 
     constructor(entryScript: string) {
-        this.packageDir = determinePackageRoot(entryScript);
+        this.packageDir = ModuleHelpers.determinePackageRoot(entryScript);
         this.entryModule = this.includeModule(entryScript);
     }
 
@@ -56,7 +57,7 @@ export class Translator {
             const body = module.program.body as Statement[];
 
             program.body.push(b.expressionStatement(b.callExpression(
-                b.identifier("__declareModule"),
+                b.identifier(IDENTIFIER_MODULE_DECLARE),
                 [
                     b.literal(module.name),
                     b.functionExpression(null, [], b.blockStatement(body))
@@ -65,7 +66,7 @@ export class Translator {
         }
 
         program.body.push(b.expressionStatement(b.callExpression(
-            b.identifier("__resolveModule"),
+            b.identifier(IDENTIFIER_MODULE_RESOLVE),
             [b.literal(this.entryModule.name)]
         )));
 
@@ -73,7 +74,7 @@ export class Translator {
     }
 
     public translate() {
-        return generate(this.generateBundleAST());
+        return codeGen(this.generateBundleAST());
     }
 
     /**

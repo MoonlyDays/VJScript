@@ -6,10 +6,10 @@
 import {ForOfStatement} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
-import {generate} from '../handler';
-import {generateArguments} from '../helpers/generator';
+import {codeGen} from '../handler';
 import {normalizeLoopStatement} from '../helpers/loop';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<ForOfStatement> {
     handlePrepare(path: NodePath<ForOfStatement>) {
@@ -24,19 +24,18 @@ export default class extends NodeHandler<ForOfStatement> {
         }
     }
 
-    * handleGenerate(node: ForOfStatement): Generator<string, void, unknown> {
-
+    * handleCodeGen(node: ForOfStatement): Generator<string, void, unknown> {
         yield 'foreach (';
 
         if (is.arrayPattern(node.left)) {
-            yield* generateArguments(node.left.elements);
+            yield* GeneratorHelpers.arguments(node.left.elements);
         } else {
-            yield generate(node.left);
+            yield codeGen(node.left);
         }
 
         yield ' in ';
-        yield generate(node.right);
+        yield codeGen(node.right);
         yield ') ';
-        yield generate(node.body);
+        yield codeGen(node.body);
     }
 }

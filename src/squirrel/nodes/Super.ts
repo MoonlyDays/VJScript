@@ -25,7 +25,7 @@ export default class extends NodeHandler<Super> {
         }
     }
 
-    * handleGenerate(): Generator<string, void, unknown> {
+    * handleCodeGen(): Generator<string, void, unknown> {
         yield 'base';
     }
 

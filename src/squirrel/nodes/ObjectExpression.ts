@@ -5,11 +5,13 @@
 
 import {ObjectExpression} from 'estree';
 
-import {generateBody, generateWithScope} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<ObjectExpression> {
-    * handleGenerate(node: ObjectExpression): Generator<string, void, unknown> {
-        yield* generateWithScope(() => generateBody({body: node.properties}));
+    * handleCodeGen(node: ObjectExpression): Generator<string, void, unknown> {
+        yield* GeneratorHelpers.withScope(() => GeneratorHelpers.body({
+            body: node.properties
+        }));
     }
 }

@@ -5,12 +5,12 @@
 
 import {FunctionDeclaration} from 'estree';
 
-import {generateFunction} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<FunctionDeclaration> {
 
-    handleGenerate(node: FunctionDeclaration): Generator<string, void, unknown> {
-        return generateFunction(node);
+    handleCodeGen(node: FunctionDeclaration): Generator<string, void, unknown> {
+        return GeneratorHelpers.function(node);
     }
 }

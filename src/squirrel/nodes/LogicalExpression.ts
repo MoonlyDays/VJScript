@@ -5,13 +5,11 @@
 
 import {LogicalExpression} from 'estree';
 
-import {generateBinaryOperatorExpression} from '../helpers/generator';
 import {NodeHandler} from './NodeHandler';
+import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<LogicalExpression> {
-
-    handleGenerate(node: LogicalExpression): Generator<string, void, unknown> {
-        return generateBinaryOperatorExpression(node);
+    handleCodeGen(node: LogicalExpression): Generator<string, void, unknown> {
+        return GeneratorHelpers.binaryOperatorExpression(node);
     }
-
 }

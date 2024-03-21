@@ -6,9 +6,8 @@
 import {Identifier} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
-import {processAttributes} from '../attributes';
-import {IDENTIFIER_MODIFIER_GLOBAL} from '../helpers/consts';
 import {NodeHandler, TraverseState} from './NodeHandler';
+import {Attributes} from "../Attributes";
 
 export default class extends NodeHandler<Identifier> {
     handlePrepare(path: NodePath<Identifier>, state: TraverseState) {
@@ -25,16 +24,10 @@ export default class extends NodeHandler<Identifier> {
         if (isProperty)
             return;
 
-        processAttributes(path, state.module);
+        Attributes.process(path, state.module);
     }
 
-    * handleGenerate(node: Identifier): Generator<string, void, unknown> {
-
-        if (node.name.includes(IDENTIFIER_MODIFIER_GLOBAL)) {
-            node.name = node.name.replace(IDENTIFIER_MODIFIER_GLOBAL, '');
-            yield '::';
-        }
-
+    * handleCodeGen(node: Identifier): Generator<string, void, unknown> {
         yield node.name;
     }
 }

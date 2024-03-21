@@ -5,15 +5,15 @@
 
 import {ConditionalExpression} from 'estree';
 
-import {generate} from '../handler';
+import {codeGen} from '../handler';
 import {NodeHandler} from './NodeHandler';
 
 export default class extends NodeHandler<ConditionalExpression> {
-    * handleGenerate(node: ConditionalExpression): Generator<string, void, unknown> {
-        yield generate(node.test);
+    * handleCodeGen(node: ConditionalExpression): Generator<string, void, unknown> {
+        yield codeGen(node.test);
         yield ' ? ';
-        yield generate(node.consequent);
+        yield codeGen(node.consequent);
         yield ' : ';
-        yield generate(node.alternate);
+        yield codeGen(node.alternate);
     }
 }

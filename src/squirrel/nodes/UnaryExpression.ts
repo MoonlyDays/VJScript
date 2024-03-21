@@ -5,7 +5,7 @@
 
 import {UnaryExpression} from 'estree';
 
-import {generate} from '../handler';
+import {codeGen} from '../handler';
 import {NodeHandler, TraverseState} from './NodeHandler';
 import {builders, is, NodePath} from 'estree-toolkit';
 import path from 'path';
@@ -21,11 +21,11 @@ export default class extends NodeHandler<UnaryExpression> {
 
     }
 
-    * handleGenerate(node: UnaryExpression): Generator<string, void, unknown> {
+    * handleCodeGen(node: UnaryExpression): Generator<string, void, unknown> {
         yield '(';
         yield node.operator;
         yield ' ';
-        yield generate(node.argument);
+        yield codeGen(node.argument);
         yield ')';
     }
 }

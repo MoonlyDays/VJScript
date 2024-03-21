@@ -14,7 +14,7 @@ export default class extends NodeHandler<Literal> {
         super.handlePrepare(path, state);
     }
 
-    * handleGenerate(node: Literal): Generator<string, void, unknown> {
+    * handleCodeGen(node: Literal): Generator<string, void, unknown> {
         yield JSON.stringify(node.value);
     }
 }

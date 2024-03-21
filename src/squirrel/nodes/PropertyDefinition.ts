@@ -7,9 +7,9 @@ import {ClassBody, PropertyDefinition} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit';
 
-import {generate} from '../handler';
-import {getClassConstructor, propertyDefinitionHasValue} from '../helpers/class';
+import {codeGen} from '../handler';
 import {NodeHandler} from './NodeHandler';
+import {ClassHelpers} from "../helpers/ClassHelpers";
 
 export default class extends NodeHandler<PropertyDefinition> {
 
@@ -23,14 +23,14 @@ export default class extends NodeHandler<PropertyDefinition> {
 
         // If this property definition has some sort of value,
         // it must be declared in the constructor.
-        if (propertyDefinitionHasValue(node)) {
+        if (ClassHelpers.propertyDefinitionHasValue(node)) {
 
             const classBody = path.findParent<ClassBody>(is.classBody);
             if (!classBody) {
                 throw Error('PropertyDefinition: Is not contained inside a Class Body?');
             }
 
-            const ctor = getClassConstructor(classBody);
+            const ctor = ClassHelpers.getConstructorDefinition(classBody);
             if (!ctor) {
                 throw Error('PropertyDefinition: Containing Class Body without a Constructor?');
             }
@@ -49,16 +49,16 @@ export default class extends NodeHandler<PropertyDefinition> {
         node.value = b.literal(null);
     }
 
-    * handleGenerate(node: PropertyDefinition): Generator<string, void, unknown> {
+    * handleCodeGen(node: PropertyDefinition): Generator<string, void, unknown> {
         if (node.static) {
             yield 'static ';
         }
 
-        yield generate(node.key);
+        yield codeGen(node.key);
 
         if (node.value) {
             yield ' = ';
-            yield generate(node.value);
+            yield codeGen(node.value);
         }
     }
 }
