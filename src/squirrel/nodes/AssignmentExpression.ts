@@ -6,11 +6,11 @@
 import {AssignmentExpression, AssignmentOperator, ClassBody, Pattern} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
+import {ClassHelpers} from '../helpers/ClassHelpers';
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {LookupHelpers} from '../helpers/LookupHelpers';
+import {PatternHelpers} from '../helpers/PatternHelpers';
 import {NodeHandler} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
-import {ClassHelpers} from "../helpers/ClassHelpers";
-import {PatternHelpers} from "../helpers/PatternHelpers";
-import {LookupHelpers} from "../helpers/LookupHelpers";
 
 export default class extends NodeHandler<AssignmentExpression> {
 

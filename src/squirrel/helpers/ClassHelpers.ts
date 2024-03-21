@@ -1,6 +1,6 @@
-import {is, NodePath} from "estree-toolkit";
-import {ClassBody, MethodDefinition, PropertyDefinition} from "estree";
-import {builders as b} from "estree-toolkit/dist/builders";
+import {ClassBody, MethodDefinition, PropertyDefinition} from 'estree';
+import {is, NodePath} from 'estree-toolkit';
+import {builders as b} from 'estree-toolkit/dist/builders';
 
 /**
  * A list of helper functions for working with Classes.
@@ -137,4 +137,4 @@ export const ClassHelpers = {
             )
         )]);
     }
-}
+};

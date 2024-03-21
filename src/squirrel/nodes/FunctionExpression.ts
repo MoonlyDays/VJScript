@@ -6,8 +6,8 @@
 import {FunctionExpression} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
 import {NodeHandler} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<FunctionExpression> {
 

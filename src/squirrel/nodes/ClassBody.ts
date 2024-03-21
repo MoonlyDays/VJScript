@@ -6,9 +6,9 @@
 import {ClassBody} from 'estree';
 import {NodePath} from 'estree-toolkit';
 
+import {ClassHelpers} from '../helpers/ClassHelpers';
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
 import {NodeHandler} from './NodeHandler';
-import {ClassHelpers} from "../helpers/ClassHelpers";
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<ClassBody> {
 

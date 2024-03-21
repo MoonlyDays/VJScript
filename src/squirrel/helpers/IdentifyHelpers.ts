@@ -3,11 +3,9 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {CallExpression, Node} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
 import {IDENTIFIER_HELPER_INTEROP_WRAPPER} from '../consts';
-import {LookupHelpers} from "./LookupHelpers";
 
 export const IdentifyHelpers = {
 
@@ -27,4 +25,4 @@ export const IdentifyHelpers = {
 
         return callee.name == IDENTIFIER_HELPER_INTEROP_WRAPPER;
     }
-}
+};

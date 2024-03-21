@@ -6,9 +6,9 @@
 import {MemberExpression} from 'estree';
 import {builders, is, NodePath} from 'estree-toolkit';
 
+import {Attributes} from '../Attributes';
 import {codeGen} from '../handler';
 import {NodeHandler, TraverseState} from './NodeHandler';
-import {Attributes} from "../Attributes";
 
 export default class extends NodeHandler<MemberExpression> {
     handlePrepare(path: NodePath<MemberExpression>, state: TraverseState) {

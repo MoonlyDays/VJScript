@@ -6,9 +6,9 @@
 import {VariableDeclaration} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {LookupHelpers} from '../helpers/LookupHelpers';
 import {NodeHandler} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
-import {LookupHelpers} from "../helpers/LookupHelpers";
 
 export default class extends NodeHandler<VariableDeclaration> {
 

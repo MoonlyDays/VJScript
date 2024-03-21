@@ -4,11 +4,11 @@
 //--------------------------------------------------------------------------------------------------
 
 import {BinaryExpression} from 'estree';
-import {NodePath, builders as b} from 'estree-toolkit';
+import {builders as b,NodePath} from 'estree-toolkit';
 
+import {IDENTIFIER_HELPER_EQUAL_LOOSE, IDENTIFIER_HELPER_EQUAL_STRICT} from '../consts';
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
 import {NodeHandler} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
-import {IDENTIFIER_HELPER_EQUAL_LOOSE, IDENTIFIER_HELPER_EQUAL_STRICT} from "../consts";
 
 export default class extends NodeHandler<BinaryExpression> {
 
@@ -22,7 +22,7 @@ export default class extends NodeHandler<BinaryExpression> {
             return;
         }
 
-        if (node.operator == "==") {
+        if (node.operator == '==') {
             path.replaceWith(b.callExpression(
                 b.identifier(IDENTIFIER_HELPER_EQUAL_LOOSE),
                 [node.left, node.right]

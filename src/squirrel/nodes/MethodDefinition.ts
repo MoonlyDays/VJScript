@@ -6,8 +6,8 @@
 import {MethodDefinition} from 'estree';
 
 import {codeGen} from '../handler';
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
 import {NodeHandler} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<MethodDefinition> {
 

@@ -3,13 +3,13 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {ClassBody, PropertyDefinition} from 'estree';
+import {BlockStatement, ClassBody, PropertyDefinition} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 import {builders as b} from 'estree-toolkit';
 
 import {codeGen} from '../handler';
+import {ClassHelpers} from '../helpers/ClassHelpers';
 import {NodeHandler} from './NodeHandler';
-import {ClassHelpers} from "../helpers/ClassHelpers";
 
 export default class extends NodeHandler<PropertyDefinition> {
 
@@ -21,8 +21,7 @@ export default class extends NodeHandler<PropertyDefinition> {
             throw Error(`PropertyDefinition: Unhandled key type ${key.type}!`);
         }
 
-        // If this property definition has some sort of value,
-        // it must be declared in the constructor.
+        // If this property definition has some sort of value, it must be declared in the constructor.
         if (ClassHelpers.propertyDefinitionHasValue(node)) {
 
             const classBody = path.findParent<ClassBody>(is.classBody);
@@ -41,9 +40,9 @@ export default class extends NodeHandler<PropertyDefinition> {
                 node.value
             );
 
-            ctor.get('value')
-                .get('body')
-                .unshiftContainer('body', [b.expressionStatement(assignment)]);
+            const value = ctor.get('value');
+            const body = value.get('body') as NodePath<BlockStatement>;
+            body.unshiftContainer('body', [b.expressionStatement(assignment)]);
         }
 
         node.value = b.literal(null);

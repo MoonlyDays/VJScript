@@ -7,9 +7,9 @@ import {ForOfStatement} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
 import {codeGen} from '../handler';
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {LoopHelpers} from '../helpers/LoopHelpers';
 import {NodeHandler} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
-import {LoopHelpers} from "../helpers/LoopHelpers";
 
 export default class extends NodeHandler<ForOfStatement> {
     handlePrepare(path: NodePath<ForOfStatement>) {

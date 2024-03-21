@@ -4,11 +4,10 @@
 //--------------------------------------------------------------------------------------------------
 
 import {UnaryExpression} from 'estree';
+import {builders, is, NodePath} from 'estree-toolkit';
 
 import {codeGen} from '../handler';
 import {NodeHandler, TraverseState} from './NodeHandler';
-import {builders, is, NodePath} from 'estree-toolkit';
-import path from 'path';
 
 export default class extends NodeHandler<UnaryExpression> {
 

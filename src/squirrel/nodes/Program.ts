@@ -4,16 +4,16 @@
 //--------------------------------------------------------------------------------------------------
 
 import {Program, Statement} from 'estree';
+import {is, NodePath} from 'estree-toolkit';
 
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
+import {LookupHelpers} from '../helpers/LookupHelpers';
 import {NodeHandler, TraverseState} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
-import {is, NodePath} from "estree-toolkit";
-import {LookupHelpers} from "../helpers/LookupHelpers";
 
 export default class extends NodeHandler<Program> {
 
     handlePrepare(path: NodePath<Program>, state: TraverseState) {
-        const body = path.get("body");
+        const body = path.get('body');
         let length = body.length;
 
         for (let i = 0; i < length; i++) {
@@ -21,22 +21,22 @@ export default class extends NodeHandler<Program> {
             if (!is.expressionStatement(stmt))
                 continue;
 
-            const expr = stmt.get("expression");
+            const expr = stmt.get('expression');
             if (!is.assignmentExpression(expr))
                 continue;
 
-            const deepest = LookupHelpers.deepestIdentifier(expr.get("left")) as NodePath;
+            const deepest = LookupHelpers.deepestIdentifier(expr.get('left')) as NodePath;
             if (!is.identifier(deepest))
                 continue;
 
             const deepestNode = deepest.node;
-            if (deepestNode.name != "exports")
+            if (deepestNode.name != 'exports')
                 continue;
 
             stmt.remove();
             length--;
             i--;
-            path.pushContainer("body", [stmt.cloneNode()]);
+            path.pushContainer('body', [stmt.cloneNode()]);
         }
 
     }

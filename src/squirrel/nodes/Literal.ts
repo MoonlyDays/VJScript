@@ -6,6 +6,7 @@
 import {Literal} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
+import {IdentifyHelpers} from '../helpers/IdentifyHelpers';
 import {NodeHandler, TraverseState} from './NodeHandler';
 
 export default class extends NodeHandler<Literal> {
@@ -17,7 +18,7 @@ export default class extends NodeHandler<Literal> {
             return;
 
         // This literal is already wrapped in helper.
-        if (this.literalWrappedInHelper(path))
+        if (IdentifyHelpers.wrappedInsideInteropHelper(path))
             return;
 
         path.replaceWith(b.callExpression(
@@ -32,17 +33,5 @@ export default class extends NodeHandler<Literal> {
 
     isNullLiteral(node: Literal) {
         return node.value == null;
-    }
-
-    literalWrappedInHelper(path: NodePath<Literal>) {
-        const parent = path.parent;
-        if (!is.callExpression(parent))
-            return false;
-
-        const callee = parent.callee;
-        if (!is.identifier(callee))
-            return false;
-
-        return callee.name == '__';
     }
 }

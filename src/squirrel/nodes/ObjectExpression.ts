@@ -5,8 +5,8 @@
 
 import {ObjectExpression} from 'estree';
 
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
 import {NodeHandler} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<ObjectExpression> {
     * handleCodeGen(node: ObjectExpression): Generator<string, void, unknown> {

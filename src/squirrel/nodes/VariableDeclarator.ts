@@ -3,12 +3,12 @@
 // https://github.com/MoonlyDays                                                                   -
 //--------------------------------------------------------------------------------------------------
 
-import {Identifier, Literal, VariableDeclarator} from 'estree';
+import {VariableDeclarator} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
 import {codeGen} from '../handler';
+import {PatternHelpers} from '../helpers/PatternHelpers';
 import {NodeHandler} from './NodeHandler';
-import {PatternHelpers} from "../helpers/PatternHelpers";
 
 export default class extends NodeHandler<VariableDeclarator> {
 

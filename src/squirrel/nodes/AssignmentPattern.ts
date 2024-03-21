@@ -6,8 +6,8 @@
 import {AssignmentPattern, Function as FunctionNode} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
+import {GeneratorHelpers} from '../helpers/GeneratorHelpers';
 import {NodeHandler} from './NodeHandler';
-import {GeneratorHelpers} from "../helpers/GeneratorHelpers";
 
 export default class extends NodeHandler<AssignmentPattern> {
 

@@ -6,8 +6,8 @@
 import {Identifier} from 'estree';
 import {is, NodePath} from 'estree-toolkit';
 
+import {Attributes} from '../Attributes';
 import {NodeHandler, TraverseState} from './NodeHandler';
-import {Attributes} from "../Attributes";
 
 export default class extends NodeHandler<Identifier> {
     handlePrepare(path: NodePath<Identifier>, state: TraverseState) {
