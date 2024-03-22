@@ -63,19 +63,16 @@ class __jsInteropObject {
         if(o) foreach(k, v in o) this[k] = v;
     }
 
-    function _nexti(i) {
-        local a = __jsProps, d = __jsDescriptors;
-        if(i == null) return a.len() > 0 ? a[0] : null;
-        if ((i = a.find(i)) == null) return null;
-        while(++i < a.len()) {
-            local b = a[i], c = d[b];
-            if(!c.enumerable) continue;
-            return b;
+    function _nexti(key) {
+        local idx, obj = this;
+
+        while(obj) {
+            obj = obj.__proto__;
         }
     }
 
     function _get(key) {
-
+        key = key.tostring();
         local obj = this;
         while(obj) {
             local descs = obj.__jsDescriptors;
@@ -107,6 +104,7 @@ class __jsInteropObject {
 
     function _set(key, val) {
 
+        key = key.tostring();
         local obj = this;
         while(obj) {
             local descs = obj.__jsDescriptors;
@@ -213,6 +211,7 @@ __ <- function(val, ...) {
 
     switch (a) {
         case "table":
+        case "array":
             return __jsInteropObject(val);
 
         case "float":
@@ -315,6 +314,39 @@ __resolveModule <- function (name) {
         m.body.call(s);
     }
     return m.scope.exports;
+}
+
+__destructureObject <- function (source, names) {
+    local infos = ::getstackinfos(2), env = infos.locals["this"];
+    foreach(k, v in names) {
+        if (k == "...") continue;
+        env[v] <- source[k];
+    }
+    if("..." in names) {
+        local r = env[names["..."]] <- __({});
+        foreach(k, v in source) {
+            if (k in names) continue;
+            r[k] = v;
+        }
+    }
+    return source;
+}
+
+__destructureArray <- function (source, names) {
+    local infos = ::getstackinfos(2), env = infos.locals["this"];
+    foreach(k, v in names) {
+        if (k == "...") continue;
+        env[v] <- source[k];
+    }
+    if("..." in names) {
+        local r = [];
+        foreach(k, v in source) {
+            if (k in names) continue;
+            r.push(v);
+        }
+        env[names["..."]] <- __(r);
+    }
+    return source;
 }
 
 
@@ -458,6 +490,11 @@ String.prototype.concat     = __(function (...) {
 
 
 ///////////////////////////////////////////////////////////////////////////
+//////////////|              Array Constructor              |//////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////
 //////////////|             Number Constructor              |//////////////
 ///////////////////////////////////////////////////////////////////////////
 Number <- __(function () {}, "Number");
@@ -570,24 +607,9 @@ Math <- __({
     trunc   = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
 
-__destr <- function (source, names) {
-    local s = ::getstackinfos(2), env = s.locals["this"], a = [];
-    foreach(_k, _v in names) {
-        if(_k == "...") continue;
-        env[_v] <- source[_k];
-        a.push(_k);
-    }
-
-    if("..." in names) {
-        local r = __({});
-        foreach(_k, _v in source) {
-            if(a.find(_k) != null) continue;
-            r[_k] = _v;
-        }
-        env[names["..."]] <- r;
-    }
-    return source;
-}
-
-__destr([1, 2, 3], ["a", "b", "c", "...rest"]);
-console.log(rest)
+console.log(__({
+    a = 1,
+    b = 2,
+    c = 3,
+    d = 4
+}));
