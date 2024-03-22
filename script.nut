@@ -570,26 +570,24 @@ Math <- __({
     trunc   = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
 
-__declareModule("test/main_js_0", function () {
-    local _other = __resolveModule("test/other_js_1");
-    class Test {
-        a = null
-        b = null
-        constructor() {
-            this.b = 2;
-            this.a = 2;
+__destr <- function (source, names) {
+    local s = ::getstackinfos(2), env = s.locals["this"], a = [];
+    foreach(_k, _v in names) {
+        if(_k == "...") continue;
+        env[_v] <- source[_k];
+        a.push(_k);
+    }
+
+    if("..." in names) {
+        local r = __({});
+        foreach(_k, _v in source) {
+            if(a.find(_k) != null) continue;
+            r[_k] = _v;
         }
-        function prikol() {
-            return _other.foo(this.a, this.b);
-        }
-    };
-    console.log(__eq("11", 11));
-    console.log(__seq("11", 11));
-});
-__declareModule("test/other_js_1", function () {
-    exports.foo <- foo;
-    function foo (a, b) {
-        return (a - b);
-    };
-});
-__resolveModule("test/main_js_0");
+        env[names["..."]] <- r;
+    }
+    return source;
+}
+
+__destr([1, 2, 3], ["a", "b", "c", "...rest"]);
+console.log(rest)

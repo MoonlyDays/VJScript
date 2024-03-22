@@ -10,24 +10,19 @@ export function destructureArrayPattern<T extends Node>(
     createNodeFn: (elementIdent: Pattern, elementValue: MemberExpression) => T,
     insertPath: NodePath = scopePath
 ) {
-    try {
-        destructure(
-            id, init, scopePath,
-            function* (id: ArrayPattern, init: Expression) {
-                // For each element in the array pattern, we create an assignment expression,
-                // which each takes the ith element of the right expression.
-                for (let i = 0; i < id.elements.length; i++) {
-                    const elementIdent = id.elements[i];
-                    const elementValue = b.memberExpression(
-                        init, b.literal(i), true
-                    );
-                    yield createNodeFn(elementIdent, elementValue);
-                }
-            }, insertPath);
-    } catch (e) {
-        console.log(JSON.stringify(id));
-        throw e;
-    }
+    destructure(
+        id, init, scopePath,
+        function* (id: ArrayPattern, init: Expression) {
+            // For each element in the array pattern, we create an assignment expression,
+            // which each takes the ith element of the right expression.
+            for (let i = 0; i < id.elements.length; i++) {
+                const elementIdent = id.elements[i];
+                const elementValue = b.memberExpression(
+                    init, b.literal(i), true
+                );
+                yield createNodeFn(elementIdent, elementValue);
+            }
+        }, insertPath);
 }
 
 export function destructureObjectPattern<T extends Node>(
@@ -61,8 +56,8 @@ function destructure<T extends Node, P extends Pattern>(
     generateFn: (id: P, init: Expression) => Generator<T, void>,
     insertPath: NodePath,
 ) {
-    const parentPath = findParentInsideContainer(insertPath);
-    if (!parentPath) {
+    insertPath = findParentInsideContainer(insertPath);
+    if (!insertPath) {
         throw Error('destructure: Parent node inside a container was not found.');
     }
 
@@ -71,7 +66,7 @@ function destructure<T extends Node, P extends Pattern>(
     // perform assignments.
     if (!is.identifier(init)) {
         const tmp = scopePath.scope.generateUidIdentifier();
-        parentPath.insertBefore([
+        insertPath.insertBefore([
             b.variableDeclaration('const', [
                 b.variableDeclarator(tmp, init)
             ])
@@ -79,9 +74,7 @@ function destructure<T extends Node, P extends Pattern>(
         init = tmp;
     }
 
-    for (const rep of generateFn(id, init))
-        scopePath.insertBefore([rep]);
-
-    scopePath.remove();
-    // scopePath.replaceWithMultiple(replace);
+    const inserts = [...generateFn(id, init)];
+    JSON.stringify(insertPath.node, null, 2);
+    insertPath.insertBefore(inserts);
 }

@@ -1,4 +1,3 @@
-const arr = [{a: 1, b: 1}, {a: 2, b: 2}, {a: 3, b: 3}];
-for (const {a, b} of arr) {
-    console.log(a);
+for (const [a, b] of [[1, 2], [3, 4], [5, 6]]) {
+    console.log(a, b);
 }

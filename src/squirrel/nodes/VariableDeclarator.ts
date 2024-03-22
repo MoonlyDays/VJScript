@@ -1,8 +1,3 @@
-//--------------------------------------------------------------------------------------------------
-// Copyright (C) Moonly Days                                                                       -
-// https://github.com/MoonlyDays                                                                   -
-//--------------------------------------------------------------------------------------------------
-
 import {VariableDeclarator} from 'estree';
 import {builders as b, is, NodePath} from 'estree-toolkit';
 
@@ -36,6 +31,7 @@ export default class extends NodeHandler<VariableDeclarator> {
     }
 
     * handleCodeGen(node: VariableDeclarator): Generator<string, void, unknown> {
+
         yield generateCode(node.id);
         if (node.init) {
             yield ' = ';

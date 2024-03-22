@@ -10,7 +10,7 @@ import {shallowestIdentifier} from './helpers/search';
 type IdentifierPatternItem = string | null | (NodePath extends NodePath<infer T> ? T : never);
 type IdentifierPatternItems = IdentifierPatternItem[];
 
-export class Identifier {
+export class Pattern {
     public items: IdentifierPatternItems = [];
 
     constructor(...items: IdentifierPatternItems) {
@@ -33,7 +33,7 @@ export class Identifier {
         }
     }
 
-    public pushFrom(pattern: Identifier) {
+    public pushFrom(pattern: Pattern) {
         this.push(...pattern.items);
     }
 
@@ -68,7 +68,7 @@ export class Identifier {
      */
     public match(path: NodePath): string[][] | false {
 
-        const pathPattern = Identifier.fromPath(path);
+        const pathPattern = Pattern.fromPath(path);
 
         const wc: {
             enabled: boolean;
@@ -173,7 +173,7 @@ export class Identifier {
      * @param path
      * @param absolute
      */
-    public static fromPath(path: NodePath, absolute = false): Identifier {
+    public static fromPath(path: NodePath, absolute = false): Pattern {
 
         if (is.memberExpression(path.parentPath)) {
             if (path.parentKey == 'property')
@@ -189,7 +189,7 @@ export class Identifier {
         return this.build(path);
     }
 
-    private static build(path: NodePath): Identifier {
+    private static build(path: NodePath): Pattern {
         if (is.memberExpression(path)) {
 
             const objectPath = path.get('object');
@@ -203,10 +203,10 @@ export class Identifier {
         }
 
         if (is.identifier(path)) {
-            return new Identifier(path.node.name);
+            return new Pattern(path.node.name);
         }
 
-        return new Identifier(path.node);
+        return new Pattern(path.node);
     }
 
     public codeGenerate() {
@@ -242,11 +242,11 @@ function normalizeItem(item: IdentifierPatternItem) {
 }
 
 export interface SearchPattern {
-    pattern: Identifier;
+    pattern: Pattern;
 }
 
 export function parseSearchPattern<T extends SearchPattern>(pattern: string): T {
-    return {pattern: new Identifier(pattern)} as T;
+    return {pattern: new Pattern(pattern)} as T;
 }
 
 export class ConfigSearchPatternSet<T extends SearchPattern = SearchPattern> extends Set<T> {
