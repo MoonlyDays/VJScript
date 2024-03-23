@@ -52,152 +52,6 @@ console <- {
     }
 }
 
-class __jsInteropObject {
-    __jsProps = null;
-    __jsDescriptors = null;
-    __proto__ = null;
-    __ctor__ = null;
-
-    constructor(o = null) {
-        __jsProps = [], __jsDescriptors = {};
-        if(o) foreach(k, v in o) this[k] = v;
-    }
-
-    function _nexti(key) {
-        local idx, obj = this;
-
-        while(obj) {
-            obj = obj.__proto__;
-        }
-    }
-
-    function _get(key) {
-        key = key.tostring();
-        local obj = this;
-        while(obj) {
-            local descs = obj.__jsDescriptors;
-            if(key in descs) {
-                local desc = descs[key];
-                if("get" in desc && desc.get) {
-                    return desc.get.pcall(this);
-                }
-
-                return desc.value;
-            }
-
-            obj = obj.__proto__;
-        }
-
-        local infos = null, i = 2;
-        while (infos = ::getstackinfos(i++)) {
-            local locals = infos.locals;
-            if(!("this" in locals))
-                continue;
-
-            locals = locals["this"]
-            if(key in locals)
-                return locals[key];
-        }
-
-        return null;
-    }
-
-    function _set(key, val) {
-
-        key = key.tostring();
-        local obj = this;
-        while(obj) {
-            local descs = obj.__jsDescriptors;
-            if(key in descs) {
-                local desc = descs[key];
-                if("set" in desc && desc.set) {
-                    return desc.set.pcall(this, val);
-                }
-            }
-
-            obj = obj.__proto__;
-        }
-
-        __jsProps.push(key);
-        __jsDescriptors[key] <- {
-            configurable = true,
-            enumerable = true,
-            writable = true,
-            value = val,
-            get = null,
-            set = null
-        }
-    }
-
-    function tostring() {
-        return toString();
-    }
-}
-
-class __jsInteropFunction extends __jsInteropObject {
-    __func__ = null;
-    __bindArgs__ = null;
-
-    constructor(_fn = null) {
-        base.constructor();
-
-        __func__ = _fn || function () {};
-        __proto__ = null;
-
-        local infos = __func__.getinfos();
-        name = infos.name;
-        length = ("paramscheck" in infos) ? infos.paramscheck : infos.parameters.len();
-        prototype = __jsInteropObject({
-            __proto__ = null,
-            __ctor__ = this
-        });
-    }
-
-    function _call(...) {
-        local thisArg = vargv[0];
-        vargv.remove(0);
-        return __call(this, thisArg, vargv);
-    }
-}
-
-class __jsInteropPrimitive extends __jsInteropObject {
-    // __prim__ = null;
-
-    constructor(value) {
-        base.constructor();
-        __prim__ = value;
-    }
-
-    function _add(other) {
-        return __(__prim__ + other.__prim__);
-    }
-
-    function _sub(other) {
-        return __(__prim__ - other.__prim__);
-    }
-
-    function _mul(other) {
-        return __(__prim__ * other.__prim__);
-    }
-
-    function _div(other) {
-        return __(__prim__ / other.__prim__);
-    }
-
-    function _module(other) {
-        return __(__prim__ % other.__prim__);
-    }
-
-    function _unm() {
-        return __(-__prim__);
-    }
-
-    function _cmp(other) {
-        if(__prim__ == other.__prim__) return 0;
-        return __prim__ < other.__prim__ ? -1 : 1;
-    }
-}
-
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             HELPER FUNCTIONS                |//////////////
@@ -348,6 +202,188 @@ __destructureArray <- function (source, names) {
     }
     return source;
 }
+
+__iterfind <- function(proto, key) {
+    local idx;
+    do {
+        if (proto.__jsProps.len() == 0) continue;
+        idx = proto.__jsProps.find(key);
+        if (idx != null) return [proto, idx];
+    }
+    while (proto = obj.__proto__);
+}
+
+
+//-----------------------------------------------------------------------//
+// Purpose: Given a prototype and an index of the property, find the next
+//          iterable property path.
+//-----------------------------------------------------------------------//
+__iternext <-  function(proto, curIdx) {
+
+    local i, l, k, a, b;
+    do {
+        b = proto.__jsDescriptors, a = proto.__jsProps, l = a.len();
+        // If no properties in the prototype, no point in checking.
+        if (l == 0) continue;
+
+        // Iterate all the next properties of this prototype
+        for (i = curIdx + 1; i < l; i++) {
+            k = a[i];
+            k = b[k];
+            console.log(k);
+        }
+
+    }
+    while (proto = proto.__proto__);
+}
+
+class __jsInteropObject {
+    __jsProps = null;
+    __jsDescriptors = null;
+    __jsIterate = null;
+
+    __proto__ = null;
+    __ctor__ = null;
+
+    constructor(o = null) {
+        __jsProps = [];
+        __jsDescriptors = {};
+        __jsIterate = {};
+
+        if(o) foreach(k, v in o) this[k] = v;
+    }
+
+    function _nexti(key) {
+        __iternext(this, -1);
+    }
+
+    function _get(key) {
+        key = key.tostring();
+        local obj = this;
+        while(obj) {
+            local descs = obj.__jsDescriptors;
+            if(key in descs) {
+                local desc = descs[key];
+                if("get" in desc && desc.get) {
+                    return desc.get.pcall(this);
+                }
+
+                return desc.value;
+            }
+
+            obj = obj.__proto__;
+        }
+
+        local infos = null, i = 2;
+        while (infos = ::getstackinfos(i++)) {
+            local locals = infos.locals;
+            if(!("this" in locals))
+                continue;
+
+            locals = locals["this"]
+            if(key in locals)
+                return locals[key];
+        }
+
+        return null;
+    }
+
+    function _set(key, val) {
+
+        key = key.tostring();
+        local obj = this;
+        while(obj) {
+            local descs = obj.__jsDescriptors;
+            if(key in descs) {
+                local desc = descs[key];
+                if("set" in desc && desc.set) {
+                    return desc.set.pcall(this, val);
+                }
+            }
+
+            obj = obj.__proto__;
+        }
+
+        __jsProps.push(key);
+        __jsDescriptors[key] <- {
+            configurable = true,
+            enumerable = true,
+            writable = true,
+            value = val,
+            get = null,
+            set = null
+        }
+    }
+
+    function tostring() {
+        return toString();
+    }
+}
+
+class __jsInteropFunction extends __jsInteropObject {
+    __func__ = null;
+    __bindArgs__ = null;
+
+    constructor(_fn = null) {
+        base.constructor();
+
+        __func__ = _fn || function () {};
+        __proto__ = null;
+
+        local infos = __func__.getinfos();
+        name = infos.name;
+        length = ("paramscheck" in infos) ? infos.paramscheck : infos.parameters.len();
+        prototype = __jsInteropObject({
+            __proto__ = null,
+            __ctor__ = this
+        });
+    }
+
+    function _call(...) {
+        local thisArg = vargv[0];
+        vargv.remove(0);
+        return __call(this, thisArg, vargv);
+    }
+}
+
+class __jsInteropPrimitive extends __jsInteropObject {
+    // __prim__ = null;
+
+    constructor(value) {
+        base.constructor();
+        __prim__ = value;
+    }
+
+    function _add(other) {
+        return __(__prim__ + other.__prim__);
+    }
+
+    function _sub(other) {
+        return __(__prim__ - other.__prim__);
+    }
+
+    function _mul(other) {
+        return __(__prim__ * other.__prim__);
+    }
+
+    function _div(other) {
+        return __(__prim__ / other.__prim__);
+    }
+
+    function _module(other) {
+        return __(__prim__ % other.__prim__);
+    }
+
+    function _unm() {
+        return __(-__prim__);
+    }
+
+    function _cmp(other) {
+        if(__prim__ == other.__prim__) return 0;
+        return __prim__ < other.__prim__ ? -1 : 1;
+    }
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////
