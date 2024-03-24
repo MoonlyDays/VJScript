@@ -228,11 +228,13 @@ __iternext <-  function(proto, curIdx) {
 
         // Iterate all the next properties of this prototype
         for (i = curIdx + 1; i < l; i++) {
-            k = a[i];
-            k = b[k];
-            console.log(k);
+            k = b[a[i]];
+            // If this property is not enumerable.
+            if (!k.enumerable) continue;
+            return [proto, i];
         }
 
+        curIdx = -1;
     }
     while (proto = proto.__proto__);
 }
@@ -254,7 +256,28 @@ class __jsInteropObject {
     }
 
     function _nexti(key) {
-        __iternext(this, -1);
+        local path, proto = this, idx = -1;
+
+        if (key != null) {
+            if (key == __jsIterate.name) {
+                // If the property we're given is the one
+                // we've iterated earlier, reuse the iteration
+                // path properties.
+                proto = __jsIterate.proto;
+                idx = __jsIterate.idx;
+            } else {
+                // If we're given something else, find that else.
+                path = __iterfind(proto, key);
+                proto = path[0], idx = path[1];
+            }
+        }
+
+        path = __iternext(proto, idx);
+        if (path == null) return null;
+
+        proto = path[0], idx = path[1];
+        __jsIterate.proto <-proto, __jsIterate.idx <- idx, __jsIterate.name <-proto.__jsProps[idx];
+        return proto.__jsProps[idx];
     }
 
     function _get(key) {
@@ -643,9 +666,18 @@ Math <- __({
     trunc   = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
 
-console.log(__({
-    a = 1,
-    b = 2,
-    c = 3,
-    d = 4
-}));
+Object.prototype.__SYMBOL_ITERATOR = __(function () {
+    local n = 0;
+    local done = false;
+    return __({
+        next = __(function() {
+            n++;
+            if (n == 100) done = true;
+            return __({
+            	value = n,
+                key = n,
+                done = done
+            })
+        }, "next")
+    })
+});
