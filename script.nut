@@ -52,6 +52,7 @@ console <- {
     }
 }
 
+const SYMBOL_ITERATOR = "Symbol(Symbol.iterator)";
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             HELPER FUNCTIONS                |//////////////
@@ -65,8 +66,14 @@ __ <- function(val, ...) {
 
     switch (a) {
         case "table":
+            a = __jsInteropObject(val);
+            a.__proto__ = Object.prototype;
+            return a;
+
         case "array":
-            return __jsInteropObject(val);
+            a = __jsInteropArray(val);
+            a.__proto__ = Array.prototype;
+            return a;
 
         case "float":
         case "integer":
@@ -213,6 +220,33 @@ __iterfind <- function(proto, key) {
     while (proto = obj.__proto__);
 }
 
+__keys <- function (obj) {
+    local visited = [], keys = [], key, desc, i = 0;
+    do {
+        // Skip object prototype properties.
+        if (obj == Object.prototype)
+            continue;
+
+        for (i = 0; i < obj.__jsProps.len(); i++) {
+            key = obj.__jsProps[i];
+
+            // Mark this property as visited, even if it's enumerable.
+            if (visited.find(key) != null) continue;
+            visited.push(key);
+
+            desc = obj.__jsDescriptors[key];
+            if (!desc.enumerable) continue;
+            keys.push(key);
+        }
+    }
+    while (obj = obj.__proto__);
+    return keys;
+};
+
+__iter <- function (obj) {
+    return __jsIteratorInterop(obj);
+}
+
 
 //-----------------------------------------------------------------------//
 // Purpose: Given a prototype and an index of the property, find the next
@@ -238,6 +272,30 @@ __iternext <-  function(proto, curIdx) {
     }
     while (proto = proto.__proto__);
 }
+
+
+class __jsIteratorInterop {
+    object = null;
+    iterator = null;
+    value = null;
+
+    constructor(obj) {
+        object = obj;
+        iterator = obj[SYMBOL_ITERATOR]();
+    }
+
+    function _get(key) {
+        return value;
+    }
+
+    function _nexti(key) {
+        local r = iterator.next.call(object);
+        if (r.done) return null;
+        value = r.value;
+        return 0;
+    }
+}
+
 
 class __jsInteropObject {
     __jsProps = null;
@@ -369,6 +427,23 @@ class __jsInteropFunction extends __jsInteropObject {
     }
 }
 
+class __jsInteropArray extends __jsInteropObject {
+    __array__ = null;
+
+    constructor(arr) {
+        base.constructor();
+        __array__ = arr;
+    }
+
+    function _get(key) {
+        return 2;
+    }
+
+    function _set(key, val) {
+
+    }
+}
+
 class __jsInteropPrimitive extends __jsInteropObject {
     // __prim__ = null;
 
@@ -488,6 +563,22 @@ Object.defineProperty = __(function (obj, prop, desc) {
     return obj;
 }, "defineProperty");
 
+Object.prototype[SYMBOL_ITERATOR] = __(function() {
+    local keys = __keys(this), i = 0;
+    return __({
+        next = __(function () {
+            if (i >= keys.len()) return __({
+            	done = true
+            })
+
+            return __({
+                value = this[keys[i++]],
+                done = false
+            })
+        })
+    })
+});
+
 Object.entries = null;
 Object.freeze = null;
 Object.fromEntries = null;
@@ -505,7 +596,9 @@ Object.is = null;
 Object.isExtensible = null;
 Object.isFrozen = null;
 Object.isSealed = null;
-Object.keys = null;
+Object.keys = __(function (obj) {
+    return __(__keys(obj));
+}, "keys");
 Object.preventExtensions = null;
 Object.seal = null;
 Object.setPrototypeOf = null;
@@ -516,7 +609,7 @@ Object.values = null;
 //////////////|             Function Constructor            |//////////////
 ///////////////////////////////////////////////////////////////////////////
 Function.prototype.apply = __(function(thisArg, args) {
-    __call(this, thisArg, args);
+    return __call(this, thisArg, args);
 }, "apply");
 Function.prototype.call = __(function(thisArg, ...) {
     return apply(thisArg, vargv);
@@ -551,7 +644,8 @@ String.prototype.concat     = __(function (...) {
 ///////////////////////////////////////////////////////////////////////////
 //////////////|              Array Constructor              |//////////////
 ///////////////////////////////////////////////////////////////////////////
-
+Array <- __(function() {}, "Array");
+Object.defineProperty(Array.prototype, "length", {})
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Number Constructor              |//////////////
@@ -666,18 +760,26 @@ Math <- __({
     trunc   = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
 
-Object.prototype.__SYMBOL_ITERATOR = __(function () {
-    local n = 0;
-    local done = false;
+
+
+__iterkeys <- __(function(obj) {
+    local props = __keys(obj), i = 0, value, done = false;
     return __({
-        next = __(function() {
-            n++;
-            if (n == 100) done = true;
+        next = __(function () {
+            if (i >= props.len()) {
+                return __({
+                	done = true
+                });
+            }
+
             return __({
-            	value = n,
-                key = n,
-                done = done
-            })
+            	value = props[i++],
+                done = false
+            });
         }, "next")
     })
-});
+})
+
+local a = [1];
+a[0] = 0;
+a["0"] = 2;
