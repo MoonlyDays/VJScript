@@ -313,32 +313,11 @@ class __jsInteropObject {
         if(o) foreach(k, v in o) this[k] = v;
     }
 
-    function _nexti(key) {
-        local path, proto = this, idx = -1;
-
-        if (key != null) {
-            if (key == __jsIterate.name) {
-                // If the property we're given is the one
-                // we've iterated earlier, reuse the iteration
-                // path properties.
-                proto = __jsIterate.proto;
-                idx = __jsIterate.idx;
-            } else {
-                // If we're given something else, find that else.
-                path = __iterfind(proto, key);
-                proto = path[0], idx = path[1];
-            }
-        }
-
-        path = __iternext(proto, idx);
-        if (path == null) return null;
-
-        proto = path[0], idx = path[1];
-        __jsIterate.proto <-proto, __jsIterate.idx <- idx, __jsIterate.name <-proto.__jsProps[idx];
-        return proto.__jsProps[idx];
+    function _get(key) {
+        return _jsGet(key);
     }
 
-    function _get(key) {
+    function _jsGet(key) {
         key = key.tostring();
         local obj = this;
         while(obj) {
@@ -370,6 +349,10 @@ class __jsInteropObject {
     }
 
     function _set(key, val) {
+        _jsSet(key, val);
+    }
+
+    function _jsSet(key, val) {
 
         key = key.tostring();
         local obj = this;
@@ -428,19 +411,13 @@ class __jsInteropFunction extends __jsInteropObject {
 }
 
 class __jsInteropArray extends __jsInteropObject {
-    __array__ = null;
 
-    constructor(arr) {
-        base.constructor();
-        __array__ = arr;
+    constructor(obj){
+        base.constructor(obj);
     }
 
-    function _get(key) {
-        return 2;
-    }
-
-    function _set(key, val) {
-
+    function _jsSet(key, val) {
+        base._jsSet(key, val);
     }
 }
 
@@ -629,9 +606,6 @@ String <- __(function() {}, "String");
 String.prototype.__prim__   = "";
 String.prototype.toString   = __(@()this, "toString");
 String.prototype.valueOf    = __(@()this, "valueOf");
-Object.defineProperty(String.prototype, "length", {
-    get = @() __(__prim__.len())
-});
 String.prototype.at         = __(@(idx) __(__prim__[idx].tochar()), "at");
 String.prototype.charCodeAt = __(@(idx) __(__prim__[idx]), "charCodeAt");
 String.prototype.concat     = __(function (...) {
@@ -645,7 +619,24 @@ String.prototype.concat     = __(function (...) {
 //////////////|              Array Constructor              |//////////////
 ///////////////////////////////////////////////////////////////////////////
 Array <- __(function() {}, "Array");
-Object.defineProperty(Array.prototype, "length", {})
+Array.prototype.length = 0;
+Array.prototype[SYMBOL_ITERATOR] = __(function () {
+    local i = 0;
+    return __({
+        next = __(function () {
+            if (i >= length) {
+                return __({
+                    done = true
+                })
+            }
+
+            return __({
+                value = this[i++],
+                done = false
+            })
+        })
+    })
+});
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Number Constructor              |//////////////
@@ -780,6 +771,11 @@ __iterkeys <- __(function(obj) {
     })
 })
 
-local a = [1];
-a[0] = 0;
-a["0"] = 2;
+return;
+
+local arr = __([7, 5, 4, 6, 4, 2, 1]);
+foreach(el in __iter(arr)) {
+    console.log(el);
+}
+console.log("");
+console.log(arr.length);
