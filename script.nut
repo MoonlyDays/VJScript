@@ -247,6 +247,11 @@ __iter <- function (obj) {
     return __jsIteratorInterop(obj);
 }
 
+__toprim <- function (val) {
+    if ("__prim__" in val) return val.__prim__;
+    return val;
+}
+
 
 //-----------------------------------------------------------------------//
 // Purpose: Given a prototype and an index of the property, find the next
@@ -422,7 +427,7 @@ class __jsInteropArray extends __jsInteropObject {
 }
 
 class __jsInteropPrimitive extends __jsInteropObject {
-    // __prim__ = null;
+    __prim__ = null;
 
     constructor(value) {
         base.constructor();
@@ -430,27 +435,27 @@ class __jsInteropPrimitive extends __jsInteropObject {
     }
 
     function _add(other) {
-        return __(__prim__ + other.__prim__);
+        return __prim__ + other.__prim__;
     }
 
     function _sub(other) {
-        return __(__prim__ - other.__prim__);
+        return __prim__ - other.__prim__;
     }
 
     function _mul(other) {
-        return __(__prim__ * other.__prim__);
+        return __prim__ * other.__prim__;
     }
 
     function _div(other) {
-        return __(__prim__ / other.__prim__);
+        return __prim__ / other.__prim__;
     }
 
     function _module(other) {
-        return __(__prim__ % other.__prim__);
+        return __prim__ % other.__prim__;
     }
 
     function _unm() {
-        return __(-__prim__);
+        return -__prim__;
     }
 
     function _cmp(other) {
@@ -641,6 +646,15 @@ Array.prototype[SYMBOL_ITERATOR] = __(function () {
 ///////////////////////////////////////////////////////////////////////////
 //////////////|             Number Constructor              |//////////////
 ///////////////////////////////////////////////////////////////////////////
+isNaN <- __(function (val) {
+    try {
+        val.tofloat();
+        return false;
+    } catch (e) {
+        return true;
+    }
+}, "isNaN")
+
 Number <- __(function () {}, "Number");
 Number.EPSILON              = __(2.220446049250313e-16);
 Number.MAX_SAFE_INTEGER     = __(9007199254740991);
@@ -652,8 +666,11 @@ Number.POSITIVE_INFINITY    = __(1.0 / 0);
 Number.NEGATIVE_INFINITY    = __(-1.0 / 0);
 
 Number.isFinite         = __(function (x) {}, "isFinite")
-Number.isInteger        = __(function (x) {}, "isInteger")
-Number.isNaN            = __(function (x) {}, "isNaN")
+Number.isInteger = __(function (x) {
+    if (isNaN(x).__prim__) return false;
+    return x == floor(x);
+})
+Number.isNaN = isNaN;
 Number.isSafeInteger    = __(function (x) {}, "isSafeInteger")
 Number.parseFloat       = __(function (x) {}, "parseFloat")
 Number.parseInt         = __(function (x) {}, "parseInt")
@@ -689,16 +706,16 @@ Math <- __({
     PI      = __(3.141592653589793),
     SQRT1_2 = __(0.7071067811865476),
     SQRT2   = __(1.4142135623730951)
-    abs     = __(fabs),
-    acos    = __(acos),
+    abs     = __(fabs, "fabs"),
+    acos    = __(acos, "acos"),
     acosh   = __(@(x) log(x + sqrt(x * x - 1)), "acosh"),
-    asin    = __(asin),
+    asin    = __(asin, "asin"),
     asinh   = __(@(x) log(x + sqrt(x * x + 1)), "asinh"),
-    atan    = __(atan),
-    atan2   = __(atan2),
+    atan    = __(atan, "atan"),
+    atan2   = __(atan2, "atan2"),
     atanh   = __(@(x) 0.5 * log((1 + x) / (1 - x)), "atanh"),
     cbrt    = __(@(x) pow(x, 1.0 / 3), "cbrt"),
-    ceil    = __(ceil),
+    ceil    = __(ceil, "ceil"),
     clz32   = __(function (x)
     {   if (x == 0) return 32;
         local a = 0x80000000, b = 0;
@@ -708,11 +725,11 @@ Math <- __({
         }
         return b;
     }, "clz32"),
-    cos     = __(cos),
+    cos     = __(cos, "cos"),
     cosh    = __(@(x) (exp(x) + exp(-x)) / 2.0, "cosh"),
-    exp     = __(exp),
+    exp     = __(exp,  "exp"),
     expm1   = __(@(x) exp(x) - 1.0, "expm1"),
-    floor   = __(floor),
+    floor   = __(floor,  "floor"),
     fround  = __UNIMPLEMENTED_FUNCTION,
     hypot   = __(function (...) {
         local sum = 0.0;
@@ -720,23 +737,23 @@ Math <- __({
         return sqrt(sum);
     }),
     imul    = __UNIMPLEMENTED_FUNCTION,
-    log     = __(log),
+    log     = __(log,  "log"),
     log1p   = __UNIMPLEMENTED_FUNCTION,
     log2    = __UNIMPLEMENTED_FUNCTION,
-    log10   = __(log10),
-    max     = __(function(...) {
+    log10   = __(log10,  "log10"),
+    max = __(function(...) {
         local a = -inf; // TODO: -Infinity
         foreach (b in vargv) if (b > a) a = b;
         return a;
     }, "max"),
-    min     = __(function(...) {
+    min = __(function(...) {
         local a = inf; // TODO: Infinity
         foreach (b in vargv) if (b < a) a = b;
         return a;
     }, "min"),
-    pow     = __(pow),
-    random  = __(@() ::rand().tofloat() / ::RAND_MAX, "random"),
-    round   = __(function (x) {
+    pow     = __(pow,  "pow"),
+    random = __(@() ::rand().tofloat() / ::RAND_MAX, "random"),
+    round = __(function (x) {
         local a = x - floor(x);
         return a < 0.5 ? floor(x) : ceil(x);
     }, "round"),
@@ -744,38 +761,16 @@ Math <- __({
         if (!x) return 0;
         return x > 0 ? 1 : -1;
     }, "sign"),
-    sin     = __(sin),
+    sin     = __(sin,  "sin"),
     sinh    = __(@(x) (exp(x) - exp(-x)) / 2.0, "sinh"),
-    sqrt    = __(sqrt),
-    tan     = __(tan),
+    sqrt    = __(sqrt, "sqrt"),
+    tan     = __(tan, "tan"),
     trunc   = __(@(x)  x >= 0 ? floor(x) : ceil(x), "trunc")
 });
 
-
-
-__iterkeys <- __(function(obj) {
-    local props = __keys(obj), i = 0, value, done = false;
-    return __({
-        next = __(function () {
-            if (i >= props.len()) {
-                return __({
-                	done = true
-                });
-            }
-
-            return __({
-            	value = props[i++],
-                done = false
-            });
-        }, "next")
-    })
-})
-
-return;
-
-local arr = __([7, 5, 4, 6, 4, 2, 1]);
-foreach(el in __iter(arr)) {
-    console.log(el);
+local a = __([1, 2, 3, 4, 5]);
+foreach(el in __iter(a)) {
+    ::print(el);
 }
-console.log("");
-console.log(arr.length);
+
+::print(a.length);
