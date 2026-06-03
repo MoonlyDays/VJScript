@@ -9,7 +9,7 @@
 // compilation time, so feel free to understand the behaviour of the code
 // using them.
 //--------------------------------------------------------------------------------
-// Copyright (C) Moonly Days 2024
+// Copyright (C) Moonly Days 2024-2026
 //--------------------------------------------------------------------------------
 
 __jsConsoleLog <-  function(obj, depth, stack) {
